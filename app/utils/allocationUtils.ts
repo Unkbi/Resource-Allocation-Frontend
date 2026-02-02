@@ -36,7 +36,7 @@ import {
 import {
   AllocationForm_Status_Filter,
   DATE_FORMAT,
-  PROJECT_ACTIVE_STATUS,
+  PROJECT_ALLOCATION_STATUS,
   teamsViewsGrouping,
 } from '../constants/constants';
 import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
@@ -210,7 +210,7 @@ export function formatAllAllocations(
     if (
       (resource?.Status &&
         !AllocationForm_Status_Filter.includes(resource?.Status)) ||
-      (project?.Status && !PROJECT_ACTIVE_STATUS.includes(project.Status))
+      (project?.Status && !PROJECT_ALLOCATION_STATUS.includes(project.Status))
     )
       continue;
 

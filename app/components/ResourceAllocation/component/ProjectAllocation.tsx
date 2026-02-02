@@ -145,7 +145,7 @@ function ProjectAllocation({
       dispatch({ type: FETCH_PROJECT_TYPES });
     }
   }, []);
-
+  
   useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['Allocation'].r && ready) {

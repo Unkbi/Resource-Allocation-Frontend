@@ -48,6 +48,10 @@ export type ReportType =
   | 'resourceProjectPeriod'
   | 'resourceProjectPeriodCost';
 
+export type SummaryType =
+  | 'project'
+  | 'team';
+
 export interface ReportUIFilters {
   reportType: ReportType;
   period: 'this_week' | 'last_week' | 'this_month' | 'last_month' | 'this_quarter' | 'last_quarter' | 'this_year' | 'last_year' | 'custom';

@@ -4,6 +4,8 @@ import { Box, Tooltip } from '@mui/material';
 import { StatusPill, ScorePill } from '../../Settings/styled';
 import { useSelector } from 'react-redux';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
+import { navigateToReport } from '@/app/utils/reportNavigation';
+import { useRouter } from 'next/navigation';
 
 const MAX_COMMENT_CHARS = 30;
 
@@ -57,6 +59,110 @@ const renderScoreCell = (params: any) => {
     </Box>
   );
 };
+
+/**
+ * Clickable score cell component that navigates to resourceProjectPeriod report
+ * with project and period filters from the current row
+ */
+const ClickableScoreCell = ({ params }: { params: any }) => {
+  const router = useRouter();
+  
+  const rawValue = Number(params.value ?? 0);
+  const value = Number.isNaN(rawValue) ? 0 : rawValue;
+  const displayValue = `${Math.round(value)}%`;
+
+  const handleClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    
+    const projectId = params.row?.project_id;
+    const period = params.row?.period; // Format: "MM/DD/YYYY"
+    
+    if (!projectId || !period) {
+      console.warn('Missing project_id or period for navigation');
+      return;
+    }
+
+    // Convert period from MM/DD/YYYY to YYYY-MM-DD format
+    let customStartDate: string | undefined;
+    let customEndDate: string | undefined;
+    
+    try {
+      const parts = period.split('/');
+      if (parts.length === 3) {
+        const [month, day, year] = parts;
+        const periodDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        
+        // The period represents a Monday (start of week)
+        // Calculate the end of that week (Sunday)
+        const startDate = new Date(periodDate);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6); // Add 6 days to get to Sunday
+        
+        const formatDate = (date: Date) => {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, '0');
+          const d = String(date.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        };
+        
+        customStartDate = formatDate(startDate);
+        customEndDate = formatDate(endDate);
+      }
+    } catch (error) {
+      console.error('Error parsing period date:', period, error);
+      return;
+    }
+
+    if (!customStartDate || !customEndDate) {
+      console.warn('Failed to parse period for navigation');
+      return;
+    }
+    
+    // Navigate to resourceProjectPeriod report with filters
+    navigateToReport(
+      {}, // No advanced filters from current context
+      {
+        reportType: 'resourceProjectPeriod',
+        period: 'custom',
+        customStartDate,
+        customEndDate,
+        additionalFilters: {
+          project: [projectId],
+        },
+      },
+      false, // Navigate in the same tab (not a new tab)
+      router
+    );
+  };
+
+  return (
+    <Box
+      onClick={handleClick}
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        height: '100%',
+        cursor: 'pointer',
+        '&:hover': {
+          opacity: 0.8,
+          textDecoration: 'underline',
+        },
+      }}
+    >
+      <ScorePill score={value}>{displayValue}</ScorePill>
+    </Box>
+  );
+};
+
+/**
+ * Render function for clickable score cells
+ */
+const renderClickableScoreCell = (params: any) => {
+  return <ClickableScoreCell params={params} />;
+};
+
 const GetUsers = (): any[] => {
   const { user } = useSelector((state: any) => state.rbac);
   if (!Array.isArray(user)) return [];
@@ -236,9 +342,9 @@ const projectPeriodColumns: GridColDef[] = [
   { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actual_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right'},
-  { field: 'project_score', headerName: 'Project Score', minWidth: 150, renderCell: renderScoreCell },
-  { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 150, renderCell: renderScoreCell },
-  { field: 'health_score', headerName: 'Health Score', minWidth: 130, renderCell: renderScoreCell },
+  { field: 'project_score', headerName: 'Project Score', minWidth: 150, renderCell: renderClickableScoreCell },
+  { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 150, renderCell: renderClickableScoreCell },
+  { field: 'health_score', headerName: 'Health Score', minWidth: 130, renderCell: renderClickableScoreCell },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
   {
     field: 'created_by', headerName: 'Created By', minWidth: 160,
@@ -331,9 +437,9 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   },
   { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 160, renderCell: renderScoreCell },
   { field: 'project_health_score', headerName: 'Health Score', minWidth: 150, renderCell: renderScoreCell },
-  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'weighted_percent_variance', headerName: 'Weighted % Variance', minWidth: 170, renderCell: renderScoreCell },
   { field: 'percent_variance', headerName: 'Percent Variance', minWidth: 140, renderCell: renderScoreCell },
   { field: 'comments', headerName: 'Comments / Project updates', minWidth: 200, renderCell: renderCommentCell },
@@ -384,9 +490,9 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   },
   { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 160, renderCell: renderScoreCell },
   { field: 'project_health_score', headerName: 'Health Score', minWidth: 150, renderCell: renderScoreCell },
-  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'weighted_percent_variance', headerName: 'Weighted % Variance', minWidth: 170, renderCell: renderScoreCell },
   { field: 'percent_variance', headerName: 'Percent Variance', minWidth: 140, renderCell: renderScoreCell },
   { field: 'hourly_rate', headerName: 'Hourly Rate', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
@@ -493,12 +599,16 @@ export const getHiddenColumns = (reportType: ReportType): Record<string, boolean
     case 'resourceProjectPeriod':
       return {
         ...commonHidden,
+        weighted_percent_variance: false,
+        percent_variance: false,
       };
 
     case 'resourceProjectPeriodCost':
       return {
         ...commonHidden,
         currency: false,
+        weighted_percent_variance: false,
+        percent_variance: false,
       };
 
     default:
