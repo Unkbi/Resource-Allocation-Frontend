@@ -25,6 +25,7 @@ import allSettingsReducer from './reducers/allSettingsReducer';
 import { RESET_STORE } from './actions/authActions';
 import businessImpactReducer from './reducers/businessImpactReducer';
 import aiSummaryReducer from './reducers/aiSummaryReducer';
+import savedReportsReducer from './reducers/savedReportsReducer';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -69,6 +70,7 @@ export const makeStore = () => {
         allSettings: allSettingsReducer(state?.allSettings, action),
         businessImpact: businessImpactReducer(state?.businessImpact, action),
         aiSummary: aiSummaryReducer(state?.aiSummary, action),
+        savedReports: savedReportsReducer(state?.savedReports, action),
       };
     },
     middleware: getDefaultMiddleware =>

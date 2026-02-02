@@ -15,11 +15,16 @@ import ReportBuilderExport from './ReportBuilderExport';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import { ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
+import { useDispatch, useSelector } from 'react-redux';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { RootState } from '@/app/redux/store';
+import { ReportType } from '@/app/types/dashboardTypes';
 
 interface ReportBuilderDataGridToolbarExtraProps {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   GridRowCount?: number;
+  reportType?: ReportType;
 }
 
 type ReportBuilderDataGridToolbarProps = GridToolbarProps & ReportBuilderDataGridToolbarExtraProps;
@@ -56,9 +61,15 @@ export default function ReportBuilderDataGridToolbar({
   isFullscreen,
   onToggleFullscreen,
   GridRowCount,
+  reportType,
 }: ReportBuilderDataGridToolbarProps) {
   const apiRef = useGridApiContext();
+  const dispatch = useDispatch();
   const [columnsAnchorEl, setColumnsAnchorEl] = useState<null | HTMLElement>(null);
+
+  // Get the current report filters from Redux
+  const reportSlice = useSelector((state: RootState) => state.dashboard.report);
+  const currentReport = reportType ? reportSlice?.[reportType] : null;
 
   const handleToggleFullscreen = () => {
     onToggleFullscreen?.();
@@ -71,6 +82,21 @@ export default function ReportBuilderDataGridToolbar({
   const handleCloseColumns = () => {
     setColumnsAnchorEl(null);
   };
+
+  const handleSaveReport = () => {
+     dispatch(
+          openDialog({
+            title: 'Save Report',
+            submitButtonText: 'Save',
+            cancelButtonText: 'Cancel',
+            formType: 'save_reports',
+            initialData: {
+              filters: currentReport?.uiFilters || {},
+              reportType: reportType,
+            },
+          })
+        );
+  }
 
   return (
     <GridToolbarContainer
@@ -91,7 +117,7 @@ export default function ReportBuilderDataGridToolbar({
           }}
         >
   {/* ************* Part of save reports feature****************  */}
-          {/* <Box
+          <Box
             sx={{
               fontSize: 14,
               fontWeight: 400,
@@ -106,7 +132,7 @@ export default function ReportBuilderDataGridToolbar({
               height: 40,
               bgcolor: '#CEDCE9',
             }}
-          /> */}
+          />
           <Box
             sx={{
               fontSize: 14,
@@ -122,15 +148,15 @@ export default function ReportBuilderDataGridToolbar({
 
   {/* ************* Part of save reports feature****************  */}
          
-        {/* <Tooltip title="Save Report">
-          <SmallIconButton onClick={handleOpenColumns} aria-label="save report">
+        <Tooltip title="Save Report">
+          <SmallIconButton onClick={handleSaveReport} aria-label="save report">
             <img
               src="/images/icons/SaveIcon.svg"
               alt="save report"
               style={{ width: 36, height: 40 }}
             />
           </SmallIconButton>
-        </Tooltip> */}
+        </Tooltip>
 
         <Tooltip title="Columns">
           <SmallIconButton onClick={handleOpenColumns} aria-label="columns">

@@ -38,6 +38,7 @@ import {
   addUserValidationSchema,
   addResourceToUserValidationSchema,
   addBusinessImpactValidationSchema,
+  saveReportsValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -157,6 +158,7 @@ import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
 import AddResourceToUserForm from '../../Forms/AddResourceToUserForm';
 import AddUserForm from '../../Forms/AddUserForm';
+import SaveReportsForm from '../../Forms/SaveReportsForm';
 import {
   formatAPIResponse,
   getUserAttributes,
@@ -189,6 +191,7 @@ import {
   CREATE_BUSINESS_IMPACT,
   UPDATE_BUSINESS_IMPACT,
 } from '@/app/redux/actions/businessImpactActions';
+import { SAVE_REPORTS } from '@/app/redux/actions/savedReportsActions';
 
 const initialValuesMap = {
   add_project: {
@@ -467,6 +470,14 @@ const initialValuesMap = {
     Status: '',
     Currency: 'USD',
   },
+  save_reports: {
+    Name: '',
+    Description: '',
+  },
+  edit_reports: {
+    Name: '',
+    Description: '',
+  },
 };
 
 const AllocationForm = () => {
@@ -655,6 +666,10 @@ const AllocationForm = () => {
         return addBusinessImpactValidationSchema;
       case 'edit_business_impact':
         return addBusinessImpactValidationSchema;
+      case 'save_reports':
+        return saveReportsValidationSchema([],initialData?.Name || '');
+      case 'edit_reports':
+        return saveReportsValidationSchema([],initialData?.Name || '');
       default:
         return null;
     }
@@ -3748,6 +3763,97 @@ const AllocationForm = () => {
 
         return;
       }
+      case 'save_reports': {
+        try {
+          // Include filters from initialData if available
+          const postData = { 
+            Name: cleanedValues.Name,
+            Description: cleanedValues.Description || '',
+            Filters: initialData?.filters || {},
+            ReportType: initialData?.reportType || 'resourceProjectPeriod',
+          };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: SAVE_REPORTS,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          }
+          );
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Report saved successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to save report:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to save report.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      case 'edit_reports': {
+        try {
+          const reportId = initialData?.id;
+          const postData = {
+            Name: cleanedValues.Name,
+            Description: cleanedValues.Description || '',
+          };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_REPORTS,
+              payload: {
+                reportId,
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Report updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to update report:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to update report.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
 
       default:
         return;
@@ -4385,6 +4491,20 @@ const AllocationForm = () => {
       case 'edit_business_impact':
         return (
           <AddBusinessImpactForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'save_reports':
+        return (
+          <SaveReportsForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_reports':
+        return (
+          <SaveReportsForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />

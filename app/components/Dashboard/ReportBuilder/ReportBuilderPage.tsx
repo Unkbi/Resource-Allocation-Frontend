@@ -20,6 +20,7 @@ import { fetchProjectSummary } from '@/app/redux/actions/aiSummaryAction';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import ErrorPage from '../../ErrorPage/ErrorPage';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_SAVED_REPORTS } from '@/app/redux/actions/savedReportsActions';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
@@ -201,7 +202,6 @@ function ReportBuilderPage({
   const [reportGenerated, setReportGenerated] = useState(false);
   const [showData, setShowData] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
-  const [savedReports, setSavedReports] = useState<{ name: string; reportType: ReportType; uiFilters: ReportUIFilters; createdAt: string }[]>([]);
   const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
   const [pendingQueryFilters, setPendingQueryFilters] = useState<(Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string }) | null>(null);
   const [hasAppliedQueryParams, setHasAppliedQueryParams] = useState(false);
@@ -211,6 +211,9 @@ function ReportBuilderPage({
   const reportSlice = useSelector((state: RootState) => state.dashboard.report);
   const currentReport = reportSlice?.[filters.reportType as ReportType];
   const aiSummaryState = useSelector((state: RootState) => state.aiSummary);
+  
+  // Get saved reports from Redux
+  const { savedReports, loading: savedReportsLoading } = useSelector((state: RootState) => state.savedReports);
   
   // Get Redux data to check if it's loaded
   const { projectTypeGroups, projectTypes } = useSelector((state: RootState) => state.allSettings);
@@ -615,56 +618,16 @@ function ReportBuilderPage({
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
   const hiddenColumns = getHiddenColumns(filters.reportType as ReportType);
-  // Save/Load reports via localStorage
-  const STORAGE_KEY = 'saved_reports';
-  const loadSavedReports = () => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      setSavedReports(Array.isArray(parsed) ? parsed : []);
-      if (searchParams && searchParams.toString()) {
-        setIsInitializing(true); // Mark that we're initializing with query params
-      }
-    } catch {
-      setSavedReports([]);
-    }
-  };
+  
+  // Fetch saved reports from API on component mount
   useEffect(() => {
-    loadSavedReports();
-  }, []);
+    dispatch({ type: FETCH_SAVED_REPORTS });
+  }, [dispatch]);
 
-  const handleSaveReport = (name: string) => {
-    const [start, end] = filters.customDateRange || [];
-    const uiFilters: ReportUIFilters = {
-      reportType: filters.reportType as ReportType,
-      period: filters.period as ReportUIFilters['period'],
-      customStartDate: start ? start.format('YYYY-MM-DD') : undefined,
-      customEndDate: end ? end.format('YYYY-MM-DD') : undefined,
-      team: filters.team,
-      organization: filters.organization,
-      resourceType: filters.resourceType,
-      resource: filters.resource,
-      projectType: filters.projectType,
-      projectTypeGroup: filters.projectTypeGroup,
-      project: filters.project,
-      portfolio: filters.portfolio,
-      projectManager: filters.projectManager,
-      allocationManager: filters.allocationManager,
-      resourceStatuses: filters.resourceStatuses,
-      resourceLocations: filters.resourceLocations,
-      resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
-      projectStatuses: filters.projectStatuses,
-    };
-    const entry = { name, reportType: uiFilters.reportType, uiFilters, createdAt: new Date().toISOString() };
-    const next = [...savedReports.filter(r => r.name !== name), entry];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    setSavedReports(next);
-  };
-
-  const handleLoadReport = (name: string) => {
-    const entry = savedReports.find(r => r.name === name);
+  const handleLoadReport = (reportId: string) => {
+    const entry = savedReports.find(r => r.Id === reportId);
     if (!entry) return;
-    const f = entry.uiFilters;
+    const f = entry.Filters;
     // Restore UI filters in component state
     setFilters({
       reportType: f.reportType,
@@ -687,6 +650,8 @@ function ReportBuilderPage({
     });
     // Dispatch fetch with restored filters
     dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
+    setShowData(true);
+    setReportGenerated(true);
   };
 
   const getSelectedFiltersCount = () => {
