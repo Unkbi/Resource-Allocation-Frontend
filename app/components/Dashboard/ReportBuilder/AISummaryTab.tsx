@@ -109,6 +109,13 @@ export default function AISummaryTab() {
         align: 'center',
         minWidth: 120,
         flex: 1,
+        valueGetter: (value: any) => {
+          // For export: return only the score value or empty string
+          if (!value || value.score === null || value.score === undefined) {
+            return '-';
+          }
+          return value.score;
+        },
         renderHeader: () => (
           <Box sx={{ textAlign: 'center' }}>
             <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>
@@ -120,8 +127,9 @@ export default function AISummaryTab() {
           </Box>
         ),
         renderCell: (params: any) => {
-          const weekData = params.value;
-          if (!weekData || weekData.score === null) {
+          // Access the original week data from the row directly
+          const weekData = params.row[weekCol.field];
+          if (!weekData || weekData.score === null || weekData.score === undefined) {
             return (
               <Typography sx={{ fontSize: '14px', color: '#9CA3AF', textAlign: 'center' }}>
                 -

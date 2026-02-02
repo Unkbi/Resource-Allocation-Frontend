@@ -30,21 +30,14 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
     margin: 0,
     maxHeight: '100%',
     height: '100vh',
-    maxWidth: '65%',
-    width: '65%',
+    maxWidth: '56%',
+    width: '56%',
     borderRadius: 0,
     position: 'fixed',
     right: 0,
     top: 0,
   },
 }));
-
-const getScoreColor = (score: number | null | undefined): string => {
-  if (score === null || score === undefined) return '#9CA3AF';
-  if (score >= 80) return '#10B981'; // Green
-  if (score >= 60) return '#F59E0B'; // Orange
-  return '#EF4444'; // Red
-};
 
 export default function AISummaryDetailDialog({ open, onClose, data }: AISummaryDetailDialogProps) {
   const {
@@ -259,7 +252,7 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
         {/* Content */}
         <Box sx={{ flex: 1, overflow: 'auto' }}>
           {/* Project Info Card */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end'}}>
             <Button
               variant="text"
               size="small"
@@ -285,92 +278,10 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
           </Box>
           <Box
             sx={{
-              bgcolor: '#FFFFFF',
-              borderRadius: '8px',
-              p: 3,
-              mb: 3,
-              border: '1px solid #E5E7EB',
+              py: 0.5,
             }}
           >
-           
-              {/* Render HTML content with styling */}
               <Box
-                sx={{
-                  fontSize: '13px',
-                  lineHeight: 1.7,
-                  color: '#374151',
-                  '& h1, & h2, & h3, & h4, & h5, & h6': {
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#1F2937',
-                    marginTop: '16px',
-                    marginBottom: '8px',
-                  },
-                  '& p': {
-                    marginBottom: '12px',
-                  },
-                  '& ul, & ol': {
-                    paddingLeft: '20px',
-                    marginBottom: '12px',
-                  },
-                  '& li': {
-                    marginBottom: '6px',
-                  },
-                  '& strong': {
-                    fontWeight: 600,
-                    color: '#1F2937',
-                  },
-                  '& em': {
-                    fontStyle: 'italic',
-                  },
-                  '& code': {
-                    backgroundColor: '#F3F4F6',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    fontFamily: 'monospace',
-                  },
-                  '& pre': {
-                    backgroundColor: '#F3F4F6',
-                    padding: '12px',
-                    borderRadius: '6px',
-                    overflow: 'auto',
-                    marginBottom: '12px',
-                  },
-                  '& table': {
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    marginBottom: '16px',
-                    fontSize: '12px',
-                    bgcolor: '#FFFFFF',
-                  },
-                  '& th': {
-                    backgroundColor: '#F9FAFB',
-                    padding: '10px',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    borderBottom: '2px solid #E5E7EB',
-                    color: '#374151',
-                  },
-                  '& td': {
-                    padding: '10px',
-                    borderBottom: '1px solid #E5E7EB',
-                  },
-                  '& a': {
-                    color: '#2563EB',
-                    textDecoration: 'none',
-                    '&:hover': {
-                      textDecoration: 'underline',
-                    },
-                  },
-                  '& blockquote': {
-                    borderLeft: '4px solid #E5E7EB',
-                    paddingLeft: '16px',
-                    margin: '12px 0',
-                    color: '#6B7280',
-                    fontStyle: 'italic',
-                  },
-                }}
                 dangerouslySetInnerHTML={{ __html: summaryHtml }}
               />
             </Box>
