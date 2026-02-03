@@ -41,6 +41,7 @@ import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
+import ActualsSettingsAllocationPreference from '@/app/components/Settings/ActualsSettingsAllocationPreference';
 
 interface MenuItem {
   id: string;
@@ -164,6 +165,7 @@ const SettingsPanel = ({
 
   const hasAnyAccess = {
     'user-profile': true,
+    'actuals-settings': true,
     notification: false,
     'user-management': permissions['User'].r,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
@@ -218,6 +220,15 @@ const SettingsPanel = ({
             icon: '',
             content: '',
             description: 'Manage your user profile',
+          },
+          {
+            id: 'actuals-settings',
+            title: 'Actuals',
+            headerText: 'Actuals',
+            icon: '',
+            content: <ActualsSettingsAllocationPreference />,
+            description:
+              'Users can choose how they want to enter their actuals: as percentages, hours, or fractions.',
           },
           {
             id: 'notification',
