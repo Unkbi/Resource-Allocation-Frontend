@@ -187,17 +187,24 @@ const FilterChips: React.FC<FilterChipsProps> = ({
     return Object.entries(filtersToProcess)
       .filter(([key, value]) => {
         // Skip specific keys based on mode
+        if (!isAdvancedMode) {
+          if (key === 'reportType') return false;
+          if (key === 'customDateRange') return false; // Don't show as separate chip
+        }
+        return true;
+      })
+      .filter(([key, value]) => {
         if (isAdvancedMode) {
-          // For advanced mode, skip empty values
-          if (Array.isArray(value)) {
-            return value.length > 0;
+          // For advanced mode, filter out default values
+          const defaultValue = defualtAdvancedFilters ? (defualtAdvancedFilters as Record<string, any>)[key] : null;
+          if (Array.isArray(value) && Array.isArray(defaultValue)) {
+            const filtered = value.filter(v => !defaultValue.includes(v));
+            return filtered.length > 0;
+          } else {
+            return value !== defaultValue && value && value !== '';
           }
-          return value && value !== '';
         } else {
           // For report mode, skip default values
-          if (key === 'reportType') return false;
-          // if (key === 'period' && value === 'last_week') return false;
-          if (key === 'customDateRange') return false; // Don't show as separate chip
           if (Array.isArray(value)) {
             return value.length > 0;
           }
@@ -205,12 +212,20 @@ const FilterChips: React.FC<FilterChipsProps> = ({
         }
       })
       .map(([key, value]) => {
-        const displayName = getDisplayName(key, value);
+        // For advanced mode, use filtered value
+        let effectiveValue = value;
+        if (isAdvancedMode) {
+          const defaultValue = defualtAdvancedFilters ? (defualtAdvancedFilters as Record<string, any>)[key] : null;
+          if (Array.isArray(value) && Array.isArray(defaultValue)) {
+            effectiveValue = value.filter(v => !defaultValue.includes(v));
+          }
+        }
+        const displayName = getDisplayName(key, effectiveValue);
         const isArray = Array.isArray(displayName);
 
         return {
           key,
-          value,
+          value: effectiveValue,
           label: currentFilterLabels[key] || key,
           displayName: isArray ? displayName : [displayName as string],
           displayText: isArray
@@ -231,6 +246,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
     currentFilterLabels,
     isAdvancedMode,
     getDisplayName,
+    defualtAdvancedFilters,
   ]);
 
   const handleRemoveFilter = (filterKey: string) => {
@@ -326,11 +342,11 @@ const FilterChips: React.FC<FilterChipsProps> = ({
             key={filter.key}
             label={chipLabel}
             onDelete={() => handleRemoveFilter(filter.key)}
-            deleteIcon={<CloseIcon />}
+            deleteIcon={showClearButton ? <CloseIcon /> : <></>}
           />
         );
       })}
-        <ClearAllButton onClick={handleClearAll}>{showClearButton ? 'Clear All' : 'Reset Filters' }</ClearAllButton>
+        {showClearButton && <ClearAllButton onClick={handleClearAll}>{showClearButton ? 'Clear All' : 'Reset Filters' }</ClearAllButton>}
       
     </Box>
   );

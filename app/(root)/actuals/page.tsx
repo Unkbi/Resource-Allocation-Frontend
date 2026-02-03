@@ -31,8 +31,10 @@ import {
   generateDateWeekMath,
   getFridayOfISO,
   getMondayOfISO,
+  getResourcesIamManager,
   getSundayOfISO,
   getTeamForResource,
+  getTeamsIamAllocationManager,
   isCurrentWeek,
   isFutureWeek,
 } from '@/app/utils/common';
@@ -58,9 +60,14 @@ import {
   FAR_PAST_DATE,
   MISSING_PROJECT_ACTUALS_STATUS,
   TOTAL_ACTUALS_LESS_THAN_ONE,
+  TOTAL_HOURS_IN_WEEK,
 } from '@/app/constants/constants';
 import ActualsCard from '@/app/components/Actuals/ActualsCard';
-import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
+import {
+  formatAllocationDataWithToHours,
+  formatAllocationTableDataWithToFTE,
+  isPeriodWithinRange,
+} from '@/app/utils/actualsUtils';
 import { AxiosError } from 'axios';
 
 interface ActualsPageProps {
@@ -122,8 +129,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const [resourceList, setResourceList] = useState<Resource[]>([]);
   const [currentResource, setCurrentResource] = useState<Resource | null>(null);
 
-  let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
-  let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
+  let max_allocation_error =
+    Number(scalarSettings?.Max_Allocation_Error || '2.0') * TOTAL_HOURS_IN_WEEK;
+  let max_allocation_warning =
+    Number(scalarSettings?.Max_Allocation_Warning || '1.5') *
+    TOTAL_HOURS_IN_WEEK;
 
   const handleModificationChange = (modified: boolean) => {
     setShow(false);
@@ -136,34 +146,122 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       ? 'noActualsTracked'
       : null;
 
+  const getResourceListBasedOnUserRole = (
+    loginUser: Resource | null,
+    activeAndInactiveResource: Resource[]
+  ) => {
+    if (!loginUser || loadingPermissions) return [];
+    if (permissions['AdminActuals']?.r) return activeAndInactiveResource;
+
+    let resourceList: Resource[] = [];
+    if (permissions['AllocationManagerActuals']?.r) {
+      const teamsUserIsAnAllocationManager = getTeamsIamAllocationManager(
+        loginUser?.Email,
+        resources,
+        teams
+      );
+      resourceList = teamsUserIsAnAllocationManager.reduce(
+        (acc: Resource[], team: Team) => {
+          const resourcesInTeam = teamsResources?.[team.Id] || [];
+          return [...acc, ...resourcesInTeam];
+        },
+        []
+      );
+    }
+    if (permissions['ManagerActuals']?.r) {
+      const resourcesUserIsAManager = getResourcesIamManager(
+        loginUser?.Id,
+        resources
+      );
+      resourceList = [...resourceList, ...resourcesUserIsAManager];
+    }
+
+    return Array.from(
+      new Map([loginUser, ...resourceList].map(r => [r.Id, r])).values()
+    );
+  };
+
+  const isAResource = useMemo(() => {
+    if (!user || !resources) return false;
+    return (
+      resources?.some(
+        (resource: Resource) => resource?.Email === (user as LoginUser).username
+      ) || false
+    );
+  }, [user, resources]);
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (user && resources) {
-        const loginUser =
-          resources?.find(
-            (resource: Resource) =>
-              resource?.Email === (user as LoginUser).username
-          ) || null;
+    if (user && resources) {
+      const loginUser =
+        resources?.find(
+          (resource: Resource) =>
+            resource?.Email === (user as LoginUser).username
+        ) || null;
+
+      if (loginUser) {
         setCurrentResource(loginUser);
 
-        // Resources that are Active/Inactive Status
-        setResourceList(
-          resources
-            .filter(
-              (resource: Resource) =>
-                resource.Status === 'Active' || resource.Status === 'Inactive'
-            )
-            .sort((a: Resource, b: Resource) =>
-              (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
-                sensitivity: 'base',
-              })
-            )
+        const resourceListBasedOnRole = getResourceListBasedOnUserRole(
+          loginUser,
+          resources.filter(
+            (resource: Resource) =>
+              resource.Status === 'Active' || resource.Status === 'Inactive'
+          )
+        ).sort((a: Resource, b: Resource) =>
+          (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
+            sensitivity: 'base',
+          })
         );
-      }
-      setLoadingName(false);
-    }, 3000);
+        // Resources that are Active/Inactive Status
+        setResourceList(resourceListBasedOnRole);
+      } else {
+        // Some Users do not have Resources created, set minimal details from LoginUser.
+        const loginUserTempResourceDetails = {
+          FirstName: (user as LoginUser)?.firstName,
+          LastName: (user as LoginUser)?.lastName,
+          FullName: `${(user as LoginUser)?.firstName || ''} ${(user as LoginUser)?.lastName || ''}`,
+          Email: (user as LoginUser)?.username || '',
+          PhoneNumber: null,
+          Id: '0',
+          StartDate: null,
+          EndDate: null,
+          LocationCategory: null,
+          WorkLocation: null,
+          Department: null,
+          HRLevel: null,
+          Manager: null,
+          Role: null,
+          Type: null,
+          ContractorHourlyRate: null,
+          ContractorHourlyRateCurrency: null,
+          AverageWeeklyHours: null,
+          __path__: null,
+          __parent__: null,
+          Status: null,
+        };
+        // @ts-ignore
+        setCurrentResource(loginUserTempResourceDetails as Resource);
 
-    return () => clearTimeout(timer);
+        const resourceListBasedOnRole = getResourceListBasedOnUserRole(
+          loginUserTempResourceDetails as Resource,
+          resources.filter(
+            (resource: Resource) =>
+              resource.Status === 'Active' || resource.Status === 'Inactive'
+          )
+        ).sort((a: Resource, b: Resource) =>
+          (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
+            sensitivity: 'base',
+          })
+        );
+        // Resources that are Active/Inactive Status
+        setResourceList([
+          // @ts-ignore
+          loginUserTempResourceDetails,
+          ...resourceListBasedOnRole,
+        ]);
+      }
+    }
+    setLoadingName(false);
   }, [user, resources]);
 
   useEffect(() => {
@@ -233,9 +331,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   const updatePlannedAllocationsIfNeeded = () => {
     if (!currentResource) return;
-    const allRows = apiRef.current
-      .getAllRowIds()
-      .map(id => apiRef.current.getRow(id));
+    const allRows = formatAllocationTableDataWithToFTE(
+      apiRef.current
+        .getAllRowIds()
+        .map(id => apiRef.current.getRow(id))
+        .filter(Boolean)
+    );
 
     // If there are validation errors, block the update
     if (Object.keys(rowValidationErrors || {}).length > 0) {
@@ -358,7 +459,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               showToastAction(
                 true,
                 error?.response?.data
-                  ? error?.response?.data
+                  ? `Error updating planned allocation. ${error?.response?.data}`
                   : `Error updating planned allocation.`,
                 'error'
               )
@@ -370,7 +471,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           showToastAction(
             true,
             error?.response?.data
-              ? error?.response?.data
+              ? `Error updating planned allocation. ${error?.response?.data}`
               : `Error updating planned allocation.`,
             'error'
           )
@@ -380,14 +481,23 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   const validateDataBeforeConfirm = () => {
+    // If there are validation errors, block the update
+    if (Object.keys(rowValidationErrors || {}).length > 0) {
+      dispatch(showToastAction(true, 'Must fill required fields.', 'error'));
+      return;
+    }
+
     if (isFutureWeek(parseISO(startDate))) {
       updatePlannedAllocationsIfNeeded();
       return;
     }
     if (isFridayOrAfterFriday) {
-      const allRows = apiRef.current
-        .getAllRowIds()
-        .map(id => apiRef.current.getRow(id));
+      const allRows = formatAllocationTableDataWithToFTE(
+        apiRef.current
+          .getAllRowIds()
+          .map(id => apiRef.current.getRow(id))
+          .filter(Boolean)
+      );
       const totalActuals =
         allRows.find(row => row.id === 'total')?.actuals ||
         allRows.reduce((sum, row) => sum + (row?.actuals || 0), 0);
@@ -398,7 +508,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           row =>
             !row.projectActualsStatus || row.projectActualsStatus === 'No Data'
         );
-      if (rowsWithMissingStatus.length === 0 && totalActuals >= 1.0) {
+      if (rowsWithMissingStatus.length === 0 && totalActuals > 0.9) {
         // No Errors
         handleConfirmed();
       }
@@ -408,7 +518,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           MISSING_PROJECT_ACTUALS_STATUS,
         ]);
       }
-      if (totalActuals < 1.0) {
+      if (totalActuals <= 0.9) {
         setShowAlertDialog(prev => [
           ...(prev || []),
           TOTAL_ACTUALS_LESS_THAN_ONE,
@@ -421,10 +531,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   const handleConfirmed = () => {
     if (projects && currentResource) {
-      const allData = apiRef.current
-        .getAllRowIds()
-        .map(id => apiRef.current.getRow(id))
-        .filter(row => row.id !== 'total' && row.project);
+      const allData = formatAllocationTableDataWithToFTE(
+        apiRef.current
+          .getAllRowIds()
+          .map(id => apiRef.current.getRow(id))
+          .filter(row => row.id !== 'total' && row.project)
+      );
 
       if (!startDate) return;
       // Set deleted rows, actualAllocations to 0.
@@ -543,9 +655,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             dispatch(
               showToast({
                 open: true,
-                message:
-                  error?.response?.data ??
-                  `Failed to confirm Actual alloctions.`,
+                message: error?.response?.data
+                  ? `Failed to confirm Actual alloctions. ${error?.response?.data}`
+                  : `Failed to confirm Actual alloctions.`,
                 type: 'error',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
@@ -766,9 +878,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
     if (startDate) {
+      const formattedAllActualAllocation = formatAllocationDataWithToHours(
+        actualAllocations?.[startDate] || []
+      );
       setFormattingActualAllocations(true);
       const formattedData: ActualAllocationTableRow[] =
-        actualAllocations?.[startDate]
+        formattedAllActualAllocation
           ?.filter(
             (alloc: ActualAllocations) =>
               (alloc.AllocationEntered && alloc.AllocationEntered > 0) ||
@@ -904,7 +1019,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           dispatch(
             showToastAction(
               true,
-              `Total of Planned cannot exceed ${max_allocation_error} (Current sum: ${updatedPlannedTotal.toFixed(1)})`,
+              `Total of Planned cannot exceed ${max_allocation_error} (Current sum: ${updatedPlannedTotal} hours)`,
               'error'
             )
           );
@@ -913,7 +1028,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           dispatch(
             showToastAction(
               true,
-              `Warning: Total planned is >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${updatedPlannedTotal.toFixed(1)}`,
+              `Warning: Total planned is >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${updatedPlannedTotal} hours`,
               'warning'
             )
           );
@@ -975,7 +1090,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         dispatch(
           showToastAction(
             true,
-            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${updatedTotal.toFixed(1)})`,
+            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${updatedTotal} hours)`,
             'error'
           )
         );
@@ -984,7 +1099,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         dispatch(
           showToastAction(
             true,
-            `Warning: Total actuals >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${updatedTotal.toFixed(1)}`,
+            `Warning: Total actuals >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${updatedTotal} hours`,
             'warning'
           )
         );
@@ -1085,10 +1200,17 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             display="flex"
             alignItems="center"
             justifyContent="center"
-            marginTop={5}
+            marginTop={0}
           >
             <Box mx={2} maxWidth={780} minHeight={350}>
-              <Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  mb: 1,
+                }}
+              >
                 <Box
                   mb={0.2}
                   sx={{
@@ -1100,7 +1222,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 >
                   {loadingName ? (
                     <Skeleton width={100} height={20} />
-                  ) : permissions['AdminActuals'].r ? (
+                  ) : (permissions['AdminActuals'].r ||
+                      permissions['AllocationManagerActuals'].r ||
+                      permissions['ManagerActuals'].r) &&
+                    resourceList.length > 1 ? (
                     <Autocomplete
                       options={resourceList}
                       getOptionLabel={(option: Resource) =>
@@ -1138,7 +1263,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     `${displayName}`
                   )}
                 </Box>
-                <Box display="flex" gap={4} mb={2}>
+                <Box display="flex" gap={4}>
                   <Typography
                     sx={{ fontFamily: 'Open Sans', fontSize: '14px' }}
                   >
@@ -1151,7 +1276,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       />
                     ) : (
                       <Typography component="span" sx={{ fontWeight: 600 }}>
-                        {userTitle}
+                        {isAResource ? userTitle : 'N/A'}
                       </Typography>
                     )}
                   </Typography>
@@ -1167,7 +1292,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       />
                     ) : (
                       <Typography component="span" sx={{ fontWeight: 600 }}>
-                        {userTeam}
+                        {isAResource ? (userTeam ?? '--') : 'N/A'}
                       </Typography>
                     )}
                   </Typography>
@@ -1242,7 +1367,14 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   width={'100%'}
                 >
                   <ActualsCard
-                    onClick={handlePrev}
+                    onClick={() => {
+                      if (isModified) {
+                        setDialogSource('prev');
+                        setDeleteDialogOpen(true);
+                      } else {
+                        handlePrev();
+                      }
+                    }}
                     period={
                       generateDateWeekMath(
                         'WEEK_MINUS',
@@ -1250,7 +1382,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                         parseISO(startDate ?? '')
                       ) || ''
                     }
-                    actualAllocationData={
+                    actualAllocationData={formatAllocationDataWithToHours(
                       actualAllocations[
                         generateDateWeekMath(
                           'WEEK_MINUS',
@@ -1258,7 +1390,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                           parseISO(startDate ?? '')
                         ) || ''
                       ]
-                    }
+                    )}
                     actualAllocationStatus={
                       actualAllocationsStatuses[
                         generateDateWeekMath(
@@ -1284,27 +1416,22 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   <ActualsCard
                     period={startDate}
                     actualAllocationData={
-                      apiRef?.current &&
-                      typeof apiRef?.current.getAllRowIds === 'function'
-                        ? (apiRef.current.getAllRowIds() ?? [])
-                            .map(id => apiRef.current.getRow(id))
-                            .filter(Boolean)
-                            .map(
-                              (row: ActualAllocationTableRow) =>
-                                ({
-                                  ActualsEntered: row.actuals,
-                                  AllocationEntered: row.planned,
-                                  Duration: null,
-                                  Id: row.id,
-                                  Notes: null,
-                                  Period: null,
-                                  Project: row.project,
-                                  ProjectName: null,
-                                  Resource: null,
-                                  ProjectActualsStatus:
-                                    row.projectActualsStatus,
-                                }) as ActualAllocations
-                            )
+                      rows?.length
+                        ? rows.map(
+                            (row: ActualAllocationTableRow) =>
+                              ({
+                                ActualsEntered: row.actuals,
+                                AllocationEntered: row.planned,
+                                Duration: null,
+                                Id: row.id,
+                                Notes: null,
+                                Period: null,
+                                Project: row.project,
+                                ProjectName: null,
+                                Resource: null,
+                                ProjectActualsStatus: row.projectActualsStatus,
+                              }) as ActualAllocations
+                          )
                         : []
                     }
                     actualAllocationStatus={
@@ -1320,7 +1447,14 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     resourceEndMonday={resourceEndMonday}
                   />
                   <ActualsCard
-                    onClick={handleNext}
+                    onClick={() => {
+                      if (isModified) {
+                        setDialogSource('prev');
+                        setDeleteDialogOpen(true);
+                      } else {
+                        handleNext();
+                      }
+                    }}
                     period={
                       generateDateWeekMath(
                         'WEEK_PLUS',
@@ -1328,7 +1462,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                         parseISO(startDate ?? '')
                       ) || ''
                     }
-                    actualAllocationData={
+                    actualAllocationData={formatAllocationDataWithToHours(
                       actualAllocations[
                         generateDateWeekMath(
                           'WEEK_PLUS',
@@ -1336,7 +1470,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                           parseISO(startDate ?? '')
                         ) || ''
                       ]
-                    }
+                    )}
                     actualAllocationStatus={
                       actualAllocationsStatuses[
                         generateDateWeekMath(
@@ -1438,7 +1572,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                           'Not Started' &&
                         // Enable button if it's the current week even if status is 'Confirmed'
                         !isCurrentWeek(parseISO(startDate)) &&
-                        (!isModified || show || hasInvalidRows))
+                        disableView &&
+                        !isFutureWeek(parseISO(startDate || '')))
                     }
                     onClick={validateDataBeforeConfirm}
                   >
@@ -1561,4 +1696,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   );
 }
 
-export default withRBAC(ActualsPage, ['ActualsStatus', 'AdminActuals']);
+export default withRBAC(ActualsPage, [
+  'ActualsStatus',
+  'AdminActuals',
+  'AllocationManagerActuals',
+  'ManagerActuals',
+]);

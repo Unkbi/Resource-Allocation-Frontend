@@ -151,7 +151,7 @@ const ActualsCard = ({
   }, [resourceStartMonday, resourceEndMonday, period]);
 
   const getStatusIcon = () => {
-    if (loading || actualAllocationsStatusesLoading) {
+    if (loading) {
       return <Skeleton width={16} height={16} sx={{ marginTop: 1 }} />;
     }
     if (!isWithinResourceRange) {
@@ -316,11 +316,11 @@ const ActualsCard = ({
               >
                 <span style={{ color: 'rgba(150, 154, 162, 1)' }}>
                   {isWithinResourceRange
-                    ? `${totalPlannedAllocation ? totalPlannedAllocation.toFixed(1) : '--'} /`
+                    ? `${totalPlannedAllocation ? totalPlannedAllocation : '--'} /`
                     : 'N/A /'}
                 </span>{' '}
                 {isWithinResourceRange
-                  ? `${totalActualAllocation ? totalActualAllocation.toFixed(1) : '--'}`
+                  ? `${totalActualAllocation ? totalActualAllocation : '--'}`
                   : 'N/A'}
               </Typography>
             )}

@@ -56,6 +56,7 @@ import {
   OTHER_WORK,
   past,
   PERSONAL_TIME,
+  TOTAL_HOURS_IN_WEEK,
   UNPLANNED_PROJECT,
 } from '@/app/constants/constants';
 import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
@@ -338,7 +339,8 @@ export default function ActualTable({
     if (params.row.id === 'total' && allocationTheme.length) {
       const matched = allocationTheme.find(
         range =>
-          value >= parseFloat(range.From) && value <= parseFloat(range.To)
+          value >= parseFloat(range.From) * TOTAL_HOURS_IN_WEEK &&
+          value <= parseFloat(range.To) * TOTAL_HOURS_IN_WEEK
       );
 
       return (
@@ -356,7 +358,7 @@ export default function ActualTable({
             position: 'relative',
           }}
         >
-          {roundToOneDecimal(value)}
+          {value}
           <Box
             sx={{
               position: 'absolute',
@@ -370,7 +372,7 @@ export default function ActualTable({
         </Box>
       );
     }
-    return roundToOneDecimal(value);
+    return value;
   };
 
   const isUnplannedRow = (row: any) => {
@@ -454,6 +456,18 @@ export default function ActualTable({
         `col-cell-actuals ${!enablePlannedColumn ? 'disabled-cell' : ''} ${
           rowValidationErrors[params.id as string]?.planned ? 'error-cell' : ''
         }`,
+      valueParser: value => {
+        if (value == null || value === '') return null;
+
+        const parsed = Math.round(Number(value));
+
+        // prevent NaN and negative values
+        if (isNaN(parsed) || parsed < 0) {
+          return 0;
+        }
+
+        return parsed;
+      },
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
@@ -469,6 +483,18 @@ export default function ActualTable({
         `col-cell-actuals ${disableView ? 'disabled-cell' : ''} ${
           rowValidationErrors[params.id as string]?.actuals ? 'error-cell' : ''
         }`,
+      valueParser: value => {
+        if (value == null || value === '') return null;
+
+        const parsed = Math.round(Number(value));
+
+        // prevent NaN and negative values
+        if (isNaN(parsed) || parsed < 0) {
+          return 0;
+        }
+
+        return parsed;
+      },
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
@@ -751,14 +777,19 @@ export default function ActualTable({
 
     const monday = getMondayOfISO(clickedDate);
     const sunday = getSundayOfISO(clickedDate);
-    dispatch(
-      updateStartAndEndDate({
-        startDate: monday,
-        endDate: sunday,
-      })
-    );
+    if (isModified) {
+      setDialogSource('prev');
+      setDeleteDialogOpen(true);
+    } else {
+      dispatch(
+        updateStartAndEndDate({
+          startDate: monday,
+          endDate: sunday,
+        })
+      );
 
-    router.replace(`/actuals?startDate=${monday}`, { scroll: false });
+      router.replace(`/actuals?startDate=${monday}`, { scroll: false });
+    }
   };
 
   const first = generateFirstAndLastMonthYear(
@@ -804,9 +835,8 @@ export default function ActualTable({
           borderRight="1px solid rgba(202, 213, 226, 1)"
           borderBottom="1px solid rgba(202, 213, 226, 1)"
           color="white"
-          height={60}
-          px={2}
-          py={1}
+          height={50}
+          px={1.2}
         >
           <Typography
             style={{
@@ -951,7 +981,7 @@ export default function ActualTable({
           </Link>
         </Box>
 
-        <Box sx={{ height: 'calc(100vh - 500px)' }}>
+        <Box sx={{ minHeight: '200px', height: 'calc(100vh - 400px)' }}>
           {actualsErrorType ? (
             <ActualsErrorPage
               type={actualsErrorType}
@@ -959,7 +989,7 @@ export default function ActualTable({
             />
           ) : (
             <DataGridPremium
-              rowHeight={60}
+              rowHeight={40}
               apiRef={apiRef}
               rows={getOrganizedRows()}
               columns={columns}
@@ -1047,7 +1077,6 @@ export default function ActualTable({
 
       <Box
         px={2}
-        py={1}
         sx={{
           paddingLeft: '0',
           background: '#F9FAFB',
@@ -1064,6 +1093,7 @@ export default function ActualTable({
               textTransform: 'none',
               fontWeight: 600,
               cursor: 'pointer',
+              paddingLeft: '8px',
             }}
             onClick={handleClick}
           >

@@ -126,8 +126,8 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Define chart sequence for each tab - EASY TO CUSTOMIZE
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
-  'projectHealthOverview',
   'engagementScoreOverview',
+  'projectHealthOverview',
   'plan_vs_actual_variance',
   'top_projects_by_variance',
   'projectFTE',
@@ -137,6 +137,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'unapprovedProjectAllocation',
   'projectScoreByPM',
   'actuals_confirmation_status',
+  'actualsTrendWeekly',
 ];
 
 const COST_CHART_SEQUENCE = [
@@ -149,7 +150,6 @@ const TEAM_CHART_SEQUENCE = [
   'projectScoreByTeam',
   'unapprovedProjectActualsByTeam',
   'resourceCoverage',
-  'actualsTrendWeekly',
   'underAllocated',
   'overAllocated',
 ];
@@ -221,6 +221,7 @@ export default function ExecutiveDashboardPage() {
     activeProjectsByType = [],
     totalHeadcount = [],
     team_headcount_distribution = [],
+    systemActiveProjects = [],
     activeProjects = [],
     activeResources = [],
     actualsConfirmed = [],
@@ -434,6 +435,7 @@ export default function ExecutiveDashboardPage() {
       // Inventory metrics charts (grouped - single API call)
       const inventoryMetricsCharts = [
         'activeProjects',
+        'systemActiveProjects',
         'activeProjectsByType',
         'activeResources',
         'totalHeadcount',
@@ -499,13 +501,13 @@ export default function ExecutiveDashboardPage() {
       individualCharts.forEach(chartKey => {
         const queryStart =
           (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed' || chartKey === 'unapprovedProjectAllocation') &&
+            chartKey === 'actualsConfirmed' || chartKey === 'unapprovedProjectAllocation' || chartKey === 'unapprovedProjectActualsByTeam' || chartKey === 'projectScoreByTeam' || chartKey === 'teamEngagementScore' || chartKey === 'projectScoreByPM') &&
           selectedOption === 'week'
             ? getMonday(selectedDate).subtract(1, 'week').format('YYYY-MM-DD')
             : startDate;
         const queryEnd =
           (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed' || chartKey === 'unapprovedProjectAllocation') &&
+            chartKey === 'actualsConfirmed' || chartKey === 'unapprovedProjectAllocation' || chartKey === 'unapprovedProjectActualsByTeam' || chartKey === 'projectScoreByTeam' || chartKey === 'teamEngagementScore' || chartKey === 'projectScoreByPM') &&
             selectedOption === 'week'
             ?  getMonday(selectedDate)
               .subtract(1, 'week')
@@ -636,7 +638,8 @@ export default function ExecutiveDashboardPage() {
       top_projects_by_variance.length > 0 &&
       // Check inventory metrics data
       (activeProjects.length > 0 || activeProjectsByType.length > 0) &&
-      (activeResources.length > 0 || totalHeadcount.length > 0);
+      (activeResources.length > 0 || totalHeadcount.length > 0) &&
+      systemActiveProjects.length > 0;
 
     if (allDataLoaded) {
       if (initialLoad) {
@@ -652,6 +655,7 @@ export default function ExecutiveDashboardPage() {
     allocationPercentage,
     top_projects_by_variance,
     activeProjects,
+    systemActiveProjects,
     activeProjectsByType,
     activeResources,
     resourceFTEContractorRatio,
@@ -762,7 +766,7 @@ export default function ExecutiveDashboardPage() {
 
   const handleChartClick = chartName => {
     setSelectedChart(chartName);
-    setDialogOpen(true);
+    // setDialogOpen(true);
   };
 
   const handleDialogClose = () => {
@@ -1545,6 +1549,7 @@ export default function ExecutiveDashboardPage() {
                     },
                   }}
                   sx={{
+                    cursor: 'pointer',
                     '& .MuiChartsAxis-tickLabel': {
                       fontSize: '12px',
                       fill: '#666',
@@ -1674,6 +1679,9 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 20, right: 20, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onItemClick={(event, axisData) => {
                     const { dataIndex, seriesId } = axisData || {};
                     if (dataIndex !== undefined && sortedHeadcount[dataIndex]) {
@@ -1802,7 +1810,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: 'Allocation %',
                       min: 0,
-                      max: 100,
                       valueFormatter: value => `${value}%`,
                       width: config.yAxis?.width || 50,
                       labelStyle: config.yAxis?.labelStyle,
@@ -1818,6 +1825,9 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 60, right: 20, top: 20, bottom: 80 }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onItemClick={(event, barItemIdentifier) => {
                     const { dataIndex, seriesId } = barItemIdentifier || {};
                     if (dataIndex !== undefined && projectTypeGroupNames[dataIndex] && seriesId) {
@@ -1921,6 +1931,9 @@ export default function ExecutiveDashboardPage() {
                   }}
                   slotProps={{
                     legend: config.legend,
+                  }}
+                  sx={{
+                    cursor: 'pointer',
                   }}
                 />
               </Box>
@@ -2037,6 +2050,7 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   sx={{
+                    cursor: 'pointer',
                     '& .MuiChartsAxis-tickLabel': {
                       fontSize: '12px',
                       fill: '#666',
@@ -2132,7 +2146,11 @@ export default function ExecutiveDashboardPage() {
                 },
               ]}
               hasAccess={true}
-              onClick={() => navigateToReportWithFilters('projectHealthOverview')}
+              onClick={() => navigateToReportWithFilters('projectHealthOverview',
+                 {
+                   projectStatuses: ['Active', 'Approved'],
+                   project: data.project_uuids 
+                 })}
             />
           );
         }}
@@ -2317,6 +2335,9 @@ export default function ExecutiveDashboardPage() {
                     },
                   }}
                   grid={{ vertical: true, horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={()=> navigateToReportWithFilters('projectFTE')}
                 />
               </Box>
@@ -2333,21 +2354,70 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !projectScoreByPM ||
           projectScoreByPM.length === 0 ||
-          hasStackedChartAllZeroValues(projectScoreByPM, [
-            'avg_alignment_score',
-            'avg_project_health_score',
-          ])
+          projectScoreByPM.every(item =>
+            Number.parseFloat(item.alignment_score || 0) === 0 &&
+            Number.parseFloat(item.project_health_score || 0) === 0
+          )
         }
         noDataMessage="No project score data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
-          // Sort by combined (alignment + health) score descending
-          const sortedPMProjectScoreData = sortByTotal(
-            projectScoreByPM || [],
-            ['avg_alignment_score', 'avg_project_health_score']
-          );
+          // Aggregate data by PM
+          const aggregatedData = {};
+          (projectScoreByPM || []).forEach(item => {
+            const pmId = item.pm_id || item.pmId || 'unknown';
+            if (!aggregatedData[pmId]) {
+              aggregatedData[pmId] = {
+                pm_id: pmId,
+                pm_name: item.pm_name || item.pmId || 'Unknown PM',
+                alignment_score: 0,
+                project_health_score: 0,
+                count: 0,
+              };
+            }
+            aggregatedData[pmId].alignment_score += Number.parseFloat(item.alignment_score || 0);
+            aggregatedData[pmId].project_health_score += Number.parseFloat(item.project_health_score || 0);
+            aggregatedData[pmId].count += 1;
+          });
+
+          // Calculate averages
+          const aggregatedArray = Object.values(aggregatedData).map(item => ({
+            ...item,
+            alignment_score: item.alignment_score / item.count,
+            project_health_score: item.project_health_score / item.count,
+          }));
+
+          // Sort by PM name
+          const sortedProjects = aggregatedArray.sort((a, b) => {
+            const nameA = a.pm_name || '';
+            const nameB = b.pm_name || '';
+            return nameA.localeCompare(nameB);
+          });
+
+          const pmIds = sortedProjects.map(item => item.pm_id || 'unknown');
+          const pmNames = sortedProjects.map(item => {
+            const name = item.pm_name || 'Unknown PM';
+            return name.trim() === '' ? 'Unassigned' : name;
+          });
+
+          const series = [
+            {
+              data: sortedProjects.map(d => Number.parseFloat(d.alignment_score || 0) / 2),
+              label: 'Project Alignment Score',
+              id: 'alignment',
+              color: '#7C93F5',
+              stack: 'total',
+            },
+            {
+              data: sortedProjects.map(d => Number.parseFloat(d.project_health_score || 0) / 2),
+              label: 'Project Health Score',
+              id: 'health',
+              color: '#00C9A7',
+              stack: 'total',
+            },
+          ];
 
           return (
             <Box
@@ -2361,49 +2431,35 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Project Score by Project Manager
+                Project Score by Project Manager{' '}
+                <span
+                    style={{
+                      fontSize: dimensions.width < 400 ? '12px' : '14px',
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontWeight: 400,
+                    }}
+                  >
+                    (Previous week)
+                  </span>
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
                 <BarChart
                   width={config.width}
                   height={config.height}
-                  series={[
-                    {
-                      data: sortedPMProjectScoreData.map(d =>
-                        Number.parseFloat(d.avg_project_health_score || 0) / 2
-                      ),
-                      label: 'Health Score',
-                      id: 'pmHealthScore',
-                      color: '#00C9A7',
-                      stack: 'total',
-                    },
-                    {
-                      data: sortedPMProjectScoreData.map(d =>
-                        Number.parseFloat(d.avg_alignment_score || 0) / 2
-                      ),
-                      label: 'Alignment Score',
-                      id: 'pmAlignmentScore',
-                      color: '#7C93F5',
-                      stack: 'total',
-                    },
-                  ]}
+                  series={series}
                   xAxis={[
                     {
-                      data: sortedPMProjectScoreData.map(d =>
-                        formatTeamName(
-                          d.pm_name,
-                          dimensions.width < 400 ? 10 : 12,
-                          sortedPMProjectScoreData.length
-                        )
-                      ),
-                      label: 'PM',
+                      data: pmNames,
+                      label: 'Project Manager',
+                      scaleType: 'band',
+                      categoryGapRatio: 0.5,
+                      barGapRatio: 0.1,
                       tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
                   ]}
                   yAxis={[
                     {
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
@@ -2413,16 +2469,150 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
-                    if (dataIndex !== undefined && axisValue) {
-                      const item = sortedPMProjectScoreData[dataIndex];
-                      const pmId = item?.pm_id;
-                      if (pmId) {
-                        navigateToReportWithFilters('projectScoreByPM', {
-                          projectManager: pmId,
-                        });
-                      }
+                    if (dataIndex !== undefined && pmIds[dataIndex]) {
+                      const isUnassigned = pmNames[dataIndex] === 'Unassigned';
+                      navigateToReportWithFilters('projectScoreByPM', {
+                        projectManager: isUnassigned ? ['_BLANK_'] : [pmIds[dataIndex]],
+                      });
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+    actualsTrendWeekly: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !actualsTrendWeekly ||
+          actualsTrendWeekly.length === 0 ||
+          actualsTrendWeekly.every(item =>
+            (item.actuals || []).every(
+              a => parseFloat(a.percentage || 0) === 0
+            )
+          )
+        }
+        noDataMessage="No weekly actuals trend data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          const periodData = (actualsTrendWeekly || [])
+            .map(item => ({
+              period_start: item.period_start,
+              week: getWeekNumber(item.period_start),
+              actuals: item.actuals || [],
+            }))
+            .sort(
+              (a, b) => new Date(a.period_start) - new Date(b.period_start)
+            );
+
+          const weeks = periodData.map(d => d.week);
+
+          // Define categories and their colors matching the image
+          const categories = [
+            { key: 'Personal Time', label: 'Personal Time', color: '#0080FF' },
+            { key: 'Other Work', label: 'Other Work', color: '#FFC233' },
+            {
+              key: 'Unplanned Projects',
+              label: 'Unplanned Projects',
+              color: '#FF884D',
+            },
+            { key: 'Approved Work', label: 'Approved Work', color: '#00C9A7' },
+          ];
+
+          // Create series data for each category
+          const seriesData = categories.map(category => ({
+            label: category.label,
+            id: category.key,
+            data: periodData.map(weekData => {
+              const match = weekData.actuals.find(
+                a => a.category === category.key
+              );
+              return match ? parseFloat(match.percentage || 0) : 0;
+            }),
+            color: category.color,
+            stack: 'total',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Actuals Trend
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={seriesData}
+                  xAxis={[
+                    {
+                      label: 'Previous weeks',
+                      data: weeks,
+                      scaleType: 'band',
+                      categoryGapRatio: 0.3,
+                      barGapRatio: 0.1,
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'Actuals (%)',
+                      min: 0,
+                      valueFormatter: value => `${value}`,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'column',
+                      position: { vertical: 'bottom', horizontal: 'right' },
+                      padding: { right: 5 },
+                      itemmarkwidth: 12,
+                      itemmarkheight: 12,
+                      markgap: 8,
+                      itemgap: 12,
+                    },
+                  }}
+                  margin={{ left: 60, right: 60, top: 20, bottom: 60 }}
+                  grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
+                  onAxisClick={(event, axisData)=>{
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && periodData[dataIndex]) {
+                      const periodStart = periodData[dataIndex].period_start;
+                      const endDate = dayjs(periodStart).add(6, 'day').format('YYYY-MM-DD');
+                      navigateToReportWithFilters('actualsTrendWeekly', {
+                        customStartDate: periodStart,
+                        customEndDate: endDate
+                      });
                     }
                   }}
                 />
@@ -2521,6 +2711,9 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={() => navigateToReportWithFilters('budgetVsPlanVsActual')}
                 />
               </Box>
@@ -2659,18 +2852,22 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 20, right: 20, top: 20, bottom: 80 }}
                   grid={{ horizontal: true }}
-                  onAxisClick={(event, barItemIdentifier ) => {
-                    const { dataIndex, axisValue } = barItemIdentifier  || {};
-                    if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
-                      if (teamId ) {
+                  sx={{
+                    cursor: 'pointer',
+                  }}
+                  onItemClick={(event, barItemIdentifier ) => {
+                    const { dataIndex, seriesId } = barItemIdentifier  || {};
+                    if (dataIndex !== undefined && seriesId) {
+                      const teamname = sortedTeamHeadcount[dataIndex]?.team_name;
+                      const teamId = teams.find(t => t.Name === teamname)?.Id;
+                      if (teamId && seriesId) {
                         navigateToReportWithFilters('team_headcount_distribution', {
                           resourceStatuses: 'Active',
                           team: teamId,
+                          resourceType: seriesId,
                         });
                       }
-                    }
-                  }}
+                  }}}
                 />
               </Box>
             </Box>
@@ -2727,7 +2924,16 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Project Actuals Breakdown by Team
+                Project Actuals Breakdown by Team{' '}
+                <span
+                    style={{
+                      fontSize: dimensions.width < 400 ? '12px' : '14px',
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontWeight: 400,
+                    }}
+                  >
+                    (Previous week)
+                  </span>
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
                 <BarChart
@@ -2777,7 +2983,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: '% of Actuals',
                       min: 0,
-                      max: 100,
                       valueFormatter: value => `${value}%`,
                       width: config.yAxis?.width || 50,
                       labelStyle: config.yAxis?.labelStyle,
@@ -2787,14 +2992,16 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) =>{
                     const { dataIndex, axisValue } = axisData || {};
-                    if (dataIndex !== undefined && sortedUniqueTeams[dataIndex]) {
-                      const teamId = filteredUnapprovedActualsByTeam.find(d => d.team_name === sortedUniqueTeams[dataIndex])?.team_id;
+                    if (dataIndex !== undefined && axisValue) {
+                      const teamId = teams.find(d => d.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('unapprovedProjectActualsByTeam', {
                          team: teamId,
-                          actualsCategory: axisValue,
                         });
                       }
                     }
@@ -2875,7 +3082,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: 'Allocation %',
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
@@ -2896,10 +3102,13 @@ export default function ExecutiveDashboardPage() {
                     },
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.team_name === axisValue)?.Id;
+                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('resourceCoverage', {
                           team: teamId
@@ -2986,10 +3195,13 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.team_name === axisValue)?.Id;
+                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('underAllocated', {
                           team: teamId,
@@ -3077,149 +3289,19 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.team_name === axisValue)?.Id;
+                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('overAllocated', {
                           team: teamId,
                           utilization: 'Over-allocated'
                         });
                       }
-                    }
-                  }}
-                />
-              </Box>
-            </Box>
-          );
-        }}
-      </DashboardWidget>
-    ),
-
-    actualsTrendWeekly: (
-      <DashboardWidget
-        minWidth={320}
-        minHeight={280}
-        showNoData={
-          !actualsTrendWeekly ||
-          actualsTrendWeekly.length === 0 ||
-          actualsTrendWeekly.every(item =>
-            (item.actuals || []).every(
-              a => parseFloat(a.percentage || 0) === 0
-            )
-          )
-        }
-        noDataMessage="No weekly actuals trend data available"
-      >
-        {dimensions => {
-          const config = useResponsiveChart(dimensions, 'bar');
-
-          const periodData = (actualsTrendWeekly || [])
-            .map(item => ({
-              period_start: item.period_start,
-              week: getWeekNumber(item.period_start),
-              actuals: item.actuals || [],
-            }))
-            .sort(
-              (a, b) => new Date(a.period_start) - new Date(b.period_start)
-            );
-
-          const weeks = periodData.map(d => d.week);
-
-          // Define categories and their colors matching the image
-          const categories = [
-            { key: 'Personal Time', label: 'Personal Time', color: '#0080FF' },
-            { key: 'Other Work', label: 'Other Work', color: '#FFC233' },
-            {
-              key: 'Unplanned Projects',
-              label: 'Unplanned Projects',
-              color: '#FF884D',
-            },
-            { key: 'Approved Work', label: 'Approved Work', color: '#00C9A7' },
-          ];
-
-          // Create series data for each category
-          const seriesData = categories.map(category => ({
-            label: category.label,
-            id: category.key,
-            data: periodData.map(weekData => {
-              const match = weekData.actuals.find(
-                a => a.category === category.key
-              );
-              return match ? parseFloat(match.percentage || 0) : 0;
-            }),
-            color: category.color,
-            stack: 'total',
-          }));
-
-          return (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                width: '100%',
-              }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 1,
-                  fontSize: dimensions.width < 400 ? '16px' : '18px',
-                  fontWeight: 600,
-                }}
-              >
-                Actuals Trend
-              </Typography>
-              <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
-                <BarChart
-                  width={config.width}
-                  height={config.height}
-                  series={seriesData}
-                  xAxis={[
-                    {
-                      label: 'Previous weeks',
-                      data: weeks,
-                      scaleType: 'band',
-                      categoryGapRatio: 0.3,
-                      barGapRatio: 0.1,
-                      tickLabelStyle: config.xAxis?.tickLabelStyle,
-                    },
-                  ]}
-                  yAxis={[
-                    {
-                      label: 'Actuals (%)',
-                      min: 0,
-                      max: 100,
-                      valueFormatter: value => `${value}`,
-                      width: config.yAxis?.width || 50,
-                      labelStyle: config.yAxis?.labelStyle,
-                    },
-                  ]}
-                  slotProps={{
-                    legend: {
-                      ...config.legend,
-                      direction: 'column',
-                      position: { vertical: 'bottom', horizontal: 'right' },
-                      padding: { right: 5 },
-                      itemmarkwidth: 12,
-                      itemmarkheight: 12,
-                      markgap: 8,
-                      itemgap: 12,
-                    },
-                  }}
-                  margin={{ left: 60, right: 60, top: 20, bottom: 60 }}
-                  grid={{ horizontal: true }}
-                  onAxisClick={(event, axisData)=>{
-                    const { dataIndex } = axisData || {};
-                    if (dataIndex !== undefined && periodData[dataIndex]) {
-                      const periodStart = periodData[dataIndex].period_start;
-                      const endDate = dayjs(periodStart).add(6, 'day').format('YYYY-MM-DD');
-                      navigateToReportWithFilters('actualsTrendWeekly', {
-                        customStartDate: periodStart,
-                        customEndDate: endDate
-                      });
                     }
                   }}
                 />
@@ -3264,7 +3346,16 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Engagement Score by Teams
+                Engagement Score by Teams{' '}
+                <span
+                    style={{
+                      fontSize: dimensions.width < 400 ? '12px' : '14px',
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontWeight: 400,
+                    }}
+                  >
+                    (Previous week)
+                  </span>
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
                 <BarChart
@@ -3306,7 +3397,6 @@ export default function ExecutiveDashboardPage() {
                   yAxis={[
                     {
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
@@ -3316,10 +3406,13 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.team_name === axisValue)?.Id;
+                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('teamEngagementScore', {
                           team: teamId
@@ -3370,7 +3463,16 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Project Score by Teams
+                Project Score by Teams{' '}
+                <span
+                    style={{
+                      fontSize: dimensions.width < 400 ? '12px' : '14px',
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontWeight: 400,
+                    }}
+                  >
+                    (Previous week)
+                  </span>
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
                 <BarChart
@@ -3412,7 +3514,6 @@ export default function ExecutiveDashboardPage() {
                   yAxis={[
                     {
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
@@ -3422,6 +3523,9 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
@@ -3616,6 +3720,7 @@ export default function ExecutiveDashboardPage() {
 
             <Overview
               activeProjects={activeProjects}
+              systemActiveProjects={systemActiveProjects}
               activeResources={activeResources}
               actualsConfirmed={filteredActualsConfirmed}
               totalResourceCost={totalResourceCost}
@@ -3633,6 +3738,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={(layout, layouts) => handleLayoutChange('overview', layout, layouts)}
               isDraggable
               isResizable
+              draggableHandle=".drag-handle"
               compactType="vertical"
               style={{ padding: '0 16px' }}
             >
@@ -3689,6 +3795,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={(layout, layouts) => handleLayoutChange('teams', layout, layouts)}
               isDraggable
               isResizable
+              draggableHandle=".drag-handle"
               compactType="vertical"
               style={{ padding: '0 16px' }}
             >
@@ -3722,6 +3829,7 @@ export default function ExecutiveDashboardPage() {
             onLayoutChange={(layout, layouts) => handleLayoutChange('costs', layout, layouts)}
             isDraggable
             isResizable
+            draggableHandle=".drag-handle"
             compactType="vertical"
             style={{ padding: '0 16px' }}
           >

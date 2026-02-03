@@ -764,7 +764,7 @@ function Project({ permissions, loadingPermissions }) {
       field: '__created',
       headerName: 'Created On',
       flex: 1,
-      minWidth: 120,
+      minWidth: 160,
       renderCell: params => {
         if (params && params.value) {
           const date = parseISO(params.value);
@@ -772,7 +772,13 @@ function Project({ permissions, loadingPermissions }) {
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
           if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
-          return `${month}/${day}/${year}`;
+          const hours = date.getHours();
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const AM__PM = hours >= 12 ? 'PM' : 'AM';
+          let hour12 = hours % 12;
+          if (hour12 === 0) hour12 = 12;
+          const hourStr = String(hour12).padStart(2, '0');
+          return `${month}/${day}/${year}  ${hourStr}:${minutes} ${AM__PM}`;
         }
         return '';
       },
@@ -801,7 +807,7 @@ function Project({ permissions, loadingPermissions }) {
       field: '__last_modified',
       headerName: 'Last Modified On',
       flex: 1,
-      minWidth: 150,
+      minWidth: 160,
       renderCell: params => {
         if (params && params.value) {
           const date = parseISO(params.value);
@@ -809,7 +815,13 @@ function Project({ permissions, loadingPermissions }) {
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
           if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
-          return `${month}/${day}/${year}`;
+          const hours = date.getHours(); 
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const AM__PM = hours >= 12 ? 'PM' : 'AM';
+          let hour12 = hours % 12;
+          if (hour12 === 0) hour12 = 12;
+          const hourStr = String(hour12).padStart(2, '0');
+          return `${month}/${day}/${year} ${hourStr}:${minutes} ${AM__PM}`;
         }
         return '';
       },

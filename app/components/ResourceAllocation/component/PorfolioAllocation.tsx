@@ -70,6 +70,10 @@ function PortfolioAllocation({
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
+  const { portfolios } = useSelector((state: RootState) => state.portfolios);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -136,6 +140,18 @@ function PortfolioAllocation({
       })
     );
   };
+  
+  const getPortfolioFirstChild = (params: GridCellParams) => {
+      if (
+        params.rowNode.type === 'group' &&
+        params.rowNode.groupingField === 'portfolioName'
+      ) {
+        const portfolioName = params.rowNode.groupingKey;
+        const portfolio = portfolios?.find(t => t.Name === portfolioName);
+        return portfolio;
+      }
+      return null;
+    };
 
   const getResource = (params: GridCellParams): Resource | null => {
     const { rowNode } = params;
@@ -248,18 +264,23 @@ function PortfolioAllocation({
       },
     },
     {
-      field: 'department',
-      headerName: 'Organization',
+      field: 'organisationName',
+      headerName: 'Organization Name',
       width: 170,
       isEditable: 'false',
       sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        const Department = resource?.Department || '';
-        return <EllipsisNameCell value={Department} />;
+        const resourceDetails = allResourcesDetail?.find(
+          (item: any) =>
+            item.Resource?.Id === resource?.Id
+        );
+        const organizationName = resourceDetails?.Organization?.Name || '';
+        return <EllipsisNameCell value={organizationName || ''} />;
       },
     },
     {
@@ -767,6 +788,118 @@ function PortfolioAllocation({
         return <EllipsisNameCell value={formattedValue} />;
       },
     },
+    {
+      field: 'department',
+      headerName: 'Department',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.Department || ''} />;
+      },
+    },
+    {
+      field: 'manager',
+      headerName: 'Manager',  // Resource page manager detail
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const resourceDetails = allResourcesDetail?.find(
+          (item: any) =>
+            item.Resource?.Id === resource?.Manager
+        );
+        const Manager = resourceDetails?.Resource?.FullName || '';
+        return resource ? <EllipsisNameCell value={Manager || ''} /> : null;
+      },
+    },
+    {
+      field: 'organisationStatus',
+      headerName: 'Organisation Status',
+      width: 160,
+      type: 'string',
+      isEditable: false,
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const resourceDetails = allResourcesDetail?.find(
+          (item: any) =>
+            item.Resource?.Id === resource?.Id
+        );
+        const organizationStatus = resourceDetails?.Organization?.Status || '';
+        return resource ? <EllipsisNameCell value={organizationStatus || ''} /> : null;
+      },
+    },
+    {
+      field: 'portfolioDescription',
+      headerName: 'Portfolio Description',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getPortfolioFirstChild(params);
+        return firstChild ? (
+          <EllipsisNameCell value={firstChild.Description ?? ''} />
+        ) : null;
+      },
+    },
+    {
+      field: 'portfolioStatus',
+      headerName: 'Portfolio Status',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getPortfolioFirstChild(params);
+        return firstChild ? (
+          <EllipsisNameCell value={firstChild?.Status ?? ''} />
+        ) : null;
+      },
+    },
+    {
+      field: 'teamAllocationManager',
+      headerName: 'Allocation Manager',
+      width: 170,
+      type: 'string',
+      isEditable: false,
+      sortable: true,
+      primaryColumn: true,
+    },
+    {
+      field: 'teamStatus',
+      headerName: 'Team Status',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: true,
+      primaryColumn: true,
+    },
+    {
+      field: 'teams',
+      headerName: 'Team Name',
+      width: 201,
+      headerClassName: 'prime-header',
+      cellClassName: 'prime-cell',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const { rowNode, api, value = '' } = params;
+        return (
+          <EllipsisNameCell
+            value={value as string}
+          />
+        );
+      },
+    }
   ];
 
   const removeResourcesWithNoProjects = (allocations: AllAllocations[]) => {
@@ -827,6 +960,14 @@ function PortfolioAllocation({
                 workLocation: false,
                 __row_group_by_columns_group_portfolioName__: true,
                 __row_group_by_columns_group_project__: true,
+                organisationName: false,
+                manager: false,
+                organisationStatus: false,
+                portfolioDescription:false,
+                portfolioStatus: false,
+                teamAllocationManager:false,
+                teamStatus: false,
+                teams: false,
               },
             },
             sorting: {
