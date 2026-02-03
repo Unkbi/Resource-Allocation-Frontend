@@ -76,7 +76,7 @@ function ActualsSettingsAllocationPreference() {
     >
       <Box
         width="50%"
-        px={2}
+        px={4}
         py={2}
         sx={{ borderBottom: '0.667px solid #E5E7EB' }}
       >
@@ -126,6 +126,7 @@ function ActualsSettingsAllocationPreference() {
       <Box
         sx={{
           p: 2,
+          px: 4,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
