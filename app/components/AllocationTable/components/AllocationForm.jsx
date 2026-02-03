@@ -2394,7 +2394,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            dispatch(setHighlightedRowId(response.Id));
+            dispatch(setHighlightedRowId(response.Portfolio.Id));
           })
           .catch(error => {
             console.error('Failed to add portfolio:', error);
