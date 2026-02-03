@@ -484,7 +484,8 @@ function Project({ permissions, loadingPermissions }) {
           dispatch(
             showToast({
               open: true,
-              message: 'Portfolio deleted successfully',
+              message:
+                `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} deleted successfully`,
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
