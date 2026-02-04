@@ -564,7 +564,7 @@ function ReportBuilderFilters({
       // Skip default/empty values for report mode
       if (!value || 
           (Array.isArray(value) && value.length === 0) ||
-          (typeof value === 'string' && value === 'resourceProjectPeriod' && key === 'reportType') ||
+          (typeof value === 'string' && value === 'resourceProjectPeriod' && key === 'reportType') || key === 'summaryType' ||
           (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'))) {
         return;
       }

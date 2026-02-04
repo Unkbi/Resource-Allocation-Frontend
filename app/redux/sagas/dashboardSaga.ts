@@ -57,6 +57,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
     'allocation_by_project_type_group',
     'plan_vs_actual_variance',
     'actuals_confirmation_status',
+    'weeklyLoggedInUsersByTeam',
   ]));
   
   const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
@@ -136,7 +137,11 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({
           chartKey: 'actuals_confirmation_status',
           data: responseData.actuals_confirmation_status ? [responseData.actuals_confirmation_status] : []
-        })),
+        })),        
+        put(setDashboardChart({
+          chartKey: 'weeklyLoggedInUsersByTeam',
+          data: responseData.weekly_logged_in_users_by_team || []
+        })),      
       ]);
     } else {
       yield all([
@@ -152,6 +157,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
         put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
         put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
+        put(setDashboardChart({ chartKey: 'weeklyLoggedInUsersByTeam', data: [] })),
       ]);
     }
   } catch (err) {
@@ -169,6 +175,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
       put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
       put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
       put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
+      put(setDashboardChart({ chartKey: 'weeklyLoggedInUsersByTeam', data: [] })),
     ]);
   }
 }

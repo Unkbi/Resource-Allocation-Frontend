@@ -64,6 +64,7 @@ import {
 import ActualsCard from '@/app/components/Actuals/ActualsCard';
 import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
 import { AxiosError } from 'axios';
+import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -1227,7 +1228,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       )}
                       renderOption={(props, option) => (
                         <li {...props} key={option.Id}>
-                          {option.FullName}
+                          <EllipsisNameCell value={option.FullName} />
                         </li>
                       )}
                     />
@@ -1247,8 +1248,19 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                         sx={{ display: 'inline-block' }}
                       />
                     ) : (
-                      <Typography component="span" sx={{ fontWeight: 600 }}>
-                        {userTitle}
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          maxWidth: 200,
+                          minWidth: 0,
+                          verticalAlign: 'bottom',
+                        }}
+                      >
+                        <EllipsisNameCell
+                          value={isAResource ? userTitle : 'N/A'}
+                        />
                       </Typography>
                     )}
                   </Typography>
@@ -1263,8 +1275,21 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                         sx={{ display: 'inline-block' }}
                       />
                     ) : (
-                      <Typography component="span" sx={{ fontWeight: 600 }}>
-                        {userTeam ?? '--'}
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          maxWidth: 200,
+                          minWidth: 0,
+                          verticalAlign: 'bottom',
+                        }}
+                      >
+                        {isAResource ? (
+                          <EllipsisNameCell value={userTeam ?? '--'} />
+                        ) : (
+                          'N/A'
+                        )}
                       </Typography>
                     )}
                   </Typography>
