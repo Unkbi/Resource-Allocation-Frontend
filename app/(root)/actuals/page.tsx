@@ -174,6 +174,15 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     );
   };
 
+  const isAResource = useMemo(() => {
+    if (!user || !resources) return false;
+    return (
+      resources?.some(
+        (resource: Resource) => resource?.Email === (user as LoginUser).username
+      ) || false
+    );
+  }, [user, resources]);
+
   useEffect(() => {
     if (user && resources) {
       const loginUser =
