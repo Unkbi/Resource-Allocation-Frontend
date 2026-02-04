@@ -533,7 +533,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   }));
 
   const StyledExtraInfoText = styled(Typography)(({ theme }) => ({
-    color: '#D24546',
+    color: theme.palette.info.main,
     fontFamily: 'Open Sans',
     fontSize: '10px',
     fontStyle: 'italic',

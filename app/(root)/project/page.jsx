@@ -484,7 +484,8 @@ function Project({ permissions, loadingPermissions }) {
           dispatch(
             showToast({
               open: true,
-              message: 'Portfolio deleted successfully',
+              message:
+                `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} deleted successfully`,
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -1363,7 +1364,7 @@ function Project({ permissions, loadingPermissions }) {
           value === 'project'
             ? 'Are you sure you want to delete this project?'
             : value === 'portfolio'
-              ? 'Are you sure you want to delete this portfolio?'
+              ? `Are you sure you want to delete this ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}?`
               : 'Are you sure you want to delete this business impact?'
         }
       >
