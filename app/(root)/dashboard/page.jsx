@@ -153,6 +153,7 @@ const TEAM_CHART_SEQUENCE = [
   'underAllocated',
   'overAllocated',
   'weeklyLoggedInUsersByTeam',
+  'userStatusSplitByTeam',
 ];
 
 const generateLayouts = chartKeys => {
@@ -285,6 +286,7 @@ export default function ExecutiveDashboardPage() {
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
   const [filteredTop5Projects, setFilteredTop5Projects] = useState([]);
+  const [filteredUserStatusSplit, setFilteredUserStatusSplit] = useState([]);
   const { projectTypes, projectTypeGroups,locationGroups } = useSelector(
     state => state.allSettings
   );
@@ -622,6 +624,12 @@ export default function ExecutiveDashboardPage() {
     );
   }, [activeProjectsByType]);
 
+  useEffect(() => {
+    setFilteredUserStatusSplit(
+      Array.isArray(weeklyLoggedInUsersByTeam) ? weeklyLoggedInUsersByTeam : []
+    );
+  }, [weeklyLoggedInUsersByTeam]);
+
   // Calculate the Monday of the selected week
   const getMonday = date => {
     const day = date.day();
@@ -741,6 +749,7 @@ export default function ExecutiveDashboardPage() {
       'projectScoreByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'unapprovedProjectActualsByTeam': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'weeklyLoggedInUsersByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'userStatusSplitByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'resourceCoverage': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'actualsTrendWeekly': { reportType: 'resourceProjectPeriod', period: 'custom' },
       'underAllocated': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
@@ -3643,6 +3652,146 @@ export default function ExecutiveDashboardPage() {
                       if (teamId) {
                         navigateToReportWithFilters('projectScoreByTeam', {
                           team: teamId
+                        });
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    userStatusSplitByTeam: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !filteredUserStatusSplit ||
+          filteredUserStatusSplit.length === 0 ||
+          filteredUserStatusSplit.every(item => {
+            const splits = item.user_status_split || {};
+            return (
+              Number(splits['Active'] || 0) === 0 &&
+              Number(splits['Invited'] || 0) === 0 &&
+              Number(splits['Not Invited'] || 0) === 0
+            );
+          })
+        }
+        noDataMessage="No user status data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Define status types and their colors
+          const statusTypes = [
+            { key: 'Active', label: 'Active', color: '#229E60' },
+            { key: 'Invited', label: 'Invited', color: '#2563EB' },
+            { key: 'Not Invited', label: 'Not Invited', color: '#FF6B6B' },
+          ];
+
+          // Sort teams by total users descending
+          const sortedUserStatusData = [
+            ...(filteredUserStatusSplit || []),
+          ].sort((a, b) => {
+            const aTotal = statusTypes.reduce(
+              (sum, type) =>
+                sum + Number(a.user_status_split?.[type.key] || 0),
+              0
+            );
+            const bTotal = statusTypes.reduce(
+              (sum, type) =>
+                sum + Number(b.user_status_split?.[type.key] || 0),
+              0
+            );
+            return bTotal - aTotal;
+          });
+
+          // Extract team names from sorted data
+          const teamNames = sortedUserStatusData.map(item =>
+            formatTeamName(
+              item.team_name,
+              dimensions.width < 400 ? 8 : 10,
+              sortedUserStatusData.length
+            )
+          );
+
+          // Create series data for each status type
+          const seriesData = statusTypes.map(type => ({
+            label: type.label,
+            id: type.key,
+            data: sortedUserStatusData.map(item =>
+              Number(item.user_status_split?.[type.key] || 0)
+            ),
+            color: type.color,
+            stack: 'total',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                User Status Split by Team
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={seriesData}
+                  xAxis={[
+                    {
+                      data: teamNames,
+                      label: 'Team',
+                      scaleType: 'band',
+                      categoryGapRatio: 0.5,
+                      barGapRatio: 0.1,
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'No. of Users',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'row',
+                      position: { vertical: 'bottom', horizontal: 'middle' },
+                    },
+                  }}
+                  margin={{ left: 20, right: 20, top: 20, bottom: 20 }}
+                  grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
+                  onItemClick={(event, barItemIdentifier) => {
+                    const { dataIndex, seriesId } = barItemIdentifier || {};
+                    if (dataIndex !== undefined && seriesId) {
+                      const teamname = sortedUserStatusData[dataIndex]?.team_name;
+                      const teamId = teams.find(t => t.Name === teamname)?.Id;
+                      if (teamId && seriesId) {
+                        navigateToReportWithFilters('userStatusSplitByTeam', {
+                          // resourceStatuses: seriesId,
+                          team: teamId,
                         });
                       }
                     }

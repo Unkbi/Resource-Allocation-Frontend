@@ -203,7 +203,7 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
           }}
         >
           <Typography sx={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
-            AI Chatbot Development Summary
+            AI Summary
           </Typography>
           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
             <IconButton onClick={onClose} size="small" sx={{ color: '#FFFFFF' }}>
