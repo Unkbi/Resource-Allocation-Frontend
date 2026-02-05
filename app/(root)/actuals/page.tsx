@@ -31,8 +31,10 @@ import {
   generateDateWeekMath,
   getFridayOfISO,
   getMondayOfISO,
+  getResourcesIamManager,
   getSundayOfISO,
   getTeamForResource,
+  getTeamsIamAllocationManager,
   isCurrentWeek,
   isFutureWeek,
 } from '@/app/utils/common';
@@ -62,6 +64,7 @@ import {
 import ActualsCard from '@/app/components/Actuals/ActualsCard';
 import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
 import { AxiosError } from 'axios';
+import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -136,6 +139,52 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       ? 'noActualsTracked'
       : null;
 
+  const getResourceListBasedOnUserRole = (
+    loginUser: Resource | null,
+    activeAndInactiveResource: Resource[]
+  ) => {
+    if (!loginUser || loadingPermissions) return [];
+    if (permissions['AdminActuals']?.r) return activeAndInactiveResource;
+
+    let resourceList: Resource[] = [];
+    if (permissions['AllocationManagerActuals']?.r) {
+      const teamsUserIsAnAllocationManager = getTeamsIamAllocationManager(
+        loginUser?.Email,
+        resources,
+        teams
+      );
+      resourceList = teamsUserIsAnAllocationManager.reduce(
+        (acc: Resource[], team: Team) => {
+          const resourcesInTeam = teamsResources?.[team.Id] || [];
+          return [...acc, ...resourcesInTeam];
+        },
+        []
+      );
+    }
+    if (permissions['ManagerActuals']?.r) {
+      const resourcesUserIsAManager = getResourcesIamManager(
+        loginUser?.Id,
+        resources
+      );
+      resourceList = [...resourceList, ...resourcesUserIsAManager];
+    }
+
+    return Array.from(
+      new Map([loginUser, ...resourceList].map(r => [r.Id, r])).values()
+    );
+  };
+
+  const isAResource = useMemo(() => {
+    if (!currentResource || !user || !resources) return false;
+    return (
+      resources?.some(
+        (resource: Resource) =>
+          resource?.Email === (user as LoginUser).username ||
+          resource?.Id === currentResource?.Id
+      ) || false
+    );
+  }, [currentResource, user, resources]);
+
   useEffect(() => {
     if (user && resources) {
       const loginUser =
@@ -143,22 +192,23 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           (resource: Resource) =>
             resource?.Email === (user as LoginUser).username
         ) || null;
+
       if (loginUser) {
         setCurrentResource(loginUser);
 
-        // Resources that are Active/Inactive Status
-        setResourceList(
-          resources
-            .filter(
-              (resource: Resource) =>
-                resource.Status === 'Active' || resource.Status === 'Inactive'
-            )
-            .sort((a: Resource, b: Resource) =>
-              (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
-                sensitivity: 'base',
-              })
-            )
+        const resourceListBasedOnRole = getResourceListBasedOnUserRole(
+          loginUser,
+          resources.filter(
+            (resource: Resource) =>
+              resource.Status === 'Active' || resource.Status === 'Inactive'
+          )
+        ).sort((a: Resource, b: Resource) =>
+          (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
+            sensitivity: 'base',
+          })
         );
+        // Resources that are Active/Inactive Status
+        setResourceList(resourceListBasedOnRole);
       } else {
         // Some Users do not have Resources created, set minimal details from LoginUser.
         const loginUserTempResourceDetails = {
@@ -167,7 +217,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           FullName: `${(user as LoginUser)?.firstName || ''} ${(user as LoginUser)?.lastName || ''}`,
           Email: (user as LoginUser)?.username || '',
           PhoneNumber: null,
-          Id: null,
+          Id: '0',
           StartDate: null,
           EndDate: null,
           LocationCategory: null,
@@ -187,20 +237,22 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         // @ts-ignore
         setCurrentResource(loginUserTempResourceDetails as Resource);
 
+        const resourceListBasedOnRole = getResourceListBasedOnUserRole(
+          loginUserTempResourceDetails as Resource,
+          resources.filter(
+            (resource: Resource) =>
+              resource.Status === 'Active' || resource.Status === 'Inactive'
+          )
+        ).sort((a: Resource, b: Resource) =>
+          (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
+            sensitivity: 'base',
+          })
+        );
         // Resources that are Active/Inactive Status
         setResourceList([
           // @ts-ignore
           loginUserTempResourceDetails,
-          ...resources
-            .filter(
-              (resource: Resource) =>
-                resource.Status === 'Active' || resource.Status === 'Inactive'
-            )
-            .sort((a: Resource, b: Resource) =>
-              (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
-                sensitivity: 'base',
-              })
-            ),
+          ...resourceListBasedOnRole,
         ]);
       }
     }
@@ -421,6 +473,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   const validateDataBeforeConfirm = () => {
+    // If there are validation errors, block the update
+    if (Object.keys(rowValidationErrors || {}).length > 0) {
+      dispatch(showToastAction(true, 'Must fill required fields.', 'error'));
+      return;
+    }
+
     if (isFutureWeek(parseISO(startDate))) {
       updatePlannedAllocationsIfNeeded();
       return;
@@ -1148,7 +1206,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 >
                   {loadingName ? (
                     <Skeleton width={100} height={20} />
-                  ) : permissions['AdminActuals'].r ? (
+                  ) : (permissions['AdminActuals'].r ||
+                      permissions['AllocationManagerActuals'].r ||
+                      permissions['ManagerActuals'].r) &&
+                    resourceList.length > 1 ? (
                     <Autocomplete
                       options={resourceList}
                       getOptionLabel={(option: Resource) =>
@@ -1178,7 +1239,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       )}
                       renderOption={(props, option) => (
                         <li {...props} key={option.Id}>
-                          {option.FullName}
+                          <EllipsisNameCell value={option.FullName} />
                         </li>
                       )}
                     />
@@ -1198,8 +1259,19 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                         sx={{ display: 'inline-block' }}
                       />
                     ) : (
-                      <Typography component="span" sx={{ fontWeight: 600 }}>
-                        {userTitle}
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          maxWidth: 200,
+                          minWidth: 0,
+                          verticalAlign: 'bottom',
+                        }}
+                      >
+                        <EllipsisNameCell
+                          value={isAResource ? userTitle : 'N/A'}
+                        />
                       </Typography>
                     )}
                   </Typography>
@@ -1214,8 +1286,21 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                         sx={{ display: 'inline-block' }}
                       />
                     ) : (
-                      <Typography component="span" sx={{ fontWeight: 600 }}>
-                        {userTeam ?? '--'}
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          maxWidth: 200,
+                          minWidth: 0,
+                          verticalAlign: 'bottom',
+                        }}
+                      >
+                        {isAResource ? (
+                          <EllipsisNameCell value={userTeam ?? '--'} />
+                        ) : (
+                          'N/A'
+                        )}
                       </Typography>
                     )}
                   </Typography>
@@ -1495,7 +1580,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                           'Not Started' &&
                         // Enable button if it's the current week even if status is 'Confirmed'
                         !isCurrentWeek(parseISO(startDate)) &&
-                        (!isModified || show || hasInvalidRows))
+                        disableView &&
+                        !isFutureWeek(parseISO(startDate || '')))
                     }
                     onClick={validateDataBeforeConfirm}
                   >
@@ -1618,4 +1704,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   );
 }
 
-export default withRBAC(ActualsPage, ['ActualsStatus', 'AdminActuals']);
+export default withRBAC(ActualsPage, [
+  'ActualsStatus',
+  'AdminActuals',
+  'AllocationManagerActuals',
+  'ManagerActuals',
+]);

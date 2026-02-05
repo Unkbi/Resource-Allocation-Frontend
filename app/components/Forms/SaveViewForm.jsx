@@ -146,6 +146,11 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       ProjectStartDate: 'Project Start Date',
       Status: 'Project Status',
       Type: 'Project Type',
+      manager: 'Manager',
+      resourceStatus: 'Resource Status',
+      organisationStatus: 'Organisation Status',
+      portfolioStatus: 'Portfolio Status',
+      portfolioDescription: 'Portfolio Description',
     };
 
     return columnLabels[column];
@@ -528,7 +533,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   }));
 
   const StyledExtraInfoText = styled(Typography)(({ theme }) => ({
-    color: '#D24546',
+    color: theme.palette.info.main,
     fontFamily: 'Open Sans',
     fontSize: '10px',
     fontStyle: 'italic',

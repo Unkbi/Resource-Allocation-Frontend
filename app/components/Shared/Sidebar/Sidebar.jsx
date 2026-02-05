@@ -162,7 +162,7 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
       permissions['Team'].r ||
       permissions['Organization'].r ||
       permissions['EmployeeRate'].r,
-    Reports: true,
+    Reports: permissions['Reports'].r,
   };
 
   const menuItems = [
@@ -197,9 +197,9 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
       disabled: false,
     },
     {
-      icon: "/images/icons/PollRounded.svg", 
-      url: "/report",
-      text :"Reports",
+      icon: '/images/icons/PollRounded.svg',
+      url: '/report',
+      text: 'Reports',
       disabled: false,
     },
   ];
@@ -718,4 +718,5 @@ export default withRBAC(Sidebar, [
   'Portfolio',
   'ActualsStatus',
   'Allocation',
+  'Reports',
 ]);

@@ -38,7 +38,9 @@ import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import { getAllocationManagerFromPath, getResourceFromUid } from '@/app/utils/common';
 import FilterChips from '../FilterChips';
 import { isFilterEnabled, isPeriodRequired } from './reportFilterConfig';
-import { ReportType } from '@/app/types/dashboardTypes';
+import { isSummaryFilterEnabled, isSummaryPeriodRequired } from './summaryFilterConfig';
+import { ReportType, SummaryType } from '@/app/types/dashboardTypes';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 const StyledChip = styled(Chip)(({ theme }) => ({
   height: '32px',
@@ -87,6 +89,7 @@ const CountBadge = styled('span')({
 
 export interface ReportFilters {
   reportType: ReportType;
+  summaryType?: SummaryType; // Added for AI Summary mode
   period: string;
   customDateRange?: DateRange<Dayjs>;
   projectManager: string[];
@@ -106,6 +109,7 @@ export interface ReportFilters {
 }
 
 interface FilterSectionProps {
+  disabled?: boolean;
   title: string;
   name: string;
   options: Array<{ label: string; value: string }>;
@@ -117,6 +121,7 @@ interface FilterSectionProps {
 }
 
 const FilterSection = ({
+  disabled = true,
   title,
   name,
   options,
@@ -139,6 +144,7 @@ const FilterSection = ({
         {title}
       </Typography>
       <StyledAutocomplete
+        disabled={disabled}
         name={name}
         label={placeholder}
         placeholder={placeholder}
@@ -159,16 +165,36 @@ interface ReportBuilderFiltersProps {
   filters: ReportFilters;
   onFiltersChange: (filters: ReportFilters) => void;
   onResetFilters: () => void;
+  mode?: 'reports' | 'aisummary'; // Mode to determine which filters to show
+  permissions?: Record<string, CrudPermissions>
 }
 
-export default function ReportBuilderFilters({
+function ReportBuilderFilters({
   expanded,
   onToggle,
   filters,
   onFiltersChange,
   onResetFilters,
+  mode = 'reports',
+  permissions,
 }: ReportBuilderFiltersProps) {
   const dispatch = useDispatch<AppDispatch>();
+  
+  // Helper to check if filter is enabled based on mode
+  const checkFilterEnabled = (filterKey: string): boolean => {
+    if (mode === 'aisummary' && filters.summaryType) {
+      return isSummaryFilterEnabled(filters.summaryType, filterKey as any);
+    }
+    return isFilterEnabled(filters.reportType, filterKey as any);
+  };
+  
+  // Helper to check if period is required based on mode
+  const checkPeriodRequired = (): boolean => {
+    if (mode === 'aisummary' && filters.summaryType) {
+      return isSummaryPeriodRequired(filters.summaryType);
+    }
+    return isPeriodRequired(filters.reportType);
+  };
   
   // Custom date range picker state
   const [customDateSubmenuAnchor, setCustomDateSubmenuAnchor] = useState<null | HTMLElement>(null);
@@ -538,7 +564,7 @@ export default function ReportBuilderFilters({
       // Skip default/empty values for report mode
       if (!value || 
           (Array.isArray(value) && value.length === 0) ||
-          (typeof value === 'string' && value === 'resourceProjectPeriod' && key === 'reportType') ||
+          (typeof value === 'string' && value === 'resourceProjectPeriod' && key === 'reportType') || key === 'summaryType' ||
           (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'))) {
         return;
       }
@@ -591,7 +617,7 @@ export default function ReportBuilderFilters({
               onClearAll={onResetFilters}
               getDisplayValue={getReportDisplayValue}
               filterType="report"
-              showClearButton={false}
+              showClearButton={permissions?.['Reports']?.r}
             />
           </Box>
         )}
@@ -616,8 +642,8 @@ export default function ReportBuilderFilters({
 
       <AccordionDetails sx={{ px: 3, pb: 3, pt: 1 }}>
 
-        {/* Period Dropdown - Only show if period is required for this report type */}
-        {isPeriodRequired(filters.reportType) && (
+        {/* Period Dropdown - Only show if period is required for this report/summary type */}
+        {checkPeriodRequired() && (
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Typography
           sx={{
@@ -842,8 +868,9 @@ export default function ReportBuilderFilters({
           mb: 2,
         }}
         >
-        {isFilterEnabled(filters.reportType, 'projectManager') && (
+        {checkFilterEnabled( 'projectManager') && (
         <FilterSection
+          disabled={!permissions?.['Resource']?.r}
           title="Project Manager"
           name="projectManager"
           options={projectManagerOptions}
@@ -852,8 +879,9 @@ export default function ReportBuilderFilters({
           formikProps={formikProps}
         />
         )}
-        {isFilterEnabled(filters.reportType, 'allocationManager') && (
+        {checkFilterEnabled( 'allocationManager') && (
         <FilterSection
+          disabled={!permissions?.['Resource']?.r}
           title="Allocation Manager"
           name="allocationManager"
           options={allocationManagerOptions}
@@ -863,8 +891,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'project') && (
+        {checkFilterEnabled( 'project') && (
         <FilterSection
+          disabled={!permissions?.['Project']?.r}
           title="Project"
           name="project"
           options={projectOptions}
@@ -874,8 +903,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'team') && (
+        {checkFilterEnabled( 'team') && (
         <FilterSection
+          disabled={!permissions?.['Team']?.r}
           title="Team"
           name="team"
           options={teamOptions}
@@ -885,8 +915,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'organization') && (
+        {checkFilterEnabled( 'organization') && (
         <FilterSection
+          disabled={!permissions?.['Organization']?.r}
           title="Organization"
           name="organization"
           options={organizationOptions}
@@ -896,8 +927,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'resourceType') && (
+        {checkFilterEnabled( 'resourceType') && (
         <FilterSection
+          disabled={!permissions?.['ResourceType']?.r}
           title="Resource Type"
           name="resourceType"
           options={resourceTypeOptions}
@@ -907,8 +939,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'resource') && (
+        {checkFilterEnabled( 'resource') && (
         <FilterSection
+          disabled={!permissions?.['Resource']?.r}
           title="Resource"
           name="resource"
           options={resourceOptions}
@@ -918,8 +951,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'projectType') && (
+        {checkFilterEnabled( 'projectType') && (
         <FilterSection
+          disabled={!permissions?.['ProjectType']?.r}
           title="Project Type"
           name="projectType"
           options={projectTypeOptions}
@@ -929,8 +963,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'projectTypeGroup') && (
+        {checkFilterEnabled( 'projectTypeGroup') && (
         <FilterSection
+          disabled={!permissions?.['ProjectTypeGroup']?.r}
           title="Project Type Group"
           name="projectTypeGroup"
           options={projectTypeGroupOptions}
@@ -940,8 +975,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'portfolio') && (
+        {checkFilterEnabled( 'portfolio') && (
         <FilterSection
+          disabled={!permissions?.['Portfolio']?.r}
           title="Portfolio"
           name="portfolio"
           options={portfolioOptions}
@@ -950,8 +986,9 @@ export default function ReportBuilderFilters({
           formikProps={formikProps}
         />
         )}
-        {isFilterEnabled(filters.reportType, 'resourceStatuses') && (
+        {checkFilterEnabled( 'resourceStatuses') && (
         <FilterSection
+          disabled={!permissions?.['Resource']?.r}
           title="Resource Status"
           name="resourceStatuses"
           options={resourceStatusOptions}
@@ -961,8 +998,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'resourceLocations') && (
+        {checkFilterEnabled( 'resourceLocations') && (
         <FilterSection
+          disabled={!permissions?.['WorkLocation']?.r}
           title="Resource Location"
           name="resourceLocations"
           options={resourceLocationOptions}
@@ -972,8 +1010,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'resourceWorkLocationGroup') && (
+        {checkFilterEnabled( 'resourceWorkLocationGroup') && (
         <FilterSection
+          disabled={!permissions?.['WorkLocationGroup']?.r}
           title="Resource Location Group"
           name="resourceWorkLocationGroup"
           options={resourceWorkLocationGroupOptions}
@@ -983,8 +1022,9 @@ export default function ReportBuilderFilters({
         />
         )}
 
-        {isFilterEnabled(filters.reportType, 'projectStatuses') && (
+        {checkFilterEnabled( 'projectStatuses') && (
         <FilterSection
+          disabled={!permissions?.['Project']?.r}
           title="Project Status"
           name="projectStatuses"
           options={projectStatusOptions}
@@ -997,6 +1037,7 @@ export default function ReportBuilderFilters({
 
 
         {/* Reset Filters Button */}
+        {permissions?.['Reports']?.r && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
         <Button
           variant="text"
@@ -1016,8 +1057,23 @@ export default function ReportBuilderFilters({
           Reset Filters
         </Button>
         </Box>
+        )}
       </AccordionDetails>
       </Accordion>
     </Box>
   );
 }
+
+export default withRBAC(ReportBuilderFilters, [
+  'Resource',
+  'ResourceType',
+  'WorkLocation',
+  'WorkLocationGroup',
+  'Project',
+  'ProjectType',
+  'ProjectTypeGroup',
+  'Portfolio',
+  'Team',
+  'Organization',
+  'Reports',
+]);

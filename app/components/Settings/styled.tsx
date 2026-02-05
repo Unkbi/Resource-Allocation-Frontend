@@ -389,14 +389,23 @@ const StatusPill = styled('div')<{ status?: string }>(({ theme, status }) => {
     case 'Planning':
       textColor = '#4A5565';
       break;
-    case 'On-Track':
+    case 'On Track':
       textColor = '#229E60';
       break;
-    case 'At-Risk':
+    case 'At Risk':
       textColor = '#F54900';
       break;
-    case 'Delayed':
+    case 'Off Track':
       textColor = '#C73732';
+      break;
+    case 'Confirmed':
+      textColor = '#3CC55F';
+      break;
+    case 'Not-Started':
+      textColor = '#F39A4C';
+      break;
+    case 'In-Progress':
+      textColor = '#FCCE00';
       break;
     default:
       textColor = '#6c757d';

@@ -128,16 +128,24 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     },
     [`& .${gridClasses.cell}[data-field="portfolioName"].secondGroupsRow`]: {
       backgroundColor:
-        !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F0F7FF'),
+        !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F0F7FF !important'),
     },
     [`& .${gridClasses.cell}[data-field="portfolioName"]`]: {
-      backgroundColor:
-        !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F7FBFF'),
+      backgroundColor: !loading
+        ? groupBy === 'resource'
+          ? '#F1F6FF'
+          : groupBy === 'project'
+            ? 'red'
+            : '#F7FBFF !important'
+        : undefined,
     },
     [`& .${gridClasses.cell}[data-field="portfolioName"].firstGroupsRow-project`]:
       {
         backgroundColor: !loading && '#E9EFF8 !important',
       },
+    [`& .${gridClasses.cell}[data-field="portfolioName"].firstGroupsRow`]: {
+      backgroundColor: !loading && '#E9EFF8 !important',
+    },
     [`& .${gridClasses.cell}[data-field="resource"].secondGroupsRow`]: {
       backgroundColor: !loading && '#F0F7FF',
     },
@@ -187,8 +195,14 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       backgroundColor: !loading && '#F7FBFF',
     },
     [`& .${gridClasses.cell}[data-field="teams"]`]: {
-      backgroundColor:
-        !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F7FBFF'),
+      backgroundColor: !loading
+        ? groupBy === 'resource' || groupBy === 'project'
+          ? '#F1F6FF'
+          : '#F7FBFF'
+        : undefined,
+    },
+    [`& .${gridClasses.cell}[data-field="teams"].firstGroupsRow-project`]: {
+      backgroundColor: !loading && '#E9EFF8',
     },
     [`& .${gridClasses.cell}[data-field="teams"].secondGroupsRow`]: {
       backgroundColor:
@@ -198,8 +212,66 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       backgroundColor: !loading && '#F7FBFF',
     },
     [`& .${gridClasses.cell}[data-field="organisationName"]`]: {
-      backgroundColor: !loading && '#F7FBFF',
+      backgroundColor:
+        !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F7FBFF'),
     },
+    [`& .${gridClasses.cell}[data-field="organisationName"].firstGroupsRow`]:
+      {
+        backgroundColor: !loading && '#E9EFF8 !important',
+      },
+    [`& .${gridClasses.cell}[data-field="organisationName"].firstGroupsRow-project`]:
+      {
+        backgroundColor: !loading && '#E9EFF8 !important',
+      },
+    [`& .${gridClasses.cell}[data-field="organisationName"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading && (groupBy === 'teams' ? '#F0F7FF' : '#F7FBFF'),
+    },
+    
+    [`& .${gridClasses.cell}[data-field="manager"]`]: {
+      backgroundColor: !loading
+        ? groupBy === 'resource'
+          ? '#F1F6FF'
+          : groupBy === 'project'
+            ? '#F1F6FF'
+            : '#F7FBFF'
+        : undefined, //Color will change in other view for this field
+    },
+    [`& .${gridClasses.cell}[data-field="manager"].secondGroupsRow`]: {
+      backgroundColor: !loading && '#F0F7FF',
+    },
+    [`& .${gridClasses.cell}[data-field="manager"].firstGroupsRow-project`]: {
+      backgroundColor: !loading && '#E9EFF8 !important',
+    },
+    [`& .${gridClasses.cell}[data-field="portfolioStatus"]`]: {
+      backgroundColor: !loading
+        ? groupBy === 'resource' || groupBy === 'project'
+          ? '#F1F6FF'
+          : '#F7FBFF'
+        : undefined, //Color will change in other view for this field
+    },
+    [`& .${gridClasses.cell}[data-field="portfolioStatus"].firstGroupsRow-project`]:
+      {
+        backgroundColor: !loading && '#E9EFF8 !important',
+      },
+    [`& .${gridClasses.cell}[data-field="portfolioStatus"].secondGroupsRow`]: {
+      backgroundColor: !loading && '#F0F7FF',
+    },
+    [`& .${gridClasses.cell}[data-field="portfolioDescription"]`]: {
+      backgroundColor: !loading
+        ? groupBy === 'resource' || groupBy === 'project'
+          ? '#F1F6FF'
+          : '#F7FBFF'
+        : undefined, //Color will change in other view for this field
+    },
+    [`& .${gridClasses.cell}[data-field="portfolioDescription"].firstGroupsRow-project`]:
+      {
+        backgroundColor: !loading && '#E9EFF8 !important',
+      },
+    [`& .${gridClasses.cell}[data-field="portfolioDescription"].secondGroupsRow`]:
+      {
+        backgroundColor: !loading && '#F0F7FF',
+      },
     [`& .${gridClasses.cell}[data-field="Team"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
@@ -231,25 +303,51 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       backgroundColor: !loading && '#F7FBFF',
     },
     [`& .${gridClasses.cell}[data-field="teamStatus"]`]: {
-      backgroundColor:
-        !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F7FBFF'),
+      backgroundColor: !loading
+        ? groupBy === 'resource' || groupBy === 'project'
+          ? '#F1F6FF'
+          : '#F7FBFF'
+        : undefined,
     },
+    [`& .${gridClasses.cell}[data-field="teamStatus"].firstGroupsRow-project`]:
+      {
+        backgroundColor: !loading && '#E9EFF8 !important',
+      },
     [`& .${gridClasses.cell}[data-field="teamStatus"].secondGroupsRow`]: {
       backgroundColor:
         !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F0F7FF'),
     },
     [`& .${gridClasses.cell}[data-field="teamAllocationManager"]`]: {
-      backgroundColor:
-        !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F7FBFF'),
+      backgroundColor: !loading
+        ? groupBy === 'resource' || groupBy === 'project'
+          ? '#F1F6FF'
+          : '#F7FBFF'
+        : undefined,
     },
+    [`& .${gridClasses.cell}[data-field="teamAllocationManager"].firstGroupsRow-project`]:
+      {
+        backgroundColor: !loading && '#E9EFF8 !important',
+      },
     [`& .${gridClasses.cell}[data-field="teamAllocationManager"].secondGroupsRow`]:
       {
         backgroundColor:
           !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F0F7FF'),
       },
     [`& .${gridClasses.cell}[data-field="organisationStatus"]`]: {
-      backgroundColor: !loading && '#F7FBFF',
+      backgroundColor: !loading
+        ? !groupBy
+          ? '#F7FBFF'
+          : groupBy === 'resource'
+            ? '#F1F6FF'
+            : groupBy === 'project'
+              ? '#F1F6FF'
+              : '#F7FBFF'
+        : undefined,
     },
+    [`& .${gridClasses.cell}[data-field="organisationStatus"].firstGroupsRow-project`]:
+      {
+        backgroundColor: !loading && '#E9EFF8 !important',
+      },
     [`& .${gridClasses.cell}[data-field="organisationStatus"].secondGroupsRow`]:
       {
         backgroundColor: !loading && '#F0F7FF',

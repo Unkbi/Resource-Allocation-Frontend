@@ -24,6 +24,8 @@ import rbacReducer from './reducers/rbacReducer';
 import allSettingsReducer from './reducers/allSettingsReducer';
 import { RESET_STORE } from './actions/authActions';
 import businessImpactReducer from './reducers/businessImpactReducer';
+import aiSummaryReducer from './reducers/aiSummaryReducer';
+import filterReducer from './reducers/filterReducer';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -66,7 +68,9 @@ export const makeStore = () => {
         portfolios: portfolioReducer(state?.portfolios, action),
         rbac: rbacReducer(state?.rbac, action),
         allSettings: allSettingsReducer(state?.allSettings, action),
-        businessImpact: businessImpactReducer(state?.businessImpact, action),                     
+        businessImpact: businessImpactReducer(state?.businessImpact, action),
+        aiSummary: aiSummaryReducer(state?.aiSummary, action),
+        filters : filterReducer(state?.filters, action)
       };
     },
     middleware: getDefaultMiddleware =>

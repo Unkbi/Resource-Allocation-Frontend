@@ -287,6 +287,8 @@ export const PROJECT_ACTIVE_STATUS = ['Active', 'Approved'];
 
 export const PROJECT_INACTIVE_STATUS = ['Proposed', 'Paused', 'Completed'];
 
+export const PROJECT_ALLOCATION_STATUS = ['Active', 'Approved' , 'Completed'];
+
 export const Resource_All_Status = [
   'Active',
   'Inactive',
@@ -308,6 +310,7 @@ export const Project_Sponsor_Manager_Status_Filter = [
 export const DASHBOARD_ALL_ACCESS = [
   'activeProjects',
   'allocationPercentage',
+  'systemActiveProjects',
   'actualsConfirmed',
   'plan_vs_actual_variance',
   'engagementScoreOverview',
@@ -319,7 +322,6 @@ export const DASHBOARD_ALL_ACCESS = [
   'unapprovedProjectAllocation',
   'projectHealthOverview',
   'projectFTE',
-  'projectScoreByPM',
 ];
 
 export const TOTAL_ACTUALS_LESS_THAN_ONE = 'TOTAL_ACTUALS_LESS_THAN_ONE';
