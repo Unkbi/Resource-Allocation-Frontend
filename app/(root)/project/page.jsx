@@ -1364,7 +1364,7 @@ function Project({ permissions, loadingPermissions }) {
           value === 'project'
             ? 'Are you sure you want to delete this project?'
             : value === 'portfolio'
-              ? 'Are you sure you want to delete this portfolio?'
+              ? `Are you sure you want to delete this ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}?`
               : 'Are you sure you want to delete this business impact?'
         }
       >

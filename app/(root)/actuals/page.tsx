@@ -69,6 +69,7 @@ import {
   isPeriodWithinRange,
 } from '@/app/utils/actualsUtils';
 import { AxiosError } from 'axios';
+import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -151,7 +152,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     activeAndInactiveResource: Resource[]
   ) => {
     if (!loginUser || loadingPermissions) return [];
-    if (permissions['AdminActuals']?.r) return activeAndInactiveResource;
+    if (permissions['AdminActuals']?.r)
+      return Array.from(
+        new Map(
+          [loginUser, ...activeAndInactiveResource].map(r => [r.Id, r])
+        ).values()
+      );
 
     let resourceList: Resource[] = [];
     if (permissions['AllocationManagerActuals']?.r) {
@@ -182,13 +188,15 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   const isAResource = useMemo(() => {
-    if (!user || !resources) return false;
+    if (!currentResource || !user || !resources) return false;
     return (
       resources?.some(
-        (resource: Resource) => resource?.Email === (user as LoginUser).username
+        (resource: Resource) =>
+          resource?.Email === (user as LoginUser).username ||
+          resource?.Id === currentResource?.Id
       ) || false
     );
-  }, [user, resources]);
+  }, [currentResource, user, resources]);
 
   useEffect(() => {
     if (user && resources) {
@@ -254,11 +262,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           })
         );
         // Resources that are Active/Inactive Status
-        setResourceList([
-          // @ts-ignore
-          loginUserTempResourceDetails,
-          ...resourceListBasedOnRole,
-        ]);
+        setResourceList(resourceListBasedOnRole);
       }
     }
     setLoadingName(false);
@@ -1255,7 +1259,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       )}
                       renderOption={(props, option) => (
                         <li {...props} key={option.Id}>
-                          {option.FullName}
+                          <EllipsisNameCell value={option.FullName} />
                         </li>
                       )}
                     />
@@ -1275,8 +1279,19 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                         sx={{ display: 'inline-block' }}
                       />
                     ) : (
-                      <Typography component="span" sx={{ fontWeight: 600 }}>
-                        {isAResource ? userTitle : 'N/A'}
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          maxWidth: 200,
+                          minWidth: 0,
+                          verticalAlign: 'bottom',
+                        }}
+                      >
+                        <EllipsisNameCell
+                          value={isAResource ? userTitle : 'N/A'}
+                        />
                       </Typography>
                     )}
                   </Typography>
@@ -1291,8 +1306,21 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                         sx={{ display: 'inline-block' }}
                       />
                     ) : (
-                      <Typography component="span" sx={{ fontWeight: 600 }}>
-                        {isAResource ? (userTeam ?? '--') : 'N/A'}
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          maxWidth: 200,
+                          minWidth: 0,
+                          verticalAlign: 'bottom',
+                        }}
+                      >
+                        {isAResource ? (
+                          <EllipsisNameCell value={userTeam ?? '--'} />
+                        ) : (
+                          'N/A'
+                        )}
                       </Typography>
                     )}
                   </Typography>
