@@ -100,7 +100,7 @@ export const StyledCommentInput = styled(TextField)(
 );
 
 export const StyledFormHelperText = styled(FormHelperText)(({ theme }) => ({
-  color: theme.palette.info.main,
+  color: theme.palette.error.main,
   marginLeft: 0,
   fontSize: '0.75rem',
 }));

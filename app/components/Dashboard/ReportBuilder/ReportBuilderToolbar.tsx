@@ -269,7 +269,7 @@ function ReportBuilderToolbar({
             }}
           >
             <MenuItem value="project" sx={{ pl: 4 }}>Project</MenuItem>
-            <MenuItem value="team" sx={{ pl: 4 }}>Team</MenuItem>
+            {/* <MenuItem value="team" sx={{ pl: 4 }}>Team</MenuItem> */}
           </Select>
           )}
         </Box>

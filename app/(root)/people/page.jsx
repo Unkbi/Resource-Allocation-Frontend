@@ -1236,8 +1236,7 @@ function Resources({ permissions, loadingPermissions }) {
       loading ||
       dataProcessing ||
       employeeRatesLoading ||
-      allResourcesDetailLoading ||
-      !(value === 'teams' || value === 'resource')
+      allResourcesDetailLoading 
     )
       return;
 
@@ -1261,7 +1260,9 @@ function Resources({ permissions, loadingPermissions }) {
             focusColumn = 'WorkLocation';
           } else if (value === 'teams') {
             focusColumn = 'Team';
-          } else {
+          } else if (value === 'organizations') {
+            focusColumn = 'Name';
+          } else{
             focusColumn = 'FullName';
           }
 
