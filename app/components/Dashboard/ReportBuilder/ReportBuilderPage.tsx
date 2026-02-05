@@ -742,19 +742,15 @@ function ReportBuilderPage({
   useEffect(() => {
     const tabFromUrl = searchParams?.get('tab');
     
-    const params = new URLSearchParams(searchParams?.toString() || '');
-    params.set('tab', 'reports');
-    setActiveTab('reports');
-    router.replace(`${pathname}?${params.toString()}`);
-    // if (tabFromUrl && tabFromUrl !== activeTab) {
-    //   // Tab in URL is different from current, sync it
-    //   setActiveTab(tabFromUrl);
-    // } else if (!tabFromUrl && activeTab === 'reports') {
-    //   // No tab parameter in URL and default is 'reports', add it to URL
-    //   const params = new URLSearchParams(searchParams?.toString() || '');
-    //   params.set('tab', 'reports');
-    //   router.replace(`${pathname}?${params.toString()}`);
-    // }
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      // Tab in URL is different from current, sync it
+      setActiveTab(tabFromUrl);
+    } else if (!tabFromUrl && activeTab === 'reports') {
+      // No tab parameter in URL and default is 'reports', add it to URL
+      const params = new URLSearchParams(searchParams?.toString() || '');
+      params.set('tab', 'reports');
+      router.replace(`${pathname}?${params.toString()}`);
+    }
   }, [searchParams, activeTab, pathname, router]);
 
   return (
@@ -806,7 +802,7 @@ function ReportBuilderPage({
           }}
         >
           <Tab label="Reports" value="reports" />
-          {/* <Tab label="AI Summary" value="aisummary" /> */}
+          <Tab label="AI Summary" value="aisummary" />
         </Tabs>
       </Box>
 
@@ -1019,7 +1015,7 @@ function ReportBuilderPage({
       )}
 
       {/* AI Summary Tab */}
-      {/* {activeTab === 'aisummary' && (
+      {activeTab === 'aisummary' && (
         <>
          <ReportBuilderToolbar
             reportType={summaryFilters.reportType as ReportType}
@@ -1057,6 +1053,7 @@ function ReportBuilderPage({
             selectedFiltersCount={getSummarySelectedFiltersCount()}
           />
           
+          {/* Filters for AI Summary */}
           <ReportBuilderFilters
             expanded={filtersExpanded}
             onToggle={() => setFiltersExpanded(!filtersExpanded)}
@@ -1078,7 +1075,7 @@ function ReportBuilderPage({
             <AISummaryTab />
           </Box>
         </>
-      )} */}
+      )}
       </>
     )}
     </Box>
