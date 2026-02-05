@@ -54,7 +54,7 @@ export default function Overview({
     'Active Resources': 'resourceOnly',
     'Total Resource Cost': 'resourceProjectPeriodCost',
     'Allocation %': 'resourceProjectPeriod',
-    'Actuals Confirmed': 'resourceProjectPeriod',
+    'Actuals Confirmed': 'resourcePeriod',
   };
 
   
@@ -82,6 +82,9 @@ const getMonday = date => {
     }
     else if (label === 'Allocated Projects') {
       additionalFilters = { projectStatuses: ['Active','Approved'], project: activeProjects?.[0]?.project_uuids || [] };
+    }
+    else if (label === 'Actuals Confirmed') {
+      additionalFilters = { resourceStatuses: ['Active'] };
     }
 
     if (advancedFilters) {
