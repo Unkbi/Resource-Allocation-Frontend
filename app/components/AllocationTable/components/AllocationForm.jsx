@@ -2394,7 +2394,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            dispatch(setHighlightedRowId(response.Id));
+            dispatch(setHighlightedRowId(response.Portfolio.Id));
           })
           .catch(error => {
             console.error('Failed to add portfolio:', error);
@@ -3405,6 +3405,17 @@ const AllocationForm = () => {
           const postData = {
             users: [userItem],
           };
+          
+          dispatch(
+            showToast({
+              open: true,
+              message: `Sending invite to ${cleanedValues.FirstName} `,
+              type: 'info',
+              position: 'bottom-left',
+              autoHideTimer: 5000,
+            })
+          );
+          
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: SEND_INVITATION,
@@ -3480,6 +3491,17 @@ const AllocationForm = () => {
           const postData = {
             users: [...finalData],
           };
+          
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Sending invitation....',
+              type: 'info',
+              position: 'bottom-left',
+              autoHideTimer: 8000,
+            })
+          );
+          
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: SEND_INVITATION,
@@ -3554,6 +3576,16 @@ const AllocationForm = () => {
           lastName: cleanedValues.LastName || null,
         };
 
+        dispatch(
+            showToast({
+              open: true,
+              message: `Updating the changes for ${initialData.Name} `,
+              type: 'info',
+              position: 'bottom-left',
+              autoHideTimer: 5000,
+            })
+        );
+        
         try {
           const result = await new Promise((resolve, reject) => {
             dispatch({

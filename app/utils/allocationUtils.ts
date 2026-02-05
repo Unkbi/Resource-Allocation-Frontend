@@ -36,7 +36,7 @@ import {
 import {
   AllocationForm_Status_Filter,
   DATE_FORMAT,
-  PROJECT_ACTIVE_STATUS,
+  PROJECT_ALLOCATION_STATUS,
   teamsViewsGrouping,
 } from '../constants/constants';
 import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
@@ -210,7 +210,7 @@ export function formatAllAllocations(
     if (
       (resource?.Status &&
         !AllocationForm_Status_Filter.includes(resource?.Status)) ||
-      (project?.Status && !PROJECT_ACTIVE_STATUS.includes(project.Status))
+      (project?.Status && !PROJECT_ALLOCATION_STATUS.includes(project.Status))
     )
       continue;
 
@@ -245,7 +245,7 @@ export function formatAllAllocations(
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
         projectTypeGroup: projectTypeGroup?.Name || null,
-        projectOvertimeAllowed: project?.AllowOvertime ?? null,
+        projectOvertimeAllowed:project?.AllowOvertime === true ? 'Yes': project?.AllowOvertime === false ? 'No': null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
@@ -264,7 +264,7 @@ export function formatAllAllocations(
         workLocation: locationDetails?.Name || null,
         department: resource?.Department || null,
         hrLevel: resource?.HRLevel || null,
-        manager: resource?.Manager || null,
+        manager: getResourceFromUid(resource?.Manager , resources)?.FullName ||null,
         contractorHourlyRate: resource?.ContractorHourlyRate || null,
         contractorHourlyRateCurrency:
           resource?.ContractorHourlyRateCurrency || null,
@@ -488,7 +488,7 @@ export function formatCostAllocations(
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
         projectTypeGroup: projectTypeGroup?.Name || null,
-        projectOvertimeAllowed: project?.AllowOvertime ?? null,
+        projectOvertimeAllowed:project?.AllowOvertime === true ? 'Yes' : project?.AllowOvertime === false ? 'No': null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
@@ -502,7 +502,7 @@ export function formatCostAllocations(
         workLocation: locationDetails?.Name || null,
         department: resource?.Department || null,
         hrLevel: resource?.HRLevel || null,
-        manager: resource?.Manager || null,
+        manager: getResourceFromUid(resource?.Manager , resources)?.FullName ||null,
         contractorHourlyRate: resource?.ContractorHourlyRate || null,
         contractorHourlyRateCurrency:
           resource?.ContractorHourlyRateCurrency || null,
@@ -625,7 +625,7 @@ export const generateEmptyRow = (
     projectLocation: project?.Location || null,
     projectType: project?.Type || null,
     projectTypeGroup: null,
-    projectOvertimeAllowed: project?.AllowOvertime ?? null,
+    projectOvertimeAllowed: project?.AllowOvertime === true? 'Yes': project?.AllowOvertime === false ? 'No': null,
     projectCost: project?.Budget ?? null,
     projectCurrency: project?.BudgetCurrency || null,
     projectStartDate: project?.StartDate || null,
@@ -639,7 +639,7 @@ export const generateEmptyRow = (
     workLocation: locationDetails?.Name || null,
     department: resource?.Department || null,
     hrLevel: resource?.HRLevel || null,
-    manager: resource?.Manager || null,
+    manager: getResourceFromUid(resource?.Manager , resources)?.FullName ||null,
     contractorHourlyRate: resource?.ContractorHourlyRate || null,
     contractorHourlyRateCurrency:
       resource?.ContractorHourlyRateCurrency || null,

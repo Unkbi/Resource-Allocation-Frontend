@@ -48,6 +48,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
   // Mark all inventory charts as loading
   yield put(startMultipleChartsLoading([
     'activeProjects',
+    'systemActiveProjects',
     'activeProjectsByType', 
     'activeResources',
     'resourceFTEContractorRatio',
@@ -56,6 +57,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
     'allocation_by_project_type_group',
     'plan_vs_actual_variance',
     'actuals_confirmation_status',
+    'weeklyLoggedInUsersByTeam',
   ]));
   
   const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
@@ -91,6 +93,10 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({ 
           chartKey: 'activeProjects', 
           data: responseData.active_project ? [responseData.active_project] : [] 
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'systemActiveProjects', 
+          data: responseData.system_active_project ? [responseData.system_active_project] : [] 
         })),
         put(setDashboardChart({ 
           chartKey: 'activeProjectsByType', 
@@ -131,10 +137,15 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({
           chartKey: 'actuals_confirmation_status',
           data: responseData.actuals_confirmation_status ? [responseData.actuals_confirmation_status] : []
-        })),
+        })),        
+        put(setDashboardChart({
+          chartKey: 'weeklyLoggedInUsersByTeam',
+          data: responseData.weekly_logged_in_users_by_team || []
+        })),      
       ]);
     } else {
       yield all([
+        put(setDashboardChart({ chartKey: 'systemActiveProjects', data: [] })),
         put(setDashboardChart({ chartKey: 'activeProjects', data: [] })),
         put(setDashboardChart({ chartKey: 'activeProjectsByType', data: [] })),
         put(setDashboardChart({ chartKey: 'activeResources', data: [] })),
@@ -146,12 +157,14 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
         put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
         put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
+        put(setDashboardChart({ chartKey: 'weeklyLoggedInUsersByTeam', data: [] })),
       ]);
     }
   } catch (err) {
     console.error('Inventory metrics fetch failed', err);
     yield all([
-      put(setDashboardChart({ chartKey: 'activeProjects', data: [] })),
+      put(setDashboardChart({ chartKey: 'systemActiveProjects', data: [] })),
+      put(setDashboardChart({ chartKey: 'activeProjects', data: [] })),      
       put(setDashboardChart({ chartKey: 'activeProjectsByType', data: [] })),
       put(setDashboardChart({ chartKey: 'activeResources', data: [] })),
       put(setDashboardChart({ chartKey: 'resourceFTEContractorRatio', data: [] })),
@@ -162,6 +175,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
       put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
       put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
       put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
+      put(setDashboardChart({ chartKey: 'weeklyLoggedInUsersByTeam', data: [] })),
     ]);
   }
 }

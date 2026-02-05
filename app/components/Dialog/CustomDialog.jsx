@@ -109,6 +109,7 @@ const CustomDialog = ({
   onSecondarySubmit,
   onCancel,
   viewOnly = false,
+  isSubmitting =false,
 }) => {
   const dispatch = useDispatch();
   const dialogState = useSelector(state => state.globalDialog);
@@ -188,7 +189,11 @@ const CustomDialog = ({
                   {cancelButtonText}
                 </StyledCancelButton>
                 {submitButtonText && (
-                  <StyledSubmitButton onClick={onSubmit} variant="contained">
+                  <StyledSubmitButton
+                    onClick={onSubmit}
+                    variant="contained"
+                    disabled={isSubmitting}
+                  >
                     {submitButtonText}
                   </StyledSubmitButton>
                 )}
