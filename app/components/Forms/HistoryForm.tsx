@@ -30,7 +30,7 @@ interface ActivityItem {
 
 const getStatusColor = (action: string) => {
   switch (action) {
-    case 'Update':
+    case 'Updated':
       return { backgroundColor: '#F5B5441A', color: '#F5B544' };
     case 'Deleted':
       return { backgroundColor: '#E6521F1A', color: '#E6521F' };
@@ -255,7 +255,7 @@ export default function HistoryForm({
                         fontWeight: 500,
                         height: '24px',
                         marginBottom: '8px',
-                        borderRadius: '8px',
+                        borderRadius: '4px',
                         ...getStatusColor(item.action),
                       }}
                     />
