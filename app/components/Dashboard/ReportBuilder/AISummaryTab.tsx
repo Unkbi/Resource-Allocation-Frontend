@@ -112,7 +112,7 @@ export default function AISummaryTab() {
         valueGetter: (value: any) => {
           // For export: return only the score value or empty string
           if (!value || value.score === null || value.score === undefined) {
-            return '-';
+            return '';
           }
           return value.score;
         },
