@@ -1,15 +1,19 @@
+import { HOURS } from '@/app/constants/constants';
+import { RootState } from '@/app/redux/store';
 import { ActualAllocations } from '@/app/types';
 import {
+  format2,
   isPeriodCurrentWeek,
   isPeriodFutureWeek,
   isPeriodPastWeek,
   isPeriodWithinRange,
+  roundToStep05,
 } from '@/app/utils/actualsUtils';
-import { getMondayOfISO } from '@/app/utils/common';
 import { Box, Skeleton, styled, Typography } from '@mui/material';
 // @ts-ignore
 import { getWeek, parseISO } from 'date-fns';
 import { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 
 interface ActualsCardProps {
   onClick?: () => void;
@@ -99,23 +103,32 @@ const ActualsCard = ({
   resourceStartMonday,
   resourceEndMonday,
 }: ActualsCardProps) => {
-  const totalPlannedAllocation = useMemo(
-    () =>
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
+  const totalPlannedAllocation = useMemo(() => {
+    const sum =
       actualAllocationData?.reduce(
         (total, alloc) => total + (alloc?.AllocationEntered || 0),
         0
-      ),
-    [actualAllocationData]
-  );
+      ) || 0;
 
-  const totalActualAllocation = useMemo(
-    () =>
+    return scalarSettings?.Actuals_Allocation_Preference === HOURS
+      ? sum
+      : format2(roundToStep05(sum));
+  }, [actualAllocationData, scalarSettings]);
+
+  const totalActualAllocation = useMemo(() => {
+    const sum =
       actualAllocationData?.reduce(
         (total, alloc) => total + (alloc?.ActualsEntered || 0),
         0
-      ),
-    [actualAllocationData]
-  );
+      ) || 0;
+
+    return scalarSettings?.Actuals_Allocation_Preference === HOURS
+      ? sum
+      : format2(roundToStep05(sum));
+  }, [actualAllocationData, scalarSettings]);
 
   const isPastWeek = useMemo(() => {
     if (!period) {
@@ -304,25 +317,49 @@ const ActualsCard = ({
                 <Skeleton width={15} height={30} />
               </Box>
             ) : (
-              <Typography
+              <Box
                 sx={{
-                  marginTop: 0,
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: isCurrentWeek
-                    ? 'rgba(255, 255, 255, 1)'
-                    : 'rgba(0, 0, 0, 1)',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
                 }}
               >
-                <span style={{ color: 'rgba(150, 154, 162, 1)' }}>
+                <Typography
+                  sx={{
+                    marginTop: 0,
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: isCurrentWeek
+                      ? 'rgba(255, 255, 255, 1)'
+                      : 'rgba(0, 0, 0, 1)',
+                  }}
+                >
+                  <span style={{ color: 'rgba(150, 154, 162, 1)' }}>
+                    {isWithinResourceRange
+                      ? `${totalPlannedAllocation ? totalPlannedAllocation : '--'} /`
+                      : 'N/A /'}
+                  </span>{' '}
                   {isWithinResourceRange
-                    ? `${totalPlannedAllocation ? totalPlannedAllocation : '--'} /`
-                    : 'N/A /'}
-                </span>{' '}
-                {isWithinResourceRange
-                  ? `${totalActualAllocation ? totalActualAllocation : '--'}`
-                  : 'N/A'}
-              </Typography>
+                    ? `${totalActualAllocation ? totalActualAllocation : '--'}`
+                    : 'N/A'}
+                </Typography>
+                {scalarSettings?.Actuals_Allocation_Preference === HOURS && (
+                  <Typography
+                    sx={{
+                      position: 'relative',
+                      top: '2px',
+                      marginLeft: '4px',
+                      fontSize: '12px',
+                      fontStyle: 'italic',
+                      color: isCurrentWeek
+                        ? 'rgba(255, 255, 255, 1)'
+                        : 'rgba(0, 0, 0, 1)',
+                    }}
+                  >
+                    (hrs)
+                  </Typography>
+                )}
+              </Box>
             )}
             <Typography
               sx={{
