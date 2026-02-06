@@ -845,3 +845,23 @@ export function isResourceWithinDate(resource, monday) {
 
 export const formatDateMMDDYYYY = date =>
   date ? format(parseISO(date), USA_DATE_FORMAT) : '';
+
+const getSliderMarks = (max, step = 0.2) => {
+  if (!Number.isFinite(max)) return [];
+
+  const marks = [];
+
+  for (let value = 0; value <= max; value += step) {
+    const rounded = Number(value.toFixed(1));
+
+    marks.push({
+      value: rounded,
+      label: rounded === max ? 'max' : rounded.toString(),
+    });
+  }
+
+  return marks;
+};
+
+export default getSliderMarks;
+

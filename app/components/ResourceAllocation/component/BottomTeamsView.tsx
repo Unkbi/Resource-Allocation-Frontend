@@ -32,7 +32,8 @@ function BottomTeamsView({
   const [selectedTeam, setSelectedTeam] = useState<
     Array<{ label: string; value: string }>
   >([]);
-  const [allocationThreshold, setAllocationThreshold] = useState(1.2);
+  const [allocationThreshold, setAllocationThreshold] = useState([0, 1.2]);
+  
   const dispatch = useDispatch<AppDispatch>();
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
@@ -129,7 +130,7 @@ function BottomTeamsView({
     return result;
   };
 
-  const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
+   const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
     return allocations.filter(
       allocation =>
         allocation.teams &&
@@ -192,22 +193,19 @@ function BottomTeamsView({
       const enrichedResources = computeAverageAllocations(
         removeResourcesWithNoTeams(allRows) ?? []
       );
-
+      
       filteredResources = enrichedResources.filter(row => {
         const teamMatch = selectedTeam.length
           ? row.teams && selectedTeam.some(team => team.label === row.teams)
           : true;
-
+        if (!teamMatch) return false;
         const avgWeekly = row._avgPeriodAllocation ?? 0;
-        if (allocationThreshold === 0) {
-          return teamMatch && hasZeroAllocation(row);
+        const [minVal, maxval] = allocationThreshold;
+        if (minVal === 0 && maxval === 0) {
+       return teamMatch && hasZeroAllocation(row);
         }
-        if (allocationThreshold > 1) {
-          return teamMatch;
-        }
-
-        return teamMatch && avgWeekly <= allocationThreshold;
-      });
+        return avgWeekly >= minVal && avgWeekly <= maxval;
+});
 
       setRows(filteredResources || []);
     }

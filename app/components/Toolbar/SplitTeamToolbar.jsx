@@ -303,8 +303,9 @@ const StyledDivider = styled(Divider)(({ theme }) => ({
   color: '#BABABA',
 }));
 
-const StyledSlider = styled(Slider)(({ theme }) => ({
-  width: '200px',
+export const StyledSlider = styled(Slider)(({ theme }) => ({
+  // width: '200px',
+  width: '300px',
   marginBottom: '0px',
   '& .MuiSlider-rail': {
     backgroundColor: '#DDE1E4',
@@ -325,6 +326,7 @@ const StyledSlider = styled(Slider)(({ theme }) => ({
   '& .MuiSlider-markLabel': {
     fontSize: '10px',
     color: '#666',
+    marginTop :'-10px',
     transform: 'translate(-50%)', // Adjust vertical position
   },
   // Style for the value label

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
+import React, { useCallback, useEffect, useRef, useState, memo, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -37,7 +37,7 @@ import {
   GridToolbarFilterButton,
 } from '@mui/x-data-grid';
 import CustomExport from './CustomExport';
-import {
+import getSliderMarks, {
   calculateWeekRanges,
   generateDateWeekMath,
   generateFirstAndLastMonthYear,
@@ -101,6 +101,7 @@ import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
 import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
 import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
+import { StyledSlider } from './SplitTeamToolbar';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -590,1094 +591,1121 @@ const PortfolioIcon = () => (
 
 const FlatIcon = () => <img src="/images/icons/FlatView.svg" alt="flat view" />;
 
-const CustomToolbar = memo(({ setFilterButtonEl }) => {
-  const dispatch = useDispatch();
-  const [value, setValue] = React.useState([null, null]);
-  const { view, savedViews, currentView, showActuals } = useSelector(
-    state => state.allocationView
-  );
-  const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
-  const { projects, calendarDate: projectsCalendar } = useSelector(
-    state => state.projects
-  );
-  const { user } = useSelector(state => state.user);
-  const { email = '' } = getLoginUserDetails(user) || {};
+const CustomToolbar = memo(
+  ({ setFilterButtonEl, sliderValue, setSliderValue }) => {
+    const dispatch = useDispatch();
+    const [value, setValue] = React.useState([null, null]);
+    const { view, savedViews, currentView, showActuals } = useSelector(
+      state => state.allocationView
+    );
+    const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
+    const { projects, calendarDate: projectsCalendar } = useSelector(
+      state => state.projects
+    );
+    const { user } = useSelector(state => state.user);
+    const { email = '' } = getLoginUserDetails(user) || {};
 
-  const { resources } = useSelector(state => state.resources);
-  const { teams } = useSelector(state => state.teams);
-  const { loginUserPrivileges: permissions, loadingLoginUserPrivileges } =
-    useSelector(state => state.rbac);
-  const { startDate, endDate } = getStartAndEndDateForView(
-    view,
-    projectsCalendar,
-    teamsCalendar
-  );
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [shareLink, setShareLink] = useState('');
-  const [deleteView, setDeleteView] = useState(null);
-  const [isRangePickerOpen, setIsRangePickerOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [popOverAnchorEl, setPopOverAnchorEl] = useState(null);
-  const [selectedView, setSelectedView] = useState('0');
-  const myTeamsButtonRef = useRef(null);
-  const myProjectsButtonRef = useRef(null);
-  const [openAddMenu, setOpenAddMenu] = React.useState(false);
-  const anchorRefAdd = React.useRef(null);
-  const anchorRef = React.useRef(null);
-  const [allApiSuccess, setAllApiSuccess] = useState(false);
-  const { portfolios } = useSelector(state => state.portfolios);
-  const { scalarSettings } = useSelector(state => state.allSettings);
+    const { resources } = useSelector(state => state.resources);
+    const { teams } = useSelector(state => state.teams);
+    const { loginUserPrivileges: permissions, loadingLoginUserPrivileges } =
+      useSelector(state => state.rbac);
+    const { startDate, endDate } = getStartAndEndDateForView(
+      view,
+      projectsCalendar,
+      teamsCalendar
+    );
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [shareDialogOpen, setShareDialogOpen] = useState(false);
+    const [shareLink, setShareLink] = useState('');
+    const [deleteView, setDeleteView] = useState(null);
+    const [isRangePickerOpen, setIsRangePickerOpen] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [popOverAnchorEl, setPopOverAnchorEl] = useState(null);
+    const [selectedView, setSelectedView] = useState('0');
+    const myTeamsButtonRef = useRef(null);
+    const myProjectsButtonRef = useRef(null);
+    const [openAddMenu, setOpenAddMenu] = React.useState(false);
+    const anchorRefAdd = React.useRef(null);
+    const anchorRef = React.useRef(null);
+    const [allApiSuccess, setAllApiSuccess] = useState(false);
+    const { portfolios } = useSelector(state => state.portfolios);
+    const { scalarSettings } = useSelector(state => state.allSettings);
 
-  const projectsLoaded = Array.isArray(projects);
-  const resourcesLoaded = Array.isArray(resources);
-  const teamsLoaded = Array.isArray(teams);
-  const portfoliosLoaded = Array.isArray(portfolios);
+    const projectsLoaded = Array.isArray(projects);
+    const resourcesLoaded = Array.isArray(resources);
+    const teamsLoaded = Array.isArray(teams);
+    const portfoliosLoaded = Array.isArray(portfolios);
 
-  const allDataLoaded =
-    projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
+    const allDataLoaded =
+      projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
 
-  useEffect(() => {
-    setAllApiSuccess(allDataLoaded);
-  }, [projects, resources, teams, portfolios]);
+    const [minValue, maxValue] = sliderValue;
+    console.log('sliderValue in toolbar', maxValue);
+    
+    useEffect(() => {
+      setAllApiSuccess(allDataLoaded);
+    }, [projects, resources, teams, portfolios]);
 
-  const handleViewClick = event => {
-    setAnchorEl(event.currentTarget);
-  };
+    const handleViewClick = event => {
+      setAnchorEl(event.currentTarget);
+    };
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+    const handleClose = () => {
+      setAnchorEl(null);
+    };
 
-  const handlePopoverClose = () => {
-    setPopOverAnchorEl(null);
-  };
+    const handlePopoverClose = () => {
+      setPopOverAnchorEl(null);
+    };
 
-  const handleMenuItemClick = viewId => {
-    setSelectedView(viewId);
-    // Set Current View
-    const newView = savedViews?.find(view => view.Id === viewId);
-    if (newView) {
-      dispatch(setCurrentView(newView));
-    }
-    handleClose();
-  };
+    const handleMenuItemClick = viewId => {
+      setSelectedView(viewId);
+      // Set Current View
+      const newView = savedViews?.find(view => view.Id === viewId);
+      if (newView) {
+        dispatch(setCurrentView(newView));
+      }
+      handleClose();
+    };
 
-  const viewOptions = [
-    {
-      name: 'Teams',
-      icon: <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
-    },
-    {
-      name: 'Organisations',
-      icon: <OrganisationIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
-    },
-    {
-      name: 'Resources',
-      icon: <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
-    },
-    {
-      name: 'Flat',
-      icon: <FlatIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
-    },
-    {
-      name: 'Project',
-      icon: <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
-    },
-    {
-      name: 'Portfolio',
-      icon: <PortfolioIcon sx={{ fontSize: 20, color: '#344665' }} />,
-    },
-    //Commenting two dropdown views , Project and Teams Cost
-    // {
-    //   name: 'Project Cost',
-    //   icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
-    // },
-    // {
-    //   name: 'Teams Cost',
-    //   icon: <TeamsCostIcon sx={{ fontSize: 20, color: '#344665' }} />,
-    // },
-    // 'Organizations'
-  ];
-  const [active, setActive] = useState(false);
+    const viewOptions = [
+      {
+        name: 'Teams',
+        icon: <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+      },
+      {
+        name: 'Organisations',
+        icon: <OrganisationIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+      },
+      {
+        name: 'Resources',
+        icon: <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+      },
+      {
+        name: 'Flat',
+        icon: <FlatIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+      },
+      {
+        name: 'Project',
+        icon: <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+      },
+      {
+        name: 'Portfolio',
+        icon: <PortfolioIcon sx={{ fontSize: 20, color: '#344665' }} />,
+      },
+      //Commenting two dropdown views , Project and Teams Cost
+      // {
+      //   name: 'Project Cost',
+      //   icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+      // },
+      // {
+      //   name: 'Teams Cost',
+      //   icon: <TeamsCostIcon sx={{ fontSize: 20, color: '#344665' }} />,
+      // },
+      // 'Organizations'
+    ];
+    const [active, setActive] = useState(false);
 
-  const first = generateFirstAndLastMonthYear(
-    parseISO(startDate),
-    'MMM yy',
-    true
-  );
-  const last = generateFirstAndLastMonthYear(parseISO(endDate), 'MMM yy', true);
+    const first = generateFirstAndLastMonthYear(
+      parseISO(startDate),
+      'MMM yy',
+      true
+    );
+    const last = generateFirstAndLastMonthYear(
+      parseISO(endDate),
+      'MMM yy',
+      true
+    );
 
-  const handleViewChange = useCallback(
-    event => {
-      dispatch(performChangeView(event.target.value));
-    },
-    [dispatch]
-  );
-  const handleClick = () => {
-    setActive(prev => !prev);
-  };
+    const handleViewChange = useCallback(
+      event => {
+        dispatch(performChangeView(event.target.value));
+      },
+      [dispatch]
+    );
+    const handleClick = () => {
+      setActive(prev => !prev);
+    };
 
-  const changeCalendarDate = (type, StartDate = '', EndDate = '') => {
-    // const isTeams = view === 'Teams';
-    const isNext = type === 'next';
-    // const action = isTeams
-    //   ? updateStartAndEndDate
-    //   : updateProjectStartAndEndDate;
+    const changeCalendarDate = (type, StartDate = '', EndDate = '') => {
+      // const isTeams = view === 'Teams';
+      const isNext = type === 'next';
+      // const action = isTeams
+      //   ? updateStartAndEndDate
+      //   : updateProjectStartAndEndDate;
 
-    // Handle the saveView changes
+      // Handle the saveView changes
 
-    if (type === 'isFixedRange') {
-      const currentDate = new Date();
-      const { weekMinus, weekPlus } = calculateWeekRanges(
-        StartDate,
-        EndDate,
-        currentDate
-      );
-      dispatch(
-        updateCurrentView({
-          isDynamicRange: false,
-          isFixedRange: true,
-          StartDate: StartDate,
-          EndDate: EndDate,
-          WeekPlus: weekPlus,
-          WeekMinus: weekMinus,
-        })
-      );
-    } else {
-      const totalWeeks = getTotalWeeks(
-        currentView?.StartDate,
-        currentView?.EndDate
-      );
+      if (type === 'isFixedRange') {
+        const currentDate = new Date();
+        const { weekMinus, weekPlus } = calculateWeekRanges(
+          StartDate,
+          EndDate,
+          currentDate
+        );
+        dispatch(
+          updateCurrentView({
+            isDynamicRange: false,
+            isFixedRange: true,
+            StartDate: StartDate,
+            EndDate: EndDate,
+            WeekPlus: weekPlus,
+            WeekMinus: weekMinus,
+          })
+        );
+      } else {
+        const totalWeeks = getTotalWeeks(
+          currentView?.StartDate,
+          currentView?.EndDate
+        );
 
-      const toShift = currentView.isFixedRange
-        ? totalWeeks >= TOTAL_FUTURE_WEEKS_ARROW
-          ? TOTAL_FUTURE_WEEKS_ARROW
-          : totalWeeks
-        : TOTAL_FUTURE_WEEKS_ARROW;
+        const toShift = currentView.isFixedRange
+          ? totalWeeks >= TOTAL_FUTURE_WEEKS_ARROW
+            ? TOTAL_FUTURE_WEEKS_ARROW
+            : totalWeeks
+          : TOTAL_FUTURE_WEEKS_ARROW;
 
-      const toNextWeekPlus =
-        currentView.WeekPlus != null
-          ? currentView.WeekPlus + toShift
-          : DEFAULT_PROJECT_WEEK_PLUS + 4;
+        const toNextWeekPlus =
+          currentView.WeekPlus != null
+            ? currentView.WeekPlus + toShift
+            : DEFAULT_PROJECT_WEEK_PLUS + 4;
 
-      const toNextWeekMinus =
-        currentView.WeekMinus != null
-          ? currentView.WeekMinus - toShift
-          : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW;
+        const toNextWeekMinus =
+          currentView.WeekMinus != null
+            ? currentView.WeekMinus - toShift
+            : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW;
 
-      const toPrevWeekPlus =
-        currentView.WeekPlus != null
-          ? currentView.WeekPlus - toShift
-          : DEFAULT_PROJECT_WEEK_MINUS - 4;
+        const toPrevWeekPlus =
+          currentView.WeekPlus != null
+            ? currentView.WeekPlus - toShift
+            : DEFAULT_PROJECT_WEEK_MINUS - 4;
 
-      const toPrevWeekMinus =
-        currentView.WeekMinus != null
-          ? currentView.WeekMinus + toShift
-          : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW;
+        const toPrevWeekMinus =
+          currentView.WeekMinus != null
+            ? currentView.WeekMinus + toShift
+            : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW;
 
-      dispatch(
-        updateCurrentView({
-          ...(!currentView.isFixedRange && { isDynamicRange: true }),
-          ...(isNext
-            ? {
-                StartDate: generateDateWeekMath('WEEK_MINUS', toNextWeekMinus),
-                EndDate: generateDateWeekMath('WEEK_PLUS', toNextWeekPlus),
-                WeekPlus: toNextWeekPlus,
-                WeekMinus: toNextWeekMinus,
-              }
-            : {
-                StartDate: generateDateWeekMath('WEEK_MINUS', toPrevWeekMinus),
-                EndDate: generateDateWeekMath('WEEK_PLUS', toPrevWeekPlus),
-                WeekMinus: toPrevWeekMinus,
-                WeekPlus: toPrevWeekPlus,
-              }),
-        })
-      );
-    }
+        dispatch(
+          updateCurrentView({
+            ...(!currentView.isFixedRange && { isDynamicRange: true }),
+            ...(isNext
+              ? {
+                  StartDate: generateDateWeekMath(
+                    'WEEK_MINUS',
+                    toNextWeekMinus
+                  ),
+                  EndDate: generateDateWeekMath('WEEK_PLUS', toNextWeekPlus),
+                  WeekPlus: toNextWeekPlus,
+                  WeekMinus: toNextWeekMinus,
+                }
+              : {
+                  StartDate: generateDateWeekMath(
+                    'WEEK_MINUS',
+                    toPrevWeekMinus
+                  ),
+                  EndDate: generateDateWeekMath('WEEK_PLUS', toPrevWeekPlus),
+                  WeekMinus: toPrevWeekMinus,
+                  WeekPlus: toPrevWeekPlus,
+                }),
+          })
+        );
+      }
 
-    // dispatch(action({ startDate: startKey, endDate: endKey }));
-  };
+      // dispatch(action({ startDate: startKey, endDate: endKey }));
+    };
 
-  const handleSaveView = () => {
-    if (selectedView === '0') {
-      // Default View is selected, open New View dialog
-      dispatch(
-        openDialog({
-          title: 'Save View',
-          submitButtonText: 'Next',
-          cancelButtonText: 'Cancel',
-          formType: 'new_view',
-          initialData: null,
-        })
-      );
-    } else {
-      dispatch(
-        openDialog({
-          title: currentView?.Name
-            ? `Save View: ${currentView?.Name}`
-            : 'Save View',
-          submitButtonText:
-            permissions && permissions['UserAllocationView']?.u
-              ? 'Save'
-              : permissions && permissions['UserAllocationView']?.c
-                ? 'Next'
+    const handleSaveView = () => {
+      if (selectedView === '0') {
+        // Default View is selected, open New View dialog
+        dispatch(
+          openDialog({
+            title: 'Save View',
+            submitButtonText: 'Next',
+            cancelButtonText: 'Cancel',
+            formType: 'new_view',
+            initialData: null,
+          })
+        );
+      } else {
+        dispatch(
+          openDialog({
+            title: currentView?.Name
+              ? `Save View: ${currentView?.Name}`
+              : 'Save View',
+            submitButtonText:
+              permissions && permissions['UserAllocationView']?.u
+                ? 'Save'
+                : permissions && permissions['UserAllocationView']?.c
+                  ? 'Next'
+                  : '',
+            secondaryButtonText:
+              permissions &&
+              permissions['UserAllocationView']?.c &&
+              permissions &&
+              permissions['UserAllocationView']?.u
+                ? 'Save As'
                 : '',
-          secondaryButtonText:
-            permissions &&
-            permissions['UserAllocationView']?.c &&
-            permissions &&
-            permissions['UserAllocationView']?.u
-              ? 'Save As'
-              : '',
+            cancelButtonText: 'Cancel',
+            formType:
+              permissions &&
+              permissions['UserAllocationView']?.c &&
+              permissions &&
+              permissions['UserAllocationView']?.u
+                ? 'save_view'
+                : 'new_view',
+            initialData: null,
+          })
+        );
+      }
+    };
+
+    const handleEditView = (e, savedViewData) => {
+      e.stopPropagation();
+      dispatch(
+        openDialog({
+          title: 'Edit View',
+          submitButtonText: 'Apply',
           cancelButtonText: 'Cancel',
-          formType:
-            permissions &&
-            permissions['UserAllocationView']?.c &&
-            permissions &&
-            permissions['UserAllocationView']?.u
-              ? 'save_view'
-              : 'new_view',
-          initialData: null,
+          formType: 'name_view',
+          initialData: {
+            id: savedViewData?.Id,
+            name: savedViewData?.Name || '',
+            description: savedViewData?.Description || '',
+            isDefault: savedViewData?.isDefault || false,
+          },
         })
       );
-    }
-  };
+    };
 
-  const handleEditView = (e, savedViewData) => {
-    e.stopPropagation();
-    dispatch(
-      openDialog({
-        title: 'Edit View',
-        submitButtonText: 'Apply',
-        cancelButtonText: 'Cancel',
-        formType: 'name_view',
-        initialData: {
-          id: savedViewData?.Id,
-          name: savedViewData?.Name || '',
-          description: savedViewData?.Description || '',
-          isDefault: savedViewData?.isDefault || false,
-        },
-      })
-    );
-  };
+    const handleDeleteView = (e, view) => {
+      e.stopPropagation();
+      setDeleteView(view);
+      setDeleteDialogOpen(true);
+    };
 
-  const handleDeleteView = (e, view) => {
-    e.stopPropagation();
-    setDeleteView(view);
-    setDeleteDialogOpen(true);
-  };
+    const handleConfirmDelete = () => {
+      setDeleteDialogOpen(false);
+      if (deleteView?.Id) {
+        dispatch(deleteUsersSavedViewAction(deleteView.Id));
+      }
+    };
 
-  const handleConfirmDelete = () => {
-    setDeleteDialogOpen(false);
-    if (deleteView?.Id) {
-      dispatch(deleteUsersSavedViewAction(deleteView.Id));
-    }
-  };
+    const handleCancelDelete = () => {
+      setDeleteDialogOpen(false);
+    };
 
-  const handleCancelDelete = () => {
-    setDeleteDialogOpen(false);
-  };
+    const handleCancelShare = () => {
+      setShareDialogOpen(false);
+    };
 
-  const handleCancelShare = () => {
-    setShareDialogOpen(false);
-  };
-
-  const handleShareDeepLink = () => {
-    const settingsStr = compressToEncodedURIComponent(
-      JSON.stringify(getOnlyFilterSettings(currentView))
-    );
-
-    const link = `${window.location.origin}/allocation?settings=${settingsStr}`;
-    setShareLink(link);
-    setShareDialogOpen(true);
-  };
-
-  const copyLinkToClipboard = () => {
-    navigator.clipboard
-      .writeText(shareLink)
-      .then(() => {
-        dispatch(showToastAction(true, 'Link copied to clipboard!', 'success'));
-      })
-      .catch(err => {
-        console.error('Failed to copy: ', err);
-      });
-  };
-
-  const getIcon = viewId => {
-    // Default View icon
-    if (viewId === '0') {
-      return <DefaultViewStartIcon />;
-    }
-
-    // Selected View icon
-    if (viewId === selectedView) {
-      return <ViewOptionCheckedStartIcon />;
-    }
-    return <ViewOptionStartIcon />;
-  };
-
-  const handleToggle = isMine => {
-    if (isMine && email) {
-      const teamsIAmAllocationManager = getTeamsIamAllocationManager(
-        email,
-        resources || [],
-        teams || []
+    const handleShareDeepLink = () => {
+      const settingsStr = compressToEncodedURIComponent(
+        JSON.stringify(getOnlyFilterSettings(currentView))
       );
 
-      if (
-        (view.includes('Teams') ||
-          view.includes('Organisations') ||
-          view.includes('Resources') ||
-          view.includes('Flat')) &&
-        teamsIAmAllocationManager.length === 0
-      ) {
-        setPopOverAnchorEl(myTeamsButtonRef.current);
-        setTimeout(() => setPopOverAnchorEl(null), 2000);
-        return;
+      const link = `${window.location.origin}/allocation?settings=${settingsStr}`;
+      setShareLink(link);
+      setShareDialogOpen(true);
+    };
+
+    const copyLinkToClipboard = () => {
+      navigator.clipboard
+        .writeText(shareLink)
+        .then(() => {
+          dispatch(
+            showToastAction(true, 'Link copied to clipboard!', 'success')
+          );
+        })
+        .catch(err => {
+          console.error('Failed to copy: ', err);
+        });
+    };
+
+    const getIcon = viewId => {
+      // Default View icon
+      if (viewId === '0') {
+        return <DefaultViewStartIcon />;
       }
 
-      // Check if the user is a project manager in any of the projects
-      const currentResource = resources?.find(r => r.Email === email);
-      const projectsIAmProjectManager = getProjectsIamProjectManager(
-        currentResource?.Id,
-        projects || []
-      );
+      // Selected View icon
+      if (viewId === selectedView) {
+        return <ViewOptionCheckedStartIcon />;
+      }
+      return <ViewOptionStartIcon />;
+    };
+
+    const handleToggle = isMine => {
+      if (isMine && email) {
+        const teamsIAmAllocationManager = getTeamsIamAllocationManager(
+          email,
+          resources || [],
+          teams || []
+        );
+
+        if (
+          (view.includes('Teams') ||
+            view.includes('Organisations') ||
+            view.includes('Resources') ||
+            view.includes('Flat')) &&
+          teamsIAmAllocationManager.length === 0
+        ) {
+          setPopOverAnchorEl(myTeamsButtonRef.current);
+          setTimeout(() => setPopOverAnchorEl(null), 2000);
+          return;
+        }
+
+        // Check if the user is a project manager in any of the projects
+        const currentResource = resources?.find(r => r.Email === email);
+        const projectsIAmProjectManager = getProjectsIamProjectManager(
+          currentResource?.Id,
+          projects || []
+        );
+
+        if (
+          (view.includes('Project') || view.includes('Portfolio')) &&
+          projectsIAmProjectManager.length === 0
+        ) {
+          setPopOverAnchorEl(myProjectsButtonRef.current);
+          setTimeout(() => setPopOverAnchorEl(null), 2000);
+          return;
+        }
+      }
 
       if (
-        (view.includes('Project') || view.includes('Portfolio')) &&
-        projectsIAmProjectManager.length === 0
+        view.includes('Teams') ||
+        view.includes('Organisations') ||
+        view.includes('Resources')
       ) {
-        setPopOverAnchorEl(myProjectsButtonRef.current);
-        setTimeout(() => setPopOverAnchorEl(null), 2000);
+        dispatch(updateCurrentView({ MyTeam: isMine }));
+      } else if (view.includes('Project') || view.includes('Portfolio')) {
+        dispatch(updateCurrentView({ MyProjects: isMine }));
+      }
+    };
+
+    const handleAllocationCostSwitch = () => {
+      const isCost = currentView?.GroupBy.includes('Cost');
+      const newGroupBy = isCost
+        ? currentView?.GroupBy.replace(' Cost', '')
+        : `${currentView?.GroupBy} Cost`;
+      dispatch(performChangeView(newGroupBy));
+    };
+
+    const open = Boolean(anchorEl);
+    const openPopover = Boolean(popOverAnchorEl);
+
+    const currentViewName =
+      savedViews.find(view => view.Id === selectedView)?.Name || 'Default View';
+
+    const handleDateField = (StartDate, EndDate) => {
+      const weeks = getTotalWeeks(StartDate, EndDate);
+      if (weeks > 51) {
+        dispatch(
+          showToastAction(true, 'Date range limited to 51 weeks', 'warning')
+        );
+        const adjustedEndDate = generateDateWeekMath(
+          'WEEK_PLUS',
+          51,
+          new Date(StartDate)
+        );
+        changeCalendarDate('isFixedRange', StartDate, adjustedEndDate);
+
+        const isTeams = view === 'Teams';
+        const action = isTeams
+          ? updateStartAndEndDate
+          : updateProjectStartAndEndDate;
+        dispatch(
+          action({
+            startDate: StartDate,
+            endDate: adjustedEndDate,
+          })
+        );
         return;
       }
-    }
-
-    if (
-      view.includes('Teams') ||
-      view.includes('Organisations') ||
-      view.includes('Resources')
-    ) {
-      dispatch(updateCurrentView({ MyTeam: isMine }));
-    } else if (view.includes('Project') || view.includes('Portfolio')) {
-      dispatch(updateCurrentView({ MyProjects: isMine }));
-    }
-  };
-
-  const handleAllocationCostSwitch = () => {
-    const isCost = currentView?.GroupBy.includes('Cost');
-    const newGroupBy = isCost
-      ? currentView?.GroupBy.replace(' Cost', '')
-      : `${currentView?.GroupBy} Cost`;
-    dispatch(performChangeView(newGroupBy));
-  };
-
-  const open = Boolean(anchorEl);
-  const openPopover = Boolean(popOverAnchorEl);
-
-  const currentViewName =
-    savedViews.find(view => view.Id === selectedView)?.Name || 'Default View';
-
-  const handleDateField = (StartDate, EndDate) => {
-    const weeks = getTotalWeeks(StartDate, EndDate);
-    if (weeks > 51) {
-      dispatch(
-        showToastAction(true, 'Date range limited to 51 weeks', 'warning')
-      );
-      const adjustedEndDate = generateDateWeekMath(
-        'WEEK_PLUS',
-        51,
-        new Date(StartDate)
-      );
-      changeCalendarDate('isFixedRange', StartDate, adjustedEndDate);
-
+      changeCalendarDate('isFixedRange', StartDate, EndDate);
       const isTeams = view === 'Teams';
       const action = isTeams
         ? updateStartAndEndDate
         : updateProjectStartAndEndDate;
-      dispatch(
-        action({
-          startDate: StartDate,
-          endDate: adjustedEndDate,
-        })
-      );
-      return;
-    }
-    changeCalendarDate('isFixedRange', StartDate, EndDate);
-    const isTeams = view === 'Teams';
-    const action = isTeams
-      ? updateStartAndEndDate
-      : updateProjectStartAndEndDate;
-    if (
-      currentView?.isFixedRange &&
-      currentView?.StartDate &&
-      currentView?.EndDate
-    ) {
-      dispatch(
-        action({
-          startDate: StartDate,
-          endDate: EndDate,
-        })
-      );
-    }
-  };
+      if (
+        currentView?.isFixedRange &&
+        currentView?.StartDate &&
+        currentView?.EndDate
+      ) {
+        dispatch(
+          action({
+            startDate: StartDate,
+            endDate: EndDate,
+          })
+        );
+      }
+    };
 
-  useEffect(() => {
-    if (currentView?.Name) {
-      setSelectedView(currentView?.Id);
-    }
-  }, [currentView?.Name]);
+    useEffect(() => {
+      if (currentView?.Name) {
+        setSelectedView(currentView?.Id);
+      }
+    }, [currentView?.Name]);
 
-  const handleAddMenuToggle = () => {
-    setOpenAddMenu(prevOpen => !prevOpen);
-  };
+    const handleAddMenuToggle = () => {
+      setOpenAddMenu(prevOpen => !prevOpen);
+    };
 
-  const handleAddMenuClose = event => {
-    if (
-      anchorRef.current?.contains(event.target) ||
-      anchorRefAdd.current?.contains(event.target)
-    ) {
-      return;
-    }
-    setOpenAddMenu(false);
-  };
-
-  function handleListKeyDown(event) {
-    if (event.key === 'Tab' || event.key === 'Escape') {
-      event.preventDefault();
+    const handleAddMenuClose = event => {
+      if (
+        anchorRef.current?.contains(event.target) ||
+        anchorRefAdd.current?.contains(event.target)
+      ) {
+        return;
+      }
       setOpenAddMenu(false);
+    };
+
+    function handleListKeyDown(event) {
+      if (event.key === 'Tab' || event.key === 'Escape') {
+        event.preventDefault();
+        setOpenAddMenu(false);
+      }
     }
-  }
 
-  const menuItems = [
-    {
-      icon: '/images/icons/AllocationIcon.svg',
-      alt: 'Allocation Icon',
-      title: 'Update Allocation',
-      type: 'add_allocation',
-      entity: 'Allocation',
-    },
-    {
-      icon: '/images/icons/ProjectIcon.svg',
-      alt: 'Project Icon',
-      title: 'Add Project',
-      type: 'add_project',
-      primarySecondButtonText: 'Add & Allocate Resources',
-      initialData: {
-        Status: 'Active',
+    const menuItems = [
+      {
+        icon: '/images/icons/AllocationIcon.svg',
+        alt: 'Allocation Icon',
+        title: 'Update Allocation',
+        type: 'add_allocation',
+        entity: 'Allocation',
       },
-      entity: 'Project',
-    },
-    {
-      icon: '/images/icons/TeamIcon.svg',
-      alt: 'Team Icon',
-      title: 'Add Team',
-      type: 'add_team',
-      entity: 'Team',
-    },
-    {
-      icon: '/images/icons/ResourceIcon.svg',
-      alt: 'Resource Icon',
-      title: 'Add Resource',
-      type: 'add_resource',
-      entity: 'Resource',
-    },
-    {
-      icon: '/images/icons/corporate_fare.svg',
-      alt: 'Organization Icon',
-      title: 'Add Organization',
-      type: 'add_organization',
-      entity: 'Organization',
-    },
-  ];
+      {
+        icon: '/images/icons/ProjectIcon.svg',
+        alt: 'Project Icon',
+        title: 'Add Project',
+        type: 'add_project',
+        primarySecondButtonText: 'Add & Allocate Resources',
+        initialData: {
+          Status: 'Active',
+        },
+        entity: 'Project',
+      },
+      {
+        icon: '/images/icons/TeamIcon.svg',
+        alt: 'Team Icon',
+        title: 'Add Team',
+        type: 'add_team',
+        entity: 'Team',
+      },
+      {
+        icon: '/images/icons/ResourceIcon.svg',
+        alt: 'Resource Icon',
+        title: 'Add Resource',
+        type: 'add_resource',
+        entity: 'Resource',
+      },
+      {
+        icon: '/images/icons/corporate_fare.svg',
+        alt: 'Organization Icon',
+        title: 'Add Organization',
+        type: 'add_organization',
+        entity: 'Organization',
+      },
+    ];
 
-  const handleOpenDialog = (
-    title,
-    formType,
-    primarySecondButtonText,
-    initialData = null
-  ) => {
-    setOpenAddMenu(false);
-    dispatch(
-      openDialog({
-        title: title,
-        submitButtonText: formType === 'add_allocation' ? 'Update' : 'Add',
-        cancelButtonText: 'Cancel',
-        primarySecondButtonText: primarySecondButtonText ?? '',
-        formType: formType,
-        initialData: initialData,
-      })
-    );
-  };
+    const handleOpenDialog = (
+      title,
+      formType,
+      primarySecondButtonText,
+      initialData = null
+    ) => {
+      setOpenAddMenu(false);
+      dispatch(
+        openDialog({
+          title: title,
+          submitButtonText: formType === 'add_allocation' ? 'Update' : 'Add',
+          cancelButtonText: 'Cancel',
+          primarySecondButtonText: primarySecondButtonText ?? '',
+          formType: formType,
+          initialData: initialData,
+        })
+      );
+    };
 
-  const handleShowActualsToggle = () => {
-    dispatch(setShowActuals(!showActuals));
-  };
+    const handleShowActualsToggle = () => {
+      dispatch(setShowActuals(!showActuals));
+    };
 
-  return (
-    <Box className="Toolbar" sx={{ display: 'flex', flexDirection: 'column' }}>
-      {/*Top Toolbar*/}
-      <Box display="flex" position="relative" zIndex={1}>
-        {/* Left Section (Add + View Selector + Toggle Buttons + Date Picker + Views) */}
-        <ToolBox1 sx={{ display: 'flex' }}>
-          {/* Add Button */}
-          {menuItems.some(m =>
-            permissions
-              ? m.entity in permissions && permissions[m.entity]?.c
-              : false
-          ) && (
-            <Box
-              sx={{
-                width: '64px',
-                borderRight: 'rgba(171, 183, 194, 0.5) solid 1px',
-                height: '64px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <IconButton
-                className="AddIcon"
-                onClick={handleAddMenuToggle}
-                ref={anchorRefAdd}
-                disabled={!allApiSuccess}
+    const handleAllocationRangeChange = (event, newValue) => {
+      setSliderValue(newValue);
+    };
+
+    const marks = useMemo(() => getSliderMarks(maxValue), [maxValue]);
+
+    return (
+      <Box
+        className="Toolbar"
+        sx={{ display: 'flex', flexDirection: 'column' }}
+      >
+        {/*Top Toolbar*/}
+        <Box display="flex" position="relative" zIndex={1}>
+          {/* Left Section (Add + View Selector + Toggle Buttons + Date Picker + Views) */}
+          <ToolBox1 sx={{ display: 'flex' }}>
+            {/* Add Button */}
+            {menuItems.some(m =>
+              permissions
+                ? m.entity in permissions && permissions[m.entity]?.c
+                : false
+            ) && (
+              <Box
                 sx={{
+                  width: '64px',
+                  borderRight: 'rgba(171, 183, 194, 0.5) solid 1px',
+                  height: '64px',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: '30px',
-                  height: '24px',
-                  backgroundColor: '#20232D',
-                  marginTop: '3px',
-                  padding: '2px',
-                  borderRadius: '8px',
-                  '&:hover, &:focus': { backgroundColor: '#20232D' },
                 }}
               >
-                {openAddMenu ? (
-                  <CloseIcon
-                    sx={{
-                      color: '#fff',
-                      width: '40px',
-                      height: '40px',
-                      backgroundColor: '#20232D',
-                      borderRadius: '8px',
-                    }}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '44px',
-                      height: '44px',
-                    }}
-                  >
-                    <img
-                      src="/images/icons/AddIconNew.svg"
-                      alt=""
-                      style={{ width: '44px', height: '44px' }}
+                <IconButton
+                  className="AddIcon"
+                  onClick={handleAddMenuToggle}
+                  ref={anchorRefAdd}
+                  disabled={!allApiSuccess}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '30px',
+                    height: '24px',
+                    backgroundColor: '#20232D',
+                    marginTop: '3px',
+                    padding: '2px',
+                    borderRadius: '8px',
+                    '&:hover, &:focus': { backgroundColor: '#20232D' },
+                  }}
+                >
+                  {openAddMenu ? (
+                    <CloseIcon
+                      sx={{
+                        color: '#fff',
+                        width: '40px',
+                        height: '40px',
+                        backgroundColor: '#20232D',
+                        borderRadius: '8px',
+                      }}
                     />
-                  </Box>
-                )}
-              </IconButton>
-              <Popper
-                open={openAddMenu}
-                anchorEl={anchorRefAdd.current}
-                role={undefined}
-                placement="bottom-start"
-                transition
-                disablePortal
-                modifiers={[
-                  {
-                    name: 'offset',
-                    options: {
-                      offset: [0, 4],
-                    },
-                  },
-                ]}
-              >
-                {({ TransitionProps, placement }) => (
-                  <Grow
-                    {...TransitionProps}
-                    style={{
-                      transformOrigin:
-                        placement === 'bottom-start'
-                          ? 'left top'
-                          : 'left bottom',
-                    }}
-                  >
-                    <Paper
-                      className="AddMenu"
+                  ) : (
+                    <Box
                       sx={{
-                        boxShadow: '0px 4px 20px 0px rgba(0, 0, 0, 0.06)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '44px',
+                        height: '44px',
                       }}
                     >
-                      <ClickAwayListener onClickAway={handleAddMenuClose}>
-                        <MenuList
-                          autoFocusItem={openAddMenu}
-                          id="Add-menu"
-                          aria-labelledby="Add-button"
-                          onKeyDown={handleListKeyDown}
-                          sx={{
-                            gap: '8px',
-                            margin: ' 5px',
-                            paddingTop: '18px',
-                            paddingBottom: '12px',
-                          }}
-                        >
-                          {menuItems
-                            .filter(m =>
-                              permissions
-                                ? m.entity in permissions &&
-                                  permissions[m.entity]?.c
-                                : true
-                            )
-                            .map((item, index) => (
-                              <MenuItem
-                                key={index}
-                                onClick={() =>
-                                  handleOpenDialog(
-                                    item.title,
-                                    item.type,
-                                    item?.primarySecondButtonText ?? '',
-                                    item.initialData
-                                  )
-                                }
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  paddingLeft: 2,
-                                  paddingBottom: 2,
-                                  gap: 1,
-                                }}
-                              >
-                                <img
-                                  src={item.icon}
-                                  alt={item.alt}
-                                  width={20}
-                                  style={{ marginRight: 8 }}
-                                />
-                                {item.title}
-                              </MenuItem>
-                            ))}
-                        </MenuList>
-                      </ClickAwayListener>
-                    </Paper>
-                  </Grow>
-                )}
-              </Popper>
-            </Box>
-          )}
-
-          {/* View Grouping Dropdown */}
-          <Box
-            sx={{
-              width: 'auto',
-              height: '64px',
-              backgroundColor: 'rgba(15, 23, 42, 0.04)',
-              borderBottom: ' rgba(206, 220, 233, 0.50) 1px solid',
-            }}
-          >
-            <StyledFormControl size="small">
-              <StyledSelect
-                value={
-                  currentView?.GroupBy === 'Project'
-                    ? 'Projects'
-                    : currentView?.GroupBy === 'Portfolio'
-                      ? `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}s`
-                      : currentView?.GroupBy === 'Project Cost'
-                        ? 'Projects'
-                        : currentView?.GroupBy === 'Teams Cost'
-                          ? 'Teams'
-                          : currentView?.GroupBy === 'Organisations'
-                            ? 'Organizations'
-                            : currentView?.GroupBy || 'Teams'
-                }
-                onChange={handleViewChange}
-                className="projectDropdown"
-                IconComponent={KeyboardArrowDown}
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      backgroundColor: '#FFFFFF',
-                      ml: '2px',
+                      <img
+                        src="/images/icons/AddIconNew.svg"
+                        alt=""
+                        style={{ width: '44px', height: '44px' }}
+                      />
+                    </Box>
+                  )}
+                </IconButton>
+                <Popper
+                  open={openAddMenu}
+                  anchorEl={anchorRefAdd.current}
+                  role={undefined}
+                  placement="bottom-start"
+                  transition
+                  disablePortal
+                  modifiers={[
+                    {
+                      name: 'offset',
+                      options: {
+                        offset: [0, 4],
+                      },
                     },
-                  },
-                }}
-                renderValue={selected => (
-                  <MenuItemContent>
-                    {viewOptions.find(
-                      option => option.name === currentView?.GroupBy
-                    )?.icon ||
-                      (currentView?.GroupBy === 'Teams Cost' ? (
-                        <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />
-                      ) : (
-                        <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />
-                      ))}
-                    <Typography
-                      sx={{
-                        color: '#5D6979',
-                        fontFamily: 'Open Sans',
-                        fontSize: '14px',
-                        fontStyle: 'normal',
-                        fontWeight: 700,
-                        lineHeight: '21.98px',
+                  ]}
+                >
+                  {({ TransitionProps, placement }) => (
+                    <Grow
+                      {...TransitionProps}
+                      style={{
+                        transformOrigin:
+                          placement === 'bottom-start'
+                            ? 'left top'
+                            : 'left bottom',
                       }}
                     >
-                      {selected}
-                    </Typography>
-                  </MenuItemContent>
-                )}
-              >
-                {viewOptions.map(option => (
-                  <StyledMenuItem key={option.name} value={option.name}>
-                    {option.icon}
-                    {option.name === 'Project'
-                      ? 'Projects'
-                      : option.name === 'Project Cost'
-                        ? 'Projects Cost'
-                        : option.name === 'Organisations'
-                          ? 'Organizations'
-                          : option.name === 'Portfolio'
-                            ? `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}s`
-                            : option.name}
-                  </StyledMenuItem>
-                ))}
-              </StyledSelect>
-            </StyledFormControl>
-          </Box>
+                      <Paper
+                        className="AddMenu"
+                        sx={{
+                          boxShadow: '0px 4px 20px 0px rgba(0, 0, 0, 0.06)',
+                        }}
+                      >
+                        <ClickAwayListener onClickAway={handleAddMenuClose}>
+                          <MenuList
+                            autoFocusItem={openAddMenu}
+                            id="Add-menu"
+                            aria-labelledby="Add-button"
+                            onKeyDown={handleListKeyDown}
+                            sx={{
+                              gap: '8px',
+                              margin: ' 5px',
+                              paddingTop: '18px',
+                              paddingBottom: '12px',
+                            }}
+                          >
+                            {menuItems
+                              .filter(m =>
+                                permissions
+                                  ? m.entity in permissions &&
+                                    permissions[m.entity]?.c
+                                  : true
+                              )
+                              .map((item, index) => (
+                                <MenuItem
+                                  key={index}
+                                  onClick={() =>
+                                    handleOpenDialog(
+                                      item.title,
+                                      item.type,
+                                      item?.primarySecondButtonText ?? '',
+                                      item.initialData
+                                    )
+                                  }
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    paddingLeft: 2,
+                                    paddingBottom: 2,
+                                    gap: 1,
+                                  }}
+                                >
+                                  <img
+                                    src={item.icon}
+                                    alt={item.alt}
+                                    width={20}
+                                    style={{ marginRight: 8 }}
+                                  />
+                                  {item.title}
+                                </MenuItem>
+                              ))}
+                          </MenuList>
+                        </ClickAwayListener>
+                      </Paper>
+                    </Grow>
+                  )}
+                </Popper>
+              </Box>
+            )}
 
-          {/* My Projects/Teams Toggle */}
-          <ToolBox2
-            className="filterTopRow"
-            sx={{
-              backgroundColor: 'rgba(15, 23, 42, 0.04)',
-              height: '64px',
-              borderBottom: ' rgba(206, 220, 233, 0.50) 1px solid',
-            }}
-          >
+            {/* View Grouping Dropdown */}
             <Box
-              className="filterColBlock"
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
+                width: 'auto',
+                height: '64px',
+                backgroundColor: 'rgba(15, 23, 42, 0.04)',
+                borderBottom: ' rgba(206, 220, 233, 0.50) 1px solid',
               }}
             >
-              {/* Toggle Icons */}
-              <Box
-                className="projectIcon"
-                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-              >
-                {view.includes('Project') || view.includes('Portfolio') ? (
-                  <>
-                    <TooltipButton
-                      msg="My Projects"
-                      placement="bottom"
-                      onClick={() => handleToggle(true)}
-                    >
-                      <span ref={myProjectsButtonRef}>
-                        <MyProjectIcon
-                          customColor={
-                            currentView?.MyProjects
-                              ? '#5C6777'
-                              : 'rgba(75, 85, 99, 0.30)'
-                          }
-                        />
-                      </span>
-                    </TooltipButton>
-                    <TooltipButton
-                      msg="All Projects"
-                      placement="bottom"
-                      onClick={() => handleToggle(false)}
-                    >
-                      <span ref={myProjectsButtonRef}>
-                        <AllProjectIcon
-                          customColor={
-                            currentView?.MyProjects
-                              ? 'rgba(75, 85, 99, 0.30)'
-                              : '#5C6777'
-                          }
-                        />
-                      </span>
-                    </TooltipButton>
-                    <Popover
-                      open={openPopover}
-                      anchorEl={popOverAnchorEl}
-                      onClose={handlePopoverClose}
-                      anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'center',
-                      }}
-                      transformOrigin={{
-                        vertical: 'top',
-                        horizontal: 'center',
-                      }}
-                      disableAutoFocus
-                      disableEnforceFocus
-                      slotProps={{
-                        paper: {
-                          sx: {
-                            padding: '8px 16px',
-                            backgroundColor: '#f5f5f5',
-                            borderRadius: 1,
-                          },
-                        },
-                      }}
-                    >
-                      <Typography variant="body2">
-                        No projects found.
+              <StyledFormControl size="small">
+                <StyledSelect
+                  value={
+                    currentView?.GroupBy === 'Project'
+                      ? 'Projects'
+                      : currentView?.GroupBy === 'Portfolio'
+                        ? `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}s`
+                        : currentView?.GroupBy === 'Project Cost'
+                          ? 'Projects'
+                          : currentView?.GroupBy === 'Teams Cost'
+                            ? 'Teams'
+                            : currentView?.GroupBy === 'Organisations'
+                              ? 'Organizations'
+                              : currentView?.GroupBy || 'Teams'
+                  }
+                  onChange={handleViewChange}
+                  className="projectDropdown"
+                  IconComponent={KeyboardArrowDown}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        backgroundColor: '#FFFFFF',
+                        ml: '2px',
+                      },
+                    },
+                  }}
+                  renderValue={selected => (
+                    <MenuItemContent>
+                      {viewOptions.find(
+                        option => option.name === currentView?.GroupBy
+                      )?.icon ||
+                        (currentView?.GroupBy === 'Teams Cost' ? (
+                          <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />
+                        ) : (
+                          <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />
+                        ))}
+                      <Typography
+                        sx={{
+                          color: '#5D6979',
+                          fontFamily: 'Open Sans',
+                          fontSize: '14px',
+                          fontStyle: 'normal',
+                          fontWeight: 700,
+                          lineHeight: '21.98px',
+                        }}
+                      >
+                        {selected}
                       </Typography>
-                    </Popover>
-                  </>
-                ) : view.includes('Teams') ||
-                  view.includes('Organisations') ||
-                  view.includes('Resources') ||
-                  view.includes('Flat') ? (
-                  <>
-                    <TooltipButton
-                      msg="My Teams"
-                      placement="bottom"
-                      onClick={() => handleToggle(true)}
-                    >
-                      <span ref={myTeamsButtonRef}>
-                        <MyTeamsIcon
-                          sx={{ width: 15, height: 15 }}
-                          color={
-                            currentView?.MyTeam
-                              ? '#5C6777'
-                              : 'rgba(75, 85, 99, 0.30)'
-                          }
-                        />
-                      </span>
-                    </TooltipButton>
-                    <TooltipButton
-                      msg="All Teams"
-                      placement="bottom"
-                      onClick={() => handleToggle(false)}
-                    >
-                      <span ref={myTeamsButtonRef}>
-                        <MyAllTeamsIcon
-                          sx={{ width: 22, height: 22 }}
-                          color={
-                            currentView?.MyTeam
-                              ? 'rgba(75, 85, 99, 0.30)'
-                              : '#5C6777'
-                          }
-                        />
-                      </span>
-                    </TooltipButton>
-                    <Popover
-                      open={openPopover}
-                      anchorEl={popOverAnchorEl}
-                      onClose={handleClose}
-                      anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'center',
-                      }}
-                      transformOrigin={{
-                        vertical: 'top',
-                        horizontal: 'center',
-                      }}
-                      disableAutoFocus
-                      disableEnforceFocus
-                      slotProps={{
-                        paper: {
-                          sx: {
-                            padding: '8px 16px',
-                            backgroundColor: '#f5f5f5',
-                            borderRadius: 1,
-                          },
-                        },
-                      }}
-                    >
-                      <Typography variant="body2">No teams found.</Typography>
-                    </Popover>
-                  </>
-                ) : null}
-              </Box>
+                    </MenuItemContent>
+                  )}
+                >
+                  {viewOptions.map(option => (
+                    <StyledMenuItem key={option.name} value={option.name}>
+                      {option.icon}
+                      {option.name === 'Project'
+                        ? 'Projects'
+                        : option.name === 'Project Cost'
+                          ? 'Projects Cost'
+                          : option.name === 'Organisations'
+                            ? 'Organizations'
+                            : option.name === 'Portfolio'
+                              ? `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}s`
+                              : option.name}
+                    </StyledMenuItem>
+                  ))}
+                </StyledSelect>
+              </StyledFormControl>
+            </Box>
 
-              {/* Calendar Date Range Picker */}
+            {/* My Projects/Teams Toggle */}
+            <ToolBox2
+              className="filterTopRow"
+              sx={{
+                backgroundColor: 'rgba(15, 23, 42, 0.04)',
+                height: '64px',
+                borderBottom: ' rgba(206, 220, 233, 0.50) 1px solid',
+              }}
+            >
               <Box
+                className="filterColBlock"
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  borderLeft: '1px solid rgba(206, 220, 233, 0.5)',
-                  borderRight: '1px solid rgba(206, 220, 233, 0.5)',
-                  height: '64px',
-                  pt: '6px',
-                  px: 1,
+                  gap: 2,
                 }}
               >
-                <IconButton
-                  sx={{ marginBottom: '8px' }}
-                  onClick={() => changeCalendarDate('prev')}
+                {/* Toggle Icons */}
+                <Box
+                  className="projectIcon"
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                 >
-                  <ChevronLeftIcon />
-                </IconButton>
-                <Box className="rangePicker" sx={{ display: 'flex' }}>
-                  <CustomDateRangePicker
-                    open={isRangePickerOpen}
-                    placeholder={`${first} - ${last}`}
-                    isButton={true}
-                    value={{ StartDate: startDate, EndDate: endDate }}
-                    showCalendarIconOnlyHere
-                    onOpen={() => setIsRangePickerOpen(true)}
-                    onClose={() => setIsRangePickerOpen(false)}
-                    showLabel={false}
-                    format="MMM YY"
-                    maxWeeks={51}
-                    handleDateField={handleDateField}
-                  />
+                  {view.includes('Project') || view.includes('Portfolio') ? (
+                    <>
+                      <TooltipButton
+                        msg="My Projects"
+                        placement="bottom"
+                        onClick={() => handleToggle(true)}
+                      >
+                        <span ref={myProjectsButtonRef}>
+                          <MyProjectIcon
+                            customColor={
+                              currentView?.MyProjects
+                                ? '#5C6777'
+                                : 'rgba(75, 85, 99, 0.30)'
+                            }
+                          />
+                        </span>
+                      </TooltipButton>
+                      <TooltipButton
+                        msg="All Projects"
+                        placement="bottom"
+                        onClick={() => handleToggle(false)}
+                      >
+                        <span ref={myProjectsButtonRef}>
+                          <AllProjectIcon
+                            customColor={
+                              currentView?.MyProjects
+                                ? 'rgba(75, 85, 99, 0.30)'
+                                : '#5C6777'
+                            }
+                          />
+                        </span>
+                      </TooltipButton>
+                      <Popover
+                        open={openPopover}
+                        anchorEl={popOverAnchorEl}
+                        onClose={handlePopoverClose}
+                        anchorOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'center',
+                        }}
+                        transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'center',
+                        }}
+                        disableAutoFocus
+                        disableEnforceFocus
+                        slotProps={{
+                          paper: {
+                            sx: {
+                              padding: '8px 16px',
+                              backgroundColor: '#f5f5f5',
+                              borderRadius: 1,
+                            },
+                          },
+                        }}
+                      >
+                        <Typography variant="body2">
+                          No projects found.
+                        </Typography>
+                      </Popover>
+                    </>
+                  ) : view.includes('Teams') ||
+                    view.includes('Organisations') ||
+                    view.includes('Resources') ||
+                    view.includes('Flat') ? (
+                    <>
+                      <TooltipButton
+                        msg="My Teams"
+                        placement="bottom"
+                        onClick={() => handleToggle(true)}
+                      >
+                        <span ref={myTeamsButtonRef}>
+                          <MyTeamsIcon
+                            sx={{ width: 15, height: 15 }}
+                            color={
+                              currentView?.MyTeam
+                                ? '#5C6777'
+                                : 'rgba(75, 85, 99, 0.30)'
+                            }
+                          />
+                        </span>
+                      </TooltipButton>
+                      <TooltipButton
+                        msg="All Teams"
+                        placement="bottom"
+                        onClick={() => handleToggle(false)}
+                      >
+                        <span ref={myTeamsButtonRef}>
+                          <MyAllTeamsIcon
+                            sx={{ width: 22, height: 22 }}
+                            color={
+                              currentView?.MyTeam
+                                ? 'rgba(75, 85, 99, 0.30)'
+                                : '#5C6777'
+                            }
+                          />
+                        </span>
+                      </TooltipButton>
+                      <Popover
+                        open={openPopover}
+                        anchorEl={popOverAnchorEl}
+                        onClose={handleClose}
+                        anchorOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'center',
+                        }}
+                        transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'center',
+                        }}
+                        disableAutoFocus
+                        disableEnforceFocus
+                        slotProps={{
+                          paper: {
+                            sx: {
+                              padding: '8px 16px',
+                              backgroundColor: '#f5f5f5',
+                              borderRadius: 1,
+                            },
+                          },
+                        }}
+                      >
+                        <Typography variant="body2">No teams found.</Typography>
+                      </Popover>
+                    </>
+                  ) : null}
                 </Box>
 
-                <IconButton
-                  sx={{ marginLeft: '15px', marginBottom: '8px' }}
-                  onClick={() => changeCalendarDate('next')}
+                {/* Calendar Date Range Picker */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderLeft: '1px solid rgba(206, 220, 233, 0.5)',
+                    borderRight: '1px solid rgba(206, 220, 233, 0.5)',
+                    height: '64px',
+                    pt: '6px',
+                    px: 1,
+                  }}
                 >
-                  <ChevronRightIcon />
-                </IconButton>
-              </Box>
-
-              {/* View Selector + Save View Button */}
-              <Box className="view-btn" sx={{ display: 'flex', gap: 2 }}>
-                <Box>
-                  <ViewButton
-                    startIcon={<PreferencesIcon />}
-                    endIcon={<KeyboardArrowDownIcon />}
-                    onClick={handleViewClick}
-                    aria-controls={open ? 'view-menu' : undefined}
-                    aria-haspopup="true"
-                    aria-expanded={open ? 'true' : undefined}
+                  <IconButton
+                    sx={{ marginBottom: '8px' }}
+                    onClick={() => changeCalendarDate('prev')}
                   >
-                    <EllipsisNameCell value={currentViewName} />
-                  </ViewButton>
+                    <ChevronLeftIcon />
+                  </IconButton>
+                  <Box className="rangePicker" sx={{ display: 'flex' }}>
+                    <CustomDateRangePicker
+                      open={isRangePickerOpen}
+                      placeholder={`${first} - ${last}`}
+                      isButton={true}
+                      value={{ StartDate: startDate, EndDate: endDate }}
+                      showCalendarIconOnlyHere
+                      onOpen={() => setIsRangePickerOpen(true)}
+                      onClose={() => setIsRangePickerOpen(false)}
+                      showLabel={false}
+                      format="MMM YY"
+                      maxWeeks={51}
+                      handleDateField={handleDateField}
+                    />
+                  </Box>
 
-                  <StyledMenu
-                    id="group-menu"
-                    anchorEl={anchorEl}
-                    open={open}
-                    onClose={handleClose}
-                    MenuListProps={{ 'aria-labelledby': 'view-button' }}
-                    PaperProps={{
-                      style: {
-                        minWidth: 'auto',
-                        width: 'auto',
-                        position: 'absolute',
-                        left: 0,
-                      },
-                    }}
+                  <IconButton
+                    sx={{ marginLeft: '15px', marginBottom: '8px' }}
+                    onClick={() => changeCalendarDate('next')}
                   >
-                    {savedViews.map(option => (
-                      <StyledViewMenuItem
-                        key={option.Id}
-                        onClick={() => handleMenuItemClick(option.Id)}
-                        className={selectedView === option.Id ? 'selected' : ''}
-                        sx={
-                          option.Id === '0'
-                            ? { borderTop: '1px solid #DDE1E4' }
-                            : {}
-                        }
-                      >
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 3,
-                            minWidth: '180px',
-                          }}
+                    <ChevronRightIcon />
+                  </IconButton>
+                </Box>
+
+                {/* View Selector + Save View Button */}
+                <Box className="view-btn" sx={{ display: 'flex', gap: 2 }}>
+                  <Box>
+                    <ViewButton
+                      startIcon={<PreferencesIcon />}
+                      endIcon={<KeyboardArrowDownIcon />}
+                      onClick={handleViewClick}
+                      aria-controls={open ? 'view-menu' : undefined}
+                      aria-haspopup="true"
+                      aria-expanded={open ? 'true' : undefined}
+                    >
+                      <EllipsisNameCell value={currentViewName} />
+                    </ViewButton>
+
+                    <StyledMenu
+                      id="group-menu"
+                      anchorEl={anchorEl}
+                      open={open}
+                      onClose={handleClose}
+                      MenuListProps={{ 'aria-labelledby': 'view-button' }}
+                      PaperProps={{
+                        style: {
+                          minWidth: 'auto',
+                          width: 'auto',
+                          position: 'absolute',
+                          left: 0,
+                        },
+                      }}
+                    >
+                      {savedViews.map(option => (
+                        <StyledViewMenuItem
+                          key={option.Id}
+                          onClick={() => handleMenuItemClick(option.Id)}
+                          className={
+                            selectedView === option.Id ? 'selected' : ''
+                          }
+                          sx={
+                            option.Id === '0'
+                              ? { borderTop: '1px solid #DDE1E4' }
+                              : {}
+                          }
                         >
                           <Box
                             sx={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 1,
+                              gap: 3,
+                              minWidth: '180px',
                             }}
                           >
-                            {getIcon(option.Id)}
-                            <Box sx={{ flexGrow: 1 }}>{option.Name}</Box>
-                          </Box>
-                          {option.isDefault && option.Id !== '0' && (
-                            <Typography className="tag">default</Typography>
-                          )}
-                          {option.Id !== '0' && (
-                            <Box className="action-buttons">
-                              {permissions &&
-                                permissions['UserAllocationView']?.u && (
-                                  <ActionIconButton
-                                    size="small"
-                                    onClick={e => handleEditView(e, option)}
-                                  >
-                                    <EditActionIcon />
-                                  </ActionIconButton>
-                                )}
-                              {permissions &&
-                                permissions['UserAllocationView']?.d && (
-                                  <ActionIconButton
-                                    size="small"
-                                    onClick={e => handleDeleteView(e, option)}
-                                  >
-                                    <DeleteActionIcon />
-                                  </ActionIconButton>
-                                )}
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
+                            >
+                              {getIcon(option.Id)}
+                              <Box sx={{ flexGrow: 1 }}>{option.Name}</Box>
                             </Box>
-                          )}
-                        </Box>
-                      </StyledViewMenuItem>
-                    ))}
-                  </StyledMenu>
+                            {option.isDefault && option.Id !== '0' && (
+                              <Typography className="tag">default</Typography>
+                            )}
+                            {option.Id !== '0' && (
+                              <Box className="action-buttons">
+                                {permissions &&
+                                  permissions['UserAllocationView']?.u && (
+                                    <ActionIconButton
+                                      size="small"
+                                      onClick={e => handleEditView(e, option)}
+                                    >
+                                      <EditActionIcon />
+                                    </ActionIconButton>
+                                  )}
+                                {permissions &&
+                                  permissions['UserAllocationView']?.d && (
+                                    <ActionIconButton
+                                      size="small"
+                                      onClick={e => handleDeleteView(e, option)}
+                                    >
+                                      <DeleteActionIcon />
+                                    </ActionIconButton>
+                                  )}
+                              </Box>
+                            )}
+                          </Box>
+                        </StyledViewMenuItem>
+                      ))}
+                    </StyledMenu>
+                  </Box>
+
+                  {((selectedView !== '0' &&
+                    ((permissions && permissions['UserAllocationView']?.c) ||
+                      (permissions && permissions['UserAllocationView']?.u))) ||
+                    (selectedView === '0' &&
+                      permissions &&
+                      permissions['UserAllocationView']?.c)) && (
+                    <Button
+                      disabled={
+                        (permissions &&
+                          !permissions['UserAllocationView']?.c &&
+                          permissions &&
+                          !permissions['UserAllocationView']?.u) ||
+                        currentView.GroupBy.includes('Cost') ||
+                        isObjectEqual(
+                          savedViews.find(view => view.Id === selectedView),
+                          currentView
+                        )
+                      }
+                      onClick={handleSaveView}
+                      sx={{
+                        border: 'none !important',
+                        color: '#344665 !important',
+                        textTransform: 'none',
+                        marginTop: '2px',
+                        '&.Mui-disabled': { color: '#9F9F9F !important' },
+                      }}
+                    >
+                      <EllipsisNameCell value="Save View" />
+                    </Button>
+                  )}
                 </Box>
-
-                {((selectedView !== '0' &&
-                  ((permissions && permissions['UserAllocationView']?.c) ||
-                    (permissions && permissions['UserAllocationView']?.u))) ||
-                  (selectedView === '0' &&
-                    permissions &&
-                    permissions['UserAllocationView']?.c)) && (
-                  <Button
-                    disabled={
-                      (permissions &&
-                        !permissions['UserAllocationView']?.c &&
-                        permissions &&
-                        !permissions['UserAllocationView']?.u) ||
-                      currentView.GroupBy.includes('Cost') ||
-                      isObjectEqual(
-                        savedViews.find(view => view.Id === selectedView),
-                        currentView
-                      )
-                    }
-                    onClick={handleSaveView}
-                    sx={{
-                      border: 'none !important',
-                      color: '#344665 !important',
-                      textTransform: 'none',
-                      marginTop: '2px',
-                      '&.Mui-disabled': { color: '#9F9F9F !important' },
-                    }}
-                  >
-                    <EllipsisNameCell value="Save View" />
-                  </Button>
-                )}
               </Box>
-            </Box>
-          </ToolBox2>
-        </ToolBox1>
-        <Box
-          sx={{
-            flexGrow: 1,
-            height: '64px',
-            backgroundColor: 'rgba(15, 23, 42, 0.04)',
-            borderBottom: ' rgba(206, 220, 233, 0.50) 1px solid',
-          }}
-        />
+            </ToolBox2>
+          </ToolBox1>
+          <Box
+            sx={{
+              flexGrow: 1,
+              height: '64px',
+              backgroundColor: 'rgba(15, 23, 42, 0.04)',
+              borderBottom: ' rgba(206, 220, 233, 0.50) 1px solid',
+            }}
+          />
 
-        {/* Right Section: Search Bar */}
-        {/* Sahadev : Search bar temporarily removed as per UX decision */}
-        {/* <Box
+          {/* Right Section: Search Bar */}
+          {/* Sahadev : Search bar temporarily removed as per UX decision */}
+          {/* <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -1727,341 +1755,451 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             />
           </Box>
         </Box> */}
-      </Box>
+        </Box>
 
-      {/* Bottom Toolbar  */}
-      <Box
-        className="lowerToolbar"
-        sx={{
-          height: '54px',
-          flexShrink: 0,
-          display: 'flex',
-          justifyContent: 'space-between',
-          // borderBottom: '3px solid rgba(171, 183, 194, 0.50)',
-          borderBottom: '2px solid rgba(206, 220, 233, 0.50)',
-          background:
-            'linear-gradient(185deg, #FFF 3.99%, rgba(239, 244, 254, 0.10) 251.06%)',
-        }}
-      >
-        <Box className="lowerToolbarSub" sx={{ display: 'flex' }}>
-          {loadingLoginUserPrivileges ? (
-            // Show skeleton placeholders while loading
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Skeleton
-                variant="rounded"
-                width={149}
-                height={24}
-                sx={{ mx: 1 }}
-              />
-              <Box
-                sx={{
-                  borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
-                  ml: '5px',
-                  my: '5px',
-                  height: '34px',
-                }}
-              ></Box>
-              <Skeleton
-                variant="rounded"
-                width={120}
-                height={24}
-                sx={{ mx: 2 }}
-              />
-            </Box>
-          ) : (
-            <>
-              {permissions && permissions['AllocationCost']?.r && (
-                <ToolBox2>
-                  <Stack direction="row" sx={{ alignItems: 'center' }}>
-                    <Typography
-                      sx={{
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: '#344665',
-                      }}
-                    >
-                      Allocations
-                    </Typography>
-                    <Switch
-                      size="small"
-                      checked={currentView?.GroupBy.includes('Cost')}
-                      onChange={handleAllocationCostSwitch}
-                      disabled={
-                        (showActuals &&
-                          !currentView?.GroupBy.includes('Cost')) ||
-                        currentView?.GroupBy === 'Portfolio' ||
-                        currentView?.GroupBy === 'Organisations' ||
-                        currentView?.GroupBy === 'Resources' ||
-                        currentView?.GroupBy === 'Flat'
-                      }
-                    />
-                    <Typography
-                      sx={{
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: '#344665',
-                      }}
-                    >
-                      Costs
-                    </Typography>
-                  </Stack>
-                </ToolBox2>
-              )}
-              {permissions &&
-                permissions['AllocationCost']?.r &&
-                permissions &&
-                permissions['ActualsStatus']?.r && (
-                  <Box
-                    sx={{
-                      borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
-                      ml: '20px',
-                      height: '34px',
-                      position: 'relative',
-                      top: '10px',
-                    }}
-                  ></Box>
-                )}
-              {permissions && permissions['ActualsStatus']?.r && (
+        {/* Bottom Toolbar  */}
+        <Box
+          className="lowerToolbar"
+          sx={{
+            height: '54px',
+            flexShrink: 0,
+            display: 'flex',
+            justifyContent: 'space-between',
+            // borderBottom: '3px solid rgba(171, 183, 194, 0.50)',
+            borderBottom: '2px solid rgba(206, 220, 233, 0.50)',
+            background:
+              'linear-gradient(185deg, #FFF 3.99%, rgba(239, 244, 254, 0.10) 251.06%)',
+          }}
+        >
+          <Box className="lowerToolbarSub" sx={{ display: 'flex' }}>
+            {loadingLoginUserPrivileges ? (
+              // Show skeleton placeholders while loading
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Skeleton
+                  variant="rounded"
+                  width={149}
+                  height={24}
+                  sx={{ mx: 1 }}
+                />
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginLeft: '22px',
+                    borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+                    ml: '5px',
+                    my: '5px',
+                    height: '34px',
                   }}
-                >
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={showActuals}
-                        disabled={currentView?.GroupBy.includes('Cost')}
-                        onChange={handleShowActualsToggle}
-                        size="small"
-                        sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
-                      />
-                    }
-                    label={
+                ></Box>
+                <Skeleton
+                  variant="rounded"
+                  width={120}
+                  height={24}
+                  sx={{ mx: 2 }}
+                />
+              </Box>
+            ) : (
+              <>
+                {permissions && permissions['AllocationCost']?.r && (
+                  <ToolBox2>
+                    <Stack direction="row" sx={{ alignItems: 'center' }}>
                       <Typography
                         sx={{
-                          color: '#374151',
-                          fontFamily: 'Open Sans',
-                          fontSize: '14px',
-                          fontStyle: 'normal',
-                          fontWeight: 500,
-                          lineHeight: '20px',
-                          marginRight: '-12px',
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: '#344665',
                         }}
                       >
-                        Show Actuals
+                        Allocations
                       </Typography>
-                    }
-                  />
-                  <Tooltip
-                    placement="right"
-                    title={
-                      <Box>
-                        <Typography variant="body2">
-                          Displays actuals beneath planned allocations for all
-                          weeks with actuals.
-                        </Typography>
-                        <Typography variant="body2" fontWeight="bold" mt={1}>
-                          Color indicators:
-                        </Typography>
-                        <Typography variant="body2">
-                          <span>● Green</span> = match
-                          <br />
-                          <span>● Yellow</span> = actuals are lower
-                          <br />
-                          <span>● Red</span> = actuals are higher than planned.
-                        </Typography>
-                      </Box>
-                    }
-                  >
+                      <Switch
+                        size="small"
+                        checked={currentView?.GroupBy.includes('Cost')}
+                        onChange={handleAllocationCostSwitch}
+                        disabled={
+                          (showActuals &&
+                            !currentView?.GroupBy.includes('Cost')) ||
+                          currentView?.GroupBy === 'Portfolio' ||
+                          currentView?.GroupBy === 'Organisations' ||
+                          currentView?.GroupBy === 'Resources' ||
+                          currentView?.GroupBy === 'Flat'
+                        }
+                      />
+                      <Typography
+                        sx={{
+                          fontSize: '0.875rem',
+                          fontWeight: 600,
+                          color: '#344665',
+                        }}
+                      >
+                        Costs
+                      </Typography>
+                    </Stack>
+                  </ToolBox2>
+                )}
+                {permissions &&
+                  permissions['AllocationCost']?.r &&
+                  permissions &&
+                  permissions['ActualsStatus']?.r && (
                     <Box
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
+                        borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+                        ml: '20px',
+                        height: '34px',
+                        position: 'relative',
+                        top: '10px',
                       }}
-                    >
-                      <img src="/images/icons/InfoRounded.svg" alt="info" />
-                    </Box>
-                  </Tooltip>
-                </Box>
-              )}
-            </>
-          )}
-        </Box>
-
-        <Box
-          className="lowerToolbarRight"
-          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-        >
-          <GridToolbarContainer
-            ref={setFilterButtonEl}
-            sx={{ padding: 0, flexWrap: 'nowrap' }}
-          >
-            <GridToolbarFilterButton
-              slotProps={{
-                tooltip: { title: 'Filters' },
-                button: {
-                  variant: 'outlined',
-                  sx: {
-                    minWidth: 'unset',
-                    width: '41px',
-                    height: '36px',
-                    padding: '20px 10px 20px 17px',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '6px',
-                    flexShrink: 0,
-                    borderRadius: '6px',
-                    border: '1px solid #E2E8F0',
-                    boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-                    '.MuiButton-startIcon': { marginRight: '0px' },
-                    '& .MuiBadge-root span': { top: '-12px', right: '-5px' },
-                    '& .MuiBadge-root svg': { display: 'none' },
-                  },
-                  component: props => (
-                    <Button
-                      {...props}
-                      startIcon={
-                        <img
-                          src="/images/icons/NewFilterIcon.svg"
-                          alt="filter"
+                    ></Box>
+                  )}
+                {permissions && permissions['ActualsStatus']?.r && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      marginLeft: '22px',
+                    }}
+                  >
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={showActuals}
+                          disabled={currentView?.GroupBy.includes('Cost')}
+                          onChange={handleShowActualsToggle}
+                          size="small"
+                          sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
                         />
                       }
-                    >
-                      {/* No text label for icon-only button */}
-                    </Button>
-                  ),
-                },
-              }}
-            />
-          </GridToolbarContainer>
-
-          <Tooltip title={'Share View'}>
-            <IconButton
-              size="small"
-              onClick={handleShareDeepLink}
-              sx={{
-                width: '41px',
-                height: '36px',
-                padding: '20px 10px 20px 12px',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '6px',
-                flexshrink: 0,
-                borderRadius: '6px',
-                border: '1px solid #E2E8F0',
-                background: '#FFF',
-                boxShadow: ' 0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-              }}
-            >
-              <img src="/images/icons/newShareIcon.svg" alt="share" />
-            </IconButton>
-          </Tooltip>
-
-          <GridToolbarContainer
-            ref={setFilterButtonEl}
-            sx={{ padding: 0, flexWrap: 'nowrap' }}
-          >
-            <GridToolbarColumnsButton
-              slotProps={{
-                tooltip: { title: 'Columns' },
-                button: {
-                  variant: 'outlined',
-                  startIcon: (
-                    <img
-                      src="/images/icons/newColumnIcon.svg"
-                      alt="columns"
-                      style={{ width: 20, height: 20 }}
+                      label={
+                        <Typography
+                          sx={{
+                            color: '#374151',
+                            fontFamily: 'Open Sans',
+                            fontSize: '14px',
+                            fontStyle: 'normal',
+                            fontWeight: 500,
+                            lineHeight: '20px',
+                            marginRight: '-12px',
+                          }}
+                        >
+                          Show Actuals
+                        </Typography>
+                      }
                     />
-                  ),
-                  sx: {
-                    minWidth: 'unset',
-                    width: '41px',
-                    height: '36px',
-                    padding: '20px 17px 20px 17px',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '6px',
-                    flexShrink: 0,
-                    borderRadius: '6px',
-                    border: '1px solid #E2E8F0',
-                    boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-                    '& .MuiButton-startIcon': {
-                      marginRight: '0px',
+                    <Tooltip
+                      placement="right"
+                      title={
+                        <Box>
+                          <Typography variant="body2">
+                            Displays actuals beneath planned allocations for all
+                            weeks with actuals.
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold" mt={1}>
+                            Color indicators:
+                          </Typography>
+                          <Typography variant="body2">
+                            <span>● Green</span> = match
+                            <br />
+                            <span>● Yellow</span> = actuals are lower
+                            <br />
+                            <span>● Red</span> = actuals are higher than
+                            planned.
+                          </Typography>
+                        </Box>
+                      }
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <img src="/images/icons/InfoRounded.svg" alt="info" />
+                      </Box>
+                    </Tooltip>
+
+                    <Box
+                      sx={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        paddingLeft: '10.5px',
+                        paddingRight: '10px',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: '0.894px',
+                          height: '37px',
+                          background: '#CEDCE9',
+                          opacity: 0.5,
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          flex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                          padding: '0 16px',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: ' #212121',
+                            fontFamily: 'Open Sans',
+                            fontSize: '14px',
+                            fontStyle: 'normal',
+                            fontWeight: ' 500',
+                            lineHeight: 'normal',
+                          }}
+                        >
+                          {'Resource Availability'}
+                        </Typography>
+                        {/* <Tooltip
+                                  title="Shows resources whose average utilization for the selected period is ≤ the chosen value."
+                                  arrow
+                                  placement="top"
+                                  componentsProps={{
+                                    tooltip: {
+                                      sx: {
+                                        whiteSpace: 'nowrap',
+                                        maxWidth: 'none',
+                                        fontSize: '12px',
+                                      },
+                                    },
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    <img src="/images/icons/splitInfo.svg" alt="info" />
+                                  </Box>
+                                </Tooltip> */}
+                      </Box>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                          paddingLeft: '3px',
+                        }}
+                      >
+                        <StyledSlider
+                          value={sliderValue}
+                          onChange={handleAllocationRangeChange}
+                          valueLabelDisplay="on"
+                          size="small"
+                          step={0.1}
+                          // min={minValue}
+                          // max={maxValue}
+                          min={0.0}
+                          max={2.0}
+                          marks={marks}
+                          // marks={[
+                          //   { value: 0, label: '0' },
+                          //   { value: 0.2, label: '0.2' },
+                          //   { value: 0.4, label: '0.4' },
+                          //   { value: 0.6, label: '0.6' },
+                          //   { value: 0.8, label: '0.8' },
+                          //   { value: 1, label: '1.0' },
+                          //   { value: 1.2, label: 'max' },
+                          // ]}
+                          valueLabelFormat={value =>
+                            value === maxValue ? 'max' : value
+                          }
+                          // valueLabelFormat={value =>
+                          //   value === 1.1
+                          //     ? 'max'
+                          //     : value === 1.2
+                          //       ? 'max'
+                          //       : `${value}`
+                          // }
+                        />
+                      </Box>
+                    </Box>
+                  </Box>
+                )}
+              </>
+            )}
+          </Box>
+
+          <Box
+            className="lowerToolbarRight"
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          >
+            <GridToolbarContainer
+              ref={setFilterButtonEl}
+              sx={{ padding: 0, flexWrap: 'nowrap' }}
+            >
+              <GridToolbarFilterButton
+                slotProps={{
+                  tooltip: { title: 'Filters' },
+                  button: {
+                    variant: 'outlined',
+                    sx: {
+                      minWidth: 'unset',
+                      width: '41px',
+                      height: '36px',
+                      padding: '20px 10px 20px 17px',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '6px',
+                      flexShrink: 0,
+                      borderRadius: '6px',
+                      border: '1px solid #E2E8F0',
+                      boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                      '.MuiButton-startIcon': { marginRight: '0px' },
+                      '& .MuiBadge-root span': { top: '-12px', right: '-5px' },
+                      '& .MuiBadge-root svg': { display: 'none' },
                     },
-                    '& .MuiButton-endIcon': {
-                      marginLeft: '0px',
+                    component: props => (
+                      <Button
+                        {...props}
+                        startIcon={
+                          <img
+                            src="/images/icons/NewFilterIcon.svg"
+                            alt="filter"
+                          />
+                        }
+                      >
+                        {/* No text label for icon-only button */}
+                      </Button>
+                    ),
+                  },
+                }}
+              />
+            </GridToolbarContainer>
+
+            <Tooltip title={'Share View'}>
+              <IconButton
+                size="small"
+                onClick={handleShareDeepLink}
+                sx={{
+                  width: '41px',
+                  height: '36px',
+                  padding: '20px 10px 20px 12px',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '6px',
+                  flexshrink: 0,
+                  borderRadius: '6px',
+                  border: '1px solid #E2E8F0',
+                  background: '#FFF',
+                  boxShadow: ' 0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                }}
+              >
+                <img src="/images/icons/newShareIcon.svg" alt="share" />
+              </IconButton>
+            </Tooltip>
+
+            <GridToolbarContainer
+              ref={setFilterButtonEl}
+              sx={{ padding: 0, flexWrap: 'nowrap' }}
+            >
+              <GridToolbarColumnsButton
+                slotProps={{
+                  tooltip: { title: 'Columns' },
+                  button: {
+                    variant: 'outlined',
+                    startIcon: (
+                      <img
+                        src="/images/icons/newColumnIcon.svg"
+                        alt="columns"
+                        style={{ width: 20, height: 20 }}
+                      />
+                    ),
+                    sx: {
+                      minWidth: 'unset',
+                      width: '41px',
+                      height: '36px',
+                      padding: '20px 17px 20px 17px',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '6px',
+                      flexShrink: 0,
+                      borderRadius: '6px',
+                      border: '1px solid #E2E8F0',
+                      boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                      '& .MuiButton-startIcon': {
+                        marginRight: '0px',
+                      },
+                      '& .MuiButton-endIcon': {
+                        marginLeft: '0px',
+                      },
                     },
                   },
-                },
-              }}
-            />
-          </GridToolbarContainer>
-          <Tooltip title={'History'}>
-            <IconButton
-              size="small"
-              onClick={() =>
-                handleOpenDialog('View History', 'open_history', '', {
-                  Resource: null,
-                  Project: null,
-                  StartDate: startDate,
-                  EndDate: endDate,
-                })
-              }
-              sx={{
-                width: '41px',
-                height: '1px',
-                padding: '21px 12px 19px 12px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '6px',
-                flexShrink: 0,
-                borderRadius: '6px',
-                border: '1px solid #E2E8F0',
-                background: '#FFF',
-                boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-              }}
-            >
-              <img
-                src="/images/icons/newHistoryIcon(2).svg"
-                alt="History"
-                height="21px"
-                width="21px"
+                }}
               />
-            </IconButton>
-          </Tooltip>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <CustomExport />
+            </GridToolbarContainer>
+            <Tooltip title={'History'}>
+              <IconButton
+                size="small"
+                onClick={() =>
+                  handleOpenDialog('View History', 'open_history', '', {
+                    Resource: null,
+                    Project: null,
+                    StartDate: startDate,
+                    EndDate: endDate,
+                  })
+                }
+                sx={{
+                  width: '41px',
+                  height: '1px',
+                  padding: '21px 12px 19px 12px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '6px',
+                  flexShrink: 0,
+                  borderRadius: '6px',
+                  border: '1px solid #E2E8F0',
+                  background: '#FFF',
+                  boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                }}
+              >
+                <img
+                  src="/images/icons/newHistoryIcon(2).svg"
+                  alt="History"
+                  height="21px"
+                  width="21px"
+                />
+              </IconButton>
+            </Tooltip>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <CustomExport />
+            </Box>
           </Box>
         </Box>
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+          title="Are you sure you want to delete this View?"
+        >
+          {`This will permanently delete the view : ${deleteView?.Name}`}
+        </ConfirmDialog>
+        <ShareLinkDialog
+          open={shareDialogOpen}
+          title="Share this Allocation View"
+          onClose={handleCancelShare}
+        >
+          <CopyLinkInput
+            value={shareLink}
+            onButtonClick={copyLinkToClipboard}
+            buttonText="Copy link"
+            label=""
+          />
+        </ShareLinkDialog>
       </Box>
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-        title="Are you sure you want to delete this View?"
-      >
-        {`This will permanently delete the view : ${deleteView?.Name}`}
-      </ConfirmDialog>
-      <ShareLinkDialog
-        open={shareDialogOpen}
-        title="Share this Allocation View"
-        onClose={handleCancelShare}
-      >
-        <CopyLinkInput
-          value={shareLink}
-          onButtonClick={copyLinkToClipboard}
-          buttonText="Copy link"
-          label=""
-        />
-      </ShareLinkDialog>
-    </Box>
-  );
-});
+    );
+  }
+);
 
 CustomToolbar.displayName = 'CustomToolbar';
 
