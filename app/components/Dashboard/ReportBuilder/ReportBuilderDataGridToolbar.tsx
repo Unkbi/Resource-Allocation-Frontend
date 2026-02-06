@@ -20,6 +20,7 @@ interface ReportBuilderDataGridToolbarExtraProps {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   GridRowCount?: number;
+  tab?: string;
 }
 
 type ReportBuilderDataGridToolbarProps = GridToolbarProps & ReportBuilderDataGridToolbarExtraProps;
@@ -56,6 +57,7 @@ export default function ReportBuilderDataGridToolbar({
   isFullscreen,
   onToggleFullscreen,
   GridRowCount,
+  tab,
 }: ReportBuilderDataGridToolbarProps) {
   const apiRef = useGridApiContext();
   const [columnsAnchorEl, setColumnsAnchorEl] = useState<null | HTMLElement>(null);
@@ -91,14 +93,16 @@ export default function ReportBuilderDataGridToolbar({
           }}
         >
   {/* ************* Part of save reports feature****************  */}
-          {/* <Box
+          {tab === 'aisummary' && (
+            <>
+          <Box
             sx={{
               fontSize: 14,
               fontWeight: 400,
               color: '#2B5BA6',
             }}
           >
-            Resource Productivity Analysis
+            Projects Summaries
           </Box>
           <Box
             sx={{
@@ -106,7 +110,9 @@ export default function ReportBuilderDataGridToolbar({
               height: 40,
               bgcolor: '#CEDCE9',
             }}
-          /> */}
+          />
+          </>
+            )}
           <Box
             sx={{
               fontSize: 14,
