@@ -15,6 +15,7 @@ import ReportBuilderExport from './ReportBuilderExport';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import { ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 interface ReportBuilderDataGridToolbarExtraProps {
   isFullscreen?: boolean;
@@ -137,6 +138,27 @@ export default function ReportBuilderDataGridToolbar({
             />
           </SmallIconButton>
         </Tooltip> */}
+        {tab === 'aisummary' && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                paddingRight: 2,
+              }}
+            >
+              <InfoOutlinedIcon sx={{fontSize: 14, color: '#1C2D5F8F'}}/>
+              <Box
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 400,
+                  color: '#1C2D5F',
+                }}
+              >
+                Click the score to view the weekly AI summary.
+              </Box>
+            </Box>
+          )}
 
         <Tooltip title="Columns">
           <SmallIconButton onClick={handleOpenColumns} aria-label="columns">
