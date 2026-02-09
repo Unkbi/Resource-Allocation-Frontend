@@ -44,7 +44,7 @@ const ActualsCardBox = styled(Box)(({ theme }) => ({
 const ActualsPeriodPill = styled(Box)(({ theme }) => ({
   position: 'relative',
   top: '5px',
-  left: 'calc(100% - 150px)',
+  left: 'calc(100% - 165px)',
   height: '20px',
   padding: '0px 12px',
   borderRadius: '55px',
@@ -250,7 +250,7 @@ const ActualsCard = ({
           sx={{
             backgroundColor: 'transparent',
             top: '2px',
-            left: 'calc(100% - 132px)',
+            left: 'calc(100% - 145px)',
           }}
         >
           {getStatusIcon()}

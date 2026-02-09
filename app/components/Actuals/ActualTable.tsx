@@ -11,6 +11,8 @@ import {
   IconButton,
   Skeleton,
   Link,
+  Tooltip,
+  Icon,
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -105,6 +107,16 @@ const calculateTotal = (data: GridValidRowModel[], columnName: string) => {
 const roundToOneDecimal = (num: number) => {
   return num.toFixed(1);
 };
+
+const OnTrackBorderedIcon = () => (
+  <img src={'/images/icons/OnTrackBordered.svg'} alt="on-track-bordered" />
+);
+const AtRiskBorderedIcon = () => (
+  <img src={'/images/icons/AtRiskBordered.svg'} alt="at-risk-bordered" />
+);
+const OffTrackBorderedIcon = () => (
+  <img src={'/images/icons/OffTrackBordered.svg'} alt="off-track-bordered" />
+);
 
 interface ActualTableProps {
   data: ActualAllocationTableRow[];
@@ -551,7 +563,30 @@ function ActualTable({
     },
     {
       field: 'projectActualsStatus',
-      headerName: 'Status',
+      renderHeader: () => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Typography
+            sx={{
+              color: '#1C2D5F',
+              textAlign: 'center',
+              fontFamily: 'Open Sans, sans-serif',
+              fontSize: '12px',
+              fontStyle: 'normal',
+              fontWeight: '600',
+              lineHeight: 'normal',
+            }}
+          >
+            Status
+          </Typography>
+          <Tooltip
+            title={
+              'How is your part of the project going? Your status plus actual hours shows if you’re ahead, on track, or blocked—and honest updates both protect you and highlight efficient delivery.'
+            }
+          >
+            <img src="/images/icons/InfoRounded.svg" alt="info" />
+          </Tooltip>
+        </Box>
+      ),
       editable: false,
       width: 120,
       align: 'center',
@@ -564,7 +599,45 @@ function ActualTable({
             ? 'disabled-cell'
             : '',
       renderCell: params => {
-        return params.id !== 'total' ? (
+        return params.id === 'total' ? (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-evenly',
+              height: '100%',
+              gap: 0.75,
+            }}
+          >
+            <Tooltip
+              title={
+                '✓ On Track — If you finish your work in less time than planned, marking green signals efficiency and positively impacts the project score.'
+              }
+            >
+              <Icon sx={{ pb: 4 }}>
+                <OnTrackBorderedIcon />
+              </Icon>
+            </Tooltip>
+            <Tooltip
+              title={
+                '⚠ At Risk — Something is slowing you down—waiting on dependencies, unclear requirements, competing priorities. Flagging this early gives managers time to help before small delays become big ones.'
+              }
+            >
+              <Icon sx={{ pb: 4 }}>
+                <AtRiskBorderedIcon />
+              </Icon>
+            </Tooltip>
+            <Tooltip
+              title={
+                '✗ Off Track — A real blocker exists. Calling it out now creates a documented trail that protects you if the project timeline slips. Leadership needs to see where problems are brewing—not after the deadline passes.'
+              }
+            >
+              <Icon sx={{ pb: 4 }}>
+                <OffTrackBorderedIcon />
+              </Icon>
+            </Tooltip>
+          </Box>
+        ) : (
           <ProjectActualsStatusCell
             disabled={disableView}
             row={params.row}
@@ -572,8 +645,6 @@ function ActualTable({
             handleProcessRowUpdate={handleProcessRowUpdate}
             setRowValidationErrors={setRowValidationErrors}
           />
-        ) : (
-          <></>
         );
       },
     },
@@ -855,18 +926,18 @@ function ActualTable({
 
   return (
     <>
-      <Box overflow="hidden" width={730}>
+      <Box overflow="hidden" width={820}>
         <Box
           sx={{
             width: '100%',
             height: '2px',
-            backgroundImage: `linear-gradient(to right, rgba(202, 213, 226, 1) 0% 34.25%, ${
+            backgroundImage: `linear-gradient(to right, rgba(202, 213, 226, 1) 0% 34.15%, ${
               getWeekStatus(startDate) === past
                 ? 'rgba(202, 213, 226, 0.2)'
                 : getWeekStatus(startDate) === current
                   ? 'rgba(30, 58, 139, 1)'
                   : 'rgba(251, 251, 251, 1)'
-            } 34.25% 65.75%,rgba(202, 213, 226, 1) 65.75% 100%)`,
+            } 34.15% 65.85%,rgba(202, 213, 226, 1) 65.85% 100%)`,
             backgroundSize: '100% 2px',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'top',
@@ -1264,10 +1335,12 @@ function ActualTable({
             sx={{
               fontSize: '12px',
               color: 'rgba(64, 68, 76, 1)',
-              marginLeft: '8px',
+              marginLeft: '4px',
             }}
           >
-            Hours per week, 40 hrs = full-time
+            {scalarSettings?.Actuals_Allocation_Preference === HOURS
+              ? 'Hours per week, 40 hrs = full-time'
+              : 'Allocation • 1.0 = full-time • 0.1 = 4 hrs'}
           </Typography>
         </Box>
       </Box>
