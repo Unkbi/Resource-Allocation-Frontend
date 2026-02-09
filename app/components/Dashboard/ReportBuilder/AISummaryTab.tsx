@@ -264,6 +264,7 @@ export default function AISummaryTab() {
                   isFullscreen: isFullscreenGrid,
                   onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
                   GridRowCount: rows.length,
+                  tab: 'aisummary',
                 } as any,
                 columnsPanel: {
                   className: 'styleColumnMenu',
