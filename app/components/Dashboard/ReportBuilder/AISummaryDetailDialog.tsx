@@ -51,7 +51,6 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
     scoreBand,
     summaryHtml,
   } = data;
-console.log(data,"data")
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
