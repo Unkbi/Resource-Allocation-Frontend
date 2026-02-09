@@ -1258,7 +1258,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             justifyContent="center"
             marginTop={0}
           >
-            <Box mx={2} maxWidth={780} minHeight={350}>
+            <Box mx={2} maxWidth={1000} minHeight={350}>
               <Box
                 sx={{
                   display: 'flex',
