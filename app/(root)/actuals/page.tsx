@@ -1126,27 +1126,23 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     let newActual = parseFloat(newRow.actuals) || 0;
     if (actualsChanged) {
       newActual = format2(roundByPreference(newActual));
-      const updatedTotal = rows.reduce((sum, row) => {
-        if (row.id === newRow.id) {
-          return sum + newActual;
-        }
-        if (row.id !== 'total' && row.id !== 'second-total') {
-          return (
-            Math.round(
-              (sum +
-                (row?.actuals ? format2(roundByPreference(row.actuals)) : 0)) *
-                10
-            ) / 10
-          );
-        }
-        return sum;
-      }, 0);
+      const updatedTotal = format2(
+        rows.reduce((sum, row) => {
+          if (row.id === newRow.id) {
+            return sum + newActual;
+          }
+          if (row.id !== 'total' && row.id !== 'second-total') {
+            return sum + (row?.actuals ? roundByPreference(row.actuals) : 0);
+          }
+          return sum;
+        }, 0)
+      );
 
       if (updatedTotal > Number(max_allocation_error)) {
         dispatch(
           showToastAction(
             true,
-            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${scalarSettings?.Actuals_Allocation_Preference === HOURS ? updatedTotal + ' hours' : updatedTotal.toFixed(1)})`,
+            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${scalarSettings?.Actuals_Allocation_Preference === HOURS ? updatedTotal + ' hours' : format2(roundByPreference(updatedTotal))})`,
             'error'
           )
         );
@@ -1155,7 +1151,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         dispatch(
           showToastAction(
             true,
-            `Warning: Total actuals >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${scalarSettings?.Actuals_Allocation_Preference === HOURS ? updatedTotal + ' hours' : updatedTotal.toFixed(1)}`,
+            `Warning: Total actuals >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${scalarSettings?.Actuals_Allocation_Preference === HOURS ? updatedTotal + ' hours' : format2(roundByPreference(updatedTotal))}`,
             'warning'
           )
         );

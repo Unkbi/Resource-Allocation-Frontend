@@ -152,10 +152,9 @@ function AllocationTheme({
   const [activeColorRow, setActiveColorRow] = React.useState<string | null>(
     null
   );
-  const [maxAllocationWarning, setMaxAllocationWarning] =
-    React.useState<number>(0.0);
-  const [maxAllocationError, setMaxAllocationError] =
-    React.useState<number>(0.0);
+  const [maxAllocationWarning, setMaxAllocationWarning] = useState<string>('');
+  const [maxAllocationError, setMaxAllocationError] = useState<string>('');
+
   // Retention durations (1-9 months)
   const [allocationHistoryDuration, setAllocationHistoryDuration] =
     React.useState<string>('');
@@ -163,9 +162,12 @@ function AllocationTheme({
     React.useState<string>('');
 
   // Track original values for change detection
-  const [originalAlertSettings, setOriginalAlertSettings] = React.useState({
-    maxAllocationWarning: 0.0,
-    maxAllocationError: 0.0,
+  const [originalAlertSettings, setOriginalAlertSettings] = React.useState<{
+    maxAllocationWarning: string;
+    maxAllocationError: string;
+  }>({
+    maxAllocationWarning: '',
+    maxAllocationError: '',
   });
 
   const [originalHistorySettings, setOriginalHistorySettings] = React.useState({
@@ -224,21 +226,21 @@ function AllocationTheme({
       }
       if (scalarSettings['Max_Allocation_Warning'] !== undefined) {
         setMaxAllocationWarning(
-          Number(Number(scalarSettings['Max_Allocation_Warning']).toFixed(1))
+          format2(roundToStep(Number(scalarSettings['Max_Allocation_Warning'])))
         );
       }
       if (scalarSettings['Max_Allocation_Error'] !== undefined) {
         setMaxAllocationError(
-          Number(Number(scalarSettings['Max_Allocation_Error']).toFixed(1))
+          format2(roundToStep(Number(scalarSettings['Max_Allocation_Error'])))
         );
       }
       // Update original values for change tracking
       setOriginalAlertSettings({
-        maxAllocationWarning: Number(
-          scalarSettings['Max_Allocation_Warning'] || 0.0
+        maxAllocationWarning: format2(
+          roundToStep(Number(scalarSettings['Max_Allocation_Warning'] || 0.0))
         ),
-        maxAllocationError: Number(
-          scalarSettings['Max_Allocation_Error'] || 0.0
+        maxAllocationError: format2(
+          roundToStep(Number(scalarSettings['Max_Allocation_Error'] || 0.0))
         ),
       });
 
@@ -895,16 +897,27 @@ function AllocationTheme({
 
         // Prepare current settings data
         const currentSettings: SettingsData = {
-          Max_Allocation_Warning: maxAllocationWarning.toFixed(1),
-          Max_Allocation_Error: maxAllocationError.toFixed(1),
+          Max_Allocation_Warning: format2(
+            roundToStep(parseFloat(maxAllocationWarning || '0'))
+          ),
+
+          Max_Allocation_Error: format2(
+            roundToStep(parseFloat(maxAllocationError || '0'))
+          ),
         };
 
         // Prepare original settings data for comparison
         const originalSettings: Record<string, any> = {
-          Max_Allocation_Warning:
-            originalAlertSettings.maxAllocationWarning.toFixed(1),
-          Max_Allocation_Error:
-            originalAlertSettings.maxAllocationError.toFixed(1),
+          Max_Allocation_Warning: format2(
+            roundToStep(
+              parseFloat(originalAlertSettings.maxAllocationWarning || '0')
+            )
+          ),
+          Max_Allocation_Error: format2(
+            roundToStep(
+              parseFloat(originalAlertSettings.maxAllocationError || '0')
+            )
+          ),
         };
 
         const result = await handleOptimizedSettingsSave(
@@ -923,8 +936,12 @@ function AllocationTheme({
         if (result.changedCount > 0) {
           // Update original values after successful save
           setOriginalAlertSettings({
-            maxAllocationWarning,
-            maxAllocationError,
+            maxAllocationWarning: format2(
+              roundToStep(parseFloat(maxAllocationWarning || '0'))
+            ),
+            maxAllocationError: format2(
+              roundToStep(parseFloat(maxAllocationError || '0'))
+            ),
           });
 
           dispatch(
@@ -1205,18 +1222,14 @@ function AllocationTheme({
                     type="number"
                     size="small"
                     placeholder="0.0"
-                    value={
-                      maxAllocationWarning === 0 ? '' : maxAllocationWarning
-                    }
+                    value={maxAllocationWarning}
                     onChange={e => {
                       const val = e.target.value;
-                      if (/^\d*\.?\d{0,1}$/.test(val)) {
-                        const numValue = parseFloat(val);
-                        setMaxAllocationWarning(
-                          Number.isNaN(numValue)
-                            ? 0.0
-                            : parseFloat(numValue.toFixed(1))
-                        );
+
+                      if (/^\d*\.?\d{0,2}$/.test(val)) {
+                        const num = parseFloat(val);
+
+                        setMaxAllocationWarning(val);
                         setHasUnsavedChanges(true);
                       }
                     }}
@@ -1227,10 +1240,11 @@ function AllocationTheme({
                     }}
                     onBlur={e => {
                       const val = e.target.value;
-                      if (val && !isNaN(parseFloat(val))) {
-                        const formattedValue = parseFloat(val).toFixed(1);
-                        setMaxAllocationWarning(parseFloat(formattedValue));
-                      }
+
+                      if (!val || isNaN(parseFloat(val))) return;
+
+                      const snapped = roundToStep(parseFloat(val));
+                      setMaxAllocationWarning(format2(snapped));
                     }}
                     sx={{
                       background: '#fff',
@@ -1315,16 +1329,14 @@ function AllocationTheme({
                     type="number"
                     size="small"
                     placeholder="0.0"
-                    value={maxAllocationError === 0 ? '' : maxAllocationError}
+                    value={maxAllocationError}
                     onChange={e => {
                       const val = e.target.value;
-                      if (/^\d*\.?\d{0,1}$/.test(val)) {
-                        const numValue = parseFloat(val);
-                        setMaxAllocationError(
-                          Number.isNaN(numValue)
-                            ? 0.0
-                            : parseFloat(numValue.toFixed(1))
-                        );
+
+                      if (/^\d*\.?\d{0,2}$/.test(val)) {
+                        const num = parseFloat(val);
+
+                        setMaxAllocationError(val);
                         setHasUnsavedChanges(true);
                       }
                     }}
@@ -1335,10 +1347,11 @@ function AllocationTheme({
                     }}
                     onBlur={e => {
                       const val = e.target.value;
-                      if (val && !isNaN(parseFloat(val))) {
-                        const formattedValue = parseFloat(val).toFixed(1);
-                        setMaxAllocationError(parseFloat(formattedValue));
-                      }
+
+                      if (!val || isNaN(parseFloat(val))) return;
+
+                      const snapped = roundToStep(parseFloat(val));
+                      setMaxAllocationError(format2(snapped));
                     }}
                     sx={{
                       background: '#fff',
