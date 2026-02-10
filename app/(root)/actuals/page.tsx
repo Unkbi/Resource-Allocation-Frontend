@@ -144,7 +144,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     activeAndInactiveResource: Resource[]
   ) => {
     if (!loginUser || loadingPermissions) return [];
-    if (permissions['AdminActuals']?.r) return activeAndInactiveResource;
+    if (permissions['AdminActuals']?.r)
+      return Array.from(
+        new Map(
+          [loginUser, ...activeAndInactiveResource].map(r => [r.Id, r])
+        ).values()
+      );
 
     let resourceList: Resource[] = [];
     if (permissions['AllocationManagerActuals']?.r) {
@@ -249,11 +254,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           })
         );
         // Resources that are Active/Inactive Status
-        setResourceList([
-          // @ts-ignore
-          loginUserTempResourceDetails,
-          ...resourceListBasedOnRole,
-        ]);
+        setResourceList(resourceListBasedOnRole);
       }
     }
     setLoadingName(false);

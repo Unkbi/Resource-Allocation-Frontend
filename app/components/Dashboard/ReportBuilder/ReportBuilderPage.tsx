@@ -979,6 +979,7 @@ function ReportBuilderPage({
                         isFullscreen: isFullscreenGrid,
                         onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
                         GridRowCount: reportData.length,
+                        tab: 'reports',
                       } as any,
                       columnsPanel: {
                         className: "styleColumnMenu",
