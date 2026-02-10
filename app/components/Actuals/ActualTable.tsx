@@ -1011,8 +1011,7 @@ function ActualTable({
               )}
             </Typography>
 
-            {/* Sahadev :  Add once API for ActualsStatusUpdate is provided */}
-            {/* {permissions &&
+            {permissions &&
               (permissions['AdminActuals']?.r ||
                 permissions['AllocationManagerActuals']?.r ||
                 permissions['ManagerActuals']?.r) &&
@@ -1030,7 +1029,7 @@ function ActualTable({
                     alt="Revert"
                   />
                 </IconButton>
-              )} */}
+              )}
           </Box>
 
           {/* CENTER — Date navigation */}

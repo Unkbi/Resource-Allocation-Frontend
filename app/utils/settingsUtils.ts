@@ -150,8 +150,6 @@ export const handleOptimizedSettingsSave = async (
   } = options;
 
   try {
-    debugger;
-
     const changedSettings = getChangedSettings(
       currentSettings,
       originalSettings || databaseSettings

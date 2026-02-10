@@ -16,6 +16,7 @@ import {
   GET_ACTUAL_ALLOCATIONS,
   GET_ACTUAL_ALLOCATIONS_STATUSES,
   GET_ACTUAL_STATUS,
+  UPDATE_ACTUAL_STATUS,
 } from '@/app/redux/actions/actualAllocationsActions';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { useSelector } from 'react-redux';
@@ -25,6 +26,7 @@ import {
   LoginUser,
   Resource,
   Team,
+  UpdateActualStatusForPeriodResponse,
 } from '@/app/types';
 import {
   formateToFloat,
@@ -38,7 +40,10 @@ import {
   isCurrentWeek,
   isFutureWeek,
 } from '@/app/utils/common';
-import { setCalendarDate } from '@/app/redux/reducers/actualAllocationsReducer';
+import {
+  setCalendarDate,
+  updateActualAllocationsStatusForPeriod,
+} from '@/app/redux/reducers/actualAllocationsReducer';
 // @ts-ignore
 import { format, parseISO, startOfWeek } from 'date-fns';
 import { GridValidRowModel, useGridApiRef } from '@mui/x-data-grid-premium';
@@ -729,8 +734,74 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   const handledRevertStatus = (status = 'In-Progress') => {
-    // Code to Revert Status
-    // Add API call to Update Actuals Status.
+    if (!status) return;
+    try {
+      new Promise((resolve, reject) => {
+        dispatch({
+          type: UPDATE_ACTUAL_STATUS,
+          payload: {
+            resource: currentResource?.Id,
+            status: status,
+            period: startDate,
+            resolve,
+            reject,
+          },
+        });
+      })
+        .then((response: any) => {
+          if ((response[0] as UpdateActualStatusForPeriodResponse)?.success) {
+            dispatch(
+              showToastAction(
+                true,
+                response[0]?.message ?? `Successfully updated status.`,
+                'success'
+              )
+            );
+            dispatch(
+              updateActualAllocationsStatusForPeriod({
+                period: response[0].period,
+                status: response[0].status,
+              })
+            );
+          } else {
+            console.error('Error updating status.');
+            dispatch(
+              showToast({
+                open: true,
+                message: `Failed to update status.`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        })
+        .catch((error: AxiosError) => {
+          console.error('Error updating status:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.response?.data
+                ? `Failed to update status. ${error?.response?.data}`
+                : `Failed to update status.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      dispatch(
+        showToast({
+          open: true,
+          message: `Failed to update status.`,
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+    }
   };
 
   const handleNext = () => {
