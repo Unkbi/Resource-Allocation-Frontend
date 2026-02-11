@@ -41,7 +41,6 @@ import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
-import ActualsSettingsAllocationPreference from '@/app/components/Settings/ActualsSettingsAllocationPreference';
 
 interface MenuItem {
   id: string;
@@ -75,17 +74,16 @@ interface SettingsPanelProps {
 export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
   const errors: ValidationErrors = {};
 
-  const STEP = 0.05;
-  const EPS = 0.0001;
-
-  // Normalize values to step grid
+  // Convert string values to numbers for comparison
   const numericRanges = ranges.map(range => ({
     Id: Number(range.id),
-    From: Math.round(parseFloat(range.From) / STEP) * STEP,
-    To: Math.round(parseFloat(range.To) / STEP) * STEP,
+    From: Number.parseFloat(range.From),
+    To: Number.parseFloat(range.To),
   }));
 
+  // Check each range against all others
   numericRanges.forEach((range, index) => {
+    // Skip invalid numbers
     if (isNaN(range.From) || isNaN(range.To)) {
       errors[range.Id] = {
         From: isNaN(range.From),
@@ -95,8 +93,8 @@ export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
       return;
     }
 
-    // From must be <= To
-    if (range.From - range.To > EPS) {
+    // Check if from is greater than to
+    if (range.From > range.To) {
       errors[range.Id] = {
         From: true,
         To: true,
@@ -105,21 +103,34 @@ export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
       return;
     }
 
-    // Overlap check (STEP aware)
+    // Check for overlaps with other ranges
     for (let i = 0; i < numericRanges.length; i++) {
-      if (i === index) continue;
+      if (i === index) continue; // Skip comparing with self
 
-      const other = numericRanges[i];
+      const otherRange = numericRanges[i];
 
-      const noOverlap =
-        range.To <= other.From - STEP + EPS ||
-        range.From >= other.To + STEP - EPS;
+      // Check for overlap
+      const hasOverlap = !(
+        range.To < otherRange.From || range.From > otherRange.To
+      );
 
-      if (!noOverlap) {
+      // Check for subset (this range is inside another range)
+      const isSubset =
+        range.From >= otherRange.From && range.To <= otherRange.To;
+
+      // Check for superset (another range is inside this range)
+      const isSuperset =
+        range.From <= otherRange.From && range.To >= otherRange.To;
+
+      if (hasOverlap || isSubset || isSuperset) {
         errors[range.Id] = {
           From: true,
           To: true,
-          message: 'Range overlaps with another range',
+          message: hasOverlap
+            ? 'Range overlaps with another range'
+            : isSubset
+              ? 'Range is a subset of another range'
+              : 'Range is a superset of another range',
         };
         break;
       }
@@ -153,7 +164,6 @@ const SettingsPanel = ({
 
   const hasAnyAccess = {
     'user-profile': true,
-    'actuals-settings': true,
     notification: false,
     'user-management': permissions['User'].r,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
@@ -208,15 +218,6 @@ const SettingsPanel = ({
             icon: '',
             content: '',
             description: 'Manage your user profile',
-          },
-          {
-            id: 'actuals-settings',
-            title: 'Actuals',
-            headerText: 'Actuals',
-            icon: '',
-            content: <ActualsSettingsAllocationPreference />,
-            description:
-              'Users can choose how they want to enter their actuals: as percentages, hours, or fractions.',
           },
           {
             id: 'notification',

@@ -68,15 +68,6 @@ const actualAllocationsSlice = createSlice({
             })
         : [];
     },
-    updateActualAllocationsStatusForPeriod: (state, action) => {
-      const { period, status } = action.payload;
-      if (!period) return;
-
-      if (state.actualAllocationsStatuses) {
-        state.actualAllocationsStatuses[period] = status;
-      }
-    },
-
     resetActualAllocations: state => {
       state.actualAllocations = {};
       state.actualAllocationsStatuses = {};
@@ -107,7 +98,6 @@ export const {
   setActualAllocationsStatuses,
   setActualAllocationsStatus,
   setActualsStatus,
-  updateActualAllocationsStatusForPeriod,
   setDataProcessing,
   setActualAllocationsStatusesLoading,
   setActualsStatusLoading,
