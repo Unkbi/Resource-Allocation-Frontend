@@ -61,6 +61,7 @@ const isEmptyOrNewSetting = (value: any): boolean => {
     stringValue === '' ||
     stringValue === '0' ||
     stringValue === '0.0' ||
+    stringValue === '0.00' ||
     stringValue ===
       'Allocation for x (resource name) has exceeded the warning threshold.' ||
     stringValue ===
@@ -81,9 +82,11 @@ export const categorizeSettings = (
       SettingValue: formatSettingValue(key, value),
     };
     const hasKey = existingSettings.hasOwnProperty(key);
-    const hasValue = hasKey && !isEmptyOrNewSetting(existingSettings[key]);
+    // Sahadev : Don't think we need this, if key exists then it exists.
+    //           This solves to Update to 0.00 and then to new value issue.
+    // const hasValue = hasKey && !isEmptyOrNewSetting(existingSettings[key]);
 
-    if (hasValue) {
+    if (hasKey) {
       existing.push(payload);
     } else {
       newSettings.push(payload);
