@@ -73,7 +73,7 @@ export const makeStore = () => {
         businessImpact: businessImpactReducer(state?.businessImpact, action),
         aiSummary: aiSummaryReducer(state?.aiSummary, action),
         filters: filterReducer(state?.filters, action),
-        customReport: customReportReducer(state?.customReport, action),,
+        customReport: customReportReducer(state?.customReport, action),
         userPreferences: userPreferencesReducer(state?.userPreferences, action),
       };
     },
