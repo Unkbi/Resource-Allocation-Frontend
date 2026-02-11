@@ -846,22 +846,42 @@ export function isResourceWithinDate(resource, monday) {
 export const formatDateMMDDYYYY = date =>
   date ? format(parseISO(date), USA_DATE_FORMAT) : '';
 
+
+// const getSliderMarks = (max, step = 0.2) => {
+//   if (!Number.isFinite(max)) return [];
+
+//   const marks = [];
+
+//   for (let value = 0; value <= max; value += step) {
+//     const rounded = Number(value.toFixed(1));
+
+//     marks.push({
+//       value: rounded,
+//       label: rounded === max ? 'max' : rounded.toString(),
+//     });
+//   }
+
+//   return marks;
+// };
+
 const getSliderMarks = (max, step = 0.2) => {
   if (!Number.isFinite(max)) return [];
 
   const marks = [];
+  const totalSteps = Math.round(max / step);
 
-  for (let value = 0; value <= max; value += step) {
-    const rounded = Number(value.toFixed(1));
+  for (let i = 0; i <= totalSteps; i++) {
+    const value = Number((i * step).toFixed(1));
 
     marks.push({
-      value: rounded,
-      label: rounded === max ? 'max' : rounded.toString(),
+      value,
+      label: i === totalSteps ? 'max' : value.toString(),
     });
   }
 
   return marks;
 };
+
 
 export default getSliderMarks;
 

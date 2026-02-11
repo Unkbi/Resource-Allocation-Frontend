@@ -1,6 +1,6 @@
 'use client';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
@@ -15,7 +15,7 @@ import EllipsisNameCell from './EllipsisNameCell';
 // import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
-import { Box } from '@mui/material';
+import { Box, Slider } from '@mui/material';
 import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
@@ -27,6 +27,7 @@ import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { get } from 'http';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -153,7 +154,142 @@ function TeamAllocation({
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
   );
- const { resources } = useSelector((state: RootState) => state.resources);
+  const { resources } = useSelector((state: RootState) => state.resources);
+  const [unfilteredData, setUnfilteredData] = useState<AllAllocations[]>([]);
+  let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
+  const [sliderValue, setSliderValue] = useState([0, parseFloat(max_allocation_error)]);
+
+  // useCallback(() => {
+  //   debugger
+  //   //Check if data is changed
+  //   //if so show unfiletred data
+  //   const filteredData = unfilteredData.filter(allocation => {
+  //   const totalEffort = calculateTotalEffort(normalizeRow(allocation));
+  //   return totalEffort >= sliderValue[0] && totalEffort <= sliderValue[1];   
+  // }, [Slider]);
+  // }, [sliderValue]);
+  
+  // useEffect(() => {
+  //   setUnfilteredData(getAllTeamViewRows() as AllAllocations[]);
+
+  // }, [getAllTeamViewRows]);
+  
+//   useEffect(() => {
+//   debugger
+//   const rows = getAllTeamViewRows() as AllAllocations[];
+//   if (rows?.length) {
+//     setUnfilteredData(rows);
+//   }
+// }, [getAllTeamViewRows]);
+
+//   useEffect(() => {
+//   const rows = getAllTeamViewRows() as AllAllocations[];
+
+//   if (!rows?.length) return;
+
+//  
+//   setUnfilteredData(rows);
+
+//   // Apply slider filter immediately
+//   const filtered = rows.filter(allocation => {
+//     const totalEffort = calculateTotalEffort(normalizeRow(allocation));
+//     return (
+//       totalEffort >= sliderValue[0] &&
+//       totalEffort <= sliderValue[1]
+//     );
+//   });
+
+//   setRows(filtered);
+// }, [sliderValue, getAllTeamViewRows, setRows]);
+
+
+// useEffect(() => {
+//   // If no source data yet, do nothing
+//   if (!unfilteredData || unfilteredData.length === 0) {
+//     setRows([]);
+//     return;
+//   }
+
+//   const [min, max] = sliderValue;
+
+//   const filteredRows = unfilteredData.filter(allocation => {
+//     const totalEffort = calculateTotalEffort(
+//       normalizeRow(allocation)
+//     );
+
+//     return totalEffort >= min && totalEffort <= max;
+//   });
+
+//   setRows(filteredRows);
+// }, [sliderValue, unfilteredData, setRows]);
+// const rows = getAllTeamViewRows() as AllAllocations[];
+// console.log(rows , "getallteamviewrows")
+
+const computeResourceAverage = (rows: AllAllocations[]) => {
+  const grouped: Record<string, AllAllocations[]> = {};
+
+  // Group rows by resourceId
+  rows.forEach(row => {
+    if (!grouped[row.resourceId]) {
+      grouped[row.resourceId] = [];
+    }
+    grouped[row.resourceId].push(row);
+  });
+
+  const result: AllAllocations[] = [];
+
+  Object.values(grouped).forEach(resourceRows => {
+    let total = 0;
+    const weekSet = new Set<string>();
+
+    resourceRows.forEach(row => {
+      Object.keys(row).forEach(key => {
+        if (/^W\d+(?:-\d{4})?$/.test(key)) {
+          weekSet.add(key);
+
+          const weekValue = row[key];
+          const numeric =
+            typeof weekValue === 'object'
+              ? Number(weekValue?.value) || 0
+              : Number(weekValue) || 0;
+
+          total += numeric;
+        }
+      });
+    });
+
+    const avg = weekSet.size > 0 ? total / weekSet.size : 0;
+
+    // attach resource-level average to ALL rows
+    resourceRows.forEach(row => {
+      result.push({
+        ...row,
+        _resourceAvgAllocation: avg,
+      });
+    });
+  });
+
+  return result;
+};
+
+  useEffect(() => {
+  if (!unfilteredData.length) {
+    setRows([]);
+    return;
+  }
+
+  const enriched = computeResourceAverage(unfilteredData);
+
+  const [min, max] = sliderValue;
+
+  const filtered = enriched.filter(row => {
+    const avg = row._resourceAvgAllocation ?? 0;
+    return avg >= min && avg <= max;
+  });
+
+  setRows(filtered);
+}, [sliderValue, unfilteredData]);
+
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -161,7 +297,9 @@ function TeamAllocation({
       let filteredResources;
       const allTempRows = getAllRowsForView('teamAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
-        setRows(initSortAllocations(allTempRows as AllAllocations[]) || []);
+        const sorted = initSortAllocations(allTempRows as AllAllocations[]) || [];
+        setRows(sorted);
+        setUnfilteredData(sorted);
         setRowsForView('teamAllocationtemp', []);
       } else {
         const projectViewRows = getAllProjectViewRows();
@@ -198,6 +336,7 @@ function TeamAllocation({
         }));
 
         setRows(formattedResources || []);
+        setUnfilteredData(formattedResources || []);
       }
       // Sahadev : Reset temp View for Project Related Views, Currently ProjectsView and ProtfolioView.
       setRowsForView('projectAllocationtemp', []);
@@ -1073,6 +1212,8 @@ function TeamAllocation({
           groupBy="teams"
           mode="team"
           startDate={startDate}
+          sliderValue ={sliderValue}
+          setSliderValue = {setSliderValue}
           endDate={endDate}
           columns={teamsColumnConfig}
           selectedTeam={selectedTeam}

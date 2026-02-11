@@ -1018,6 +1018,8 @@ function OrganisationAllocation({
           mode="team"
           startDate={startDate}
           endDate={endDate}
+          sliderValue ={[]}
+          setSliderValue = {[() => {}]}
           columns={organisationColumnConfig}
           selectedTeam={selectedTeam}
           toolbarComponent={CustomToolbar}

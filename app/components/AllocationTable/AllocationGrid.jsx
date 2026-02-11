@@ -68,7 +68,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { useDataGrid } from '@/app/context/dataGridContext';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { getFormattedAllocationsForUpdate } from '@/app/utils/allocationUtils';
+import { getCombinedAllocation, getFormattedAllocationsForUpdate } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { startOfWeek, addDays, isValid } from 'date-fns';
 import { isCellEditableUtils } from '@/app/utils/common';
@@ -89,6 +89,8 @@ function AllocationGrid({
   startDate,
   endDate,
   toolbarComponent,
+  sliderValue = [],
+  setSliderValue= () => {},
   NoRowsOverlay,
   mode,
   columnsFilterable = true,
@@ -153,7 +155,7 @@ function AllocationGrid({
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
   const [rowExpanded, setRowExpanded] = useState(false);
 
-  const [sliderValue, setSliderValue] = useState([0, parseFloat(max_allocation_error)]);
+
   const { allAllocations, dataProcessing } = useSelector(
       (state) => state.allAllocations
     );
@@ -1568,129 +1570,8 @@ function AllocationGrid({
     );
   };
 
-    const computeAverageAllocations = (data) => {
-      const grouped = {};
-  
-      // Group by resource
-      data.forEach(row => {
-        const resource = row.resource;
-        if (!resource) return; // Skip if resource is not defined
-        if (!grouped[resource]) grouped[resource] = [];
-        grouped[resource].push(row);
-      });
-  
-      const result = [];
-  
-      Object.entries(grouped).forEach(([resource, rows]) => {
-        let totalAllocation = 0;
-        const seenWeeks = new Set();
-  
-        rows.forEach(row => {
-          Object.keys(row).forEach(key => {
-            if (isWeekKey(key) && typeof row[key] === 'object') {
-              const value = parseFloat(row[key]?.value ?? 0);
-              totalAllocation += value;
-              if (!seenWeeks.has(key)) {
-                seenWeeks.add(key);
-              }
-            }
-          });
-        });
-  
-        const avgAllocation =
-          seenWeeks.size > 0 ? totalAllocation / seenWeeks.size : 0;
-        rows.forEach(row => {
-          const cloned = { ...row };
-          cloned._avgPeriodAllocation = avgAllocation; // New field
-          result.push(cloned);
-        });
-      });
-  
-      return result;
-    };
-  
-     const removeResourcesWithNoTeams = (allocations) => {
-      return allocations.filter(
-        allocation =>
-          allocation.teams &&
-          ((_resources )?.find(
-            res => res.Id === allocation.resourceId
-          )?.EndDate
-            ? new Date(
-                (_resources)?.find(
-                  res => res.Id === allocation.resourceId
-                )?.EndDate ?? ''
-              ) >= new Date(startDate)
-            : true) &&
-          ((_resources)?.find(
-            res => res.Id === allocation.resourceId
-          )?.StartDate
-            ? new Date(
-                (_resources )?.find(
-                  res => res.Id === allocation.resourceId
-                )?.StartDate ?? ''
-              ) <= new Date(endDate)
-            : true)
-      );
-    };
-  
-    const hasZeroAllocation = (row) => {
-      if (row._avgPeriodAllocation === 0) return true;
-      return Object.keys(row).every(key => {
-        if (isWeekKey(key)) {
-          const value = row[key];
-          if (value && typeof value === 'object' && 'value' in value) {
-            return value.value === 0 || value.value === undefined;
-          }
-          return true;
-        }
-        return true;
-      });
-    };
-  
-    useEffect(() => {
-      if (loadingPermissions) return;
-      if (
-        permissions &&
-        permissions['Allocation'].r &&
-        ready &&
-        (allAllocations?.length || getAllRows()?.length)
-      ) {
-        let filteredResources = [];
-        // Combine to keep upto Date information.
-        let allRows = [];
-        if (!loading) {
-          allRows = getCombinedAllocation(getAllRows(), allAllocations || []);
-        } else {
-          // Init or DateShift is performed so need latest information.
-          allRows = allAllocations || [];
-          dispatch(setLoading(false));
-        }
-        const enrichedResources = computeAverageAllocations(
-          removeResourcesWithNoTeams(allRows) ?? []
-        );
 
-        filteredResources = enrichedResources.filter(row => {
-          const teamMatch = selectedTeam.length
-            ? row.teams && selectedTeam.some(team => team.label === row.teams)
-            : true;
-          // debugger;
-          if (!teamMatch) return false;
-
-          const avgWeekly = row._avgPeriodAllocation ?? 0;
-          const [minVal, maxval] = sliderValue;
-
-          if (minVal === 0 && maxval === 0) {
-            return teamMatch && hasZeroAllocation(row);
-          }
-          return avgWeekly >= minVal && avgWeekly <= maxval;
-        });
-
-        setRows(filteredResources || []);
-      }
-    }, [ready, allAllocations, selectedTeam, sliderValue, loadingPermissions]);
-  
-
+    
   const toolBarBasedProperties = toolbarComponent
     ? {
         filterModel: filterModel,
@@ -1702,8 +1583,8 @@ function AllocationGrid({
           toolbarColumns: '',
           toolbarExport: '',
         },
-        sliderValue: sliderValue,
-        setSliderValue: setSliderValue,
+        // sliderValue: sliderValue,
+        // setSliderValue: setSliderValue,
       }
     : {};
 

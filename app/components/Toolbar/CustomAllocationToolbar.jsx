@@ -640,7 +640,7 @@ const CustomToolbar = memo(
       projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
 
     const [minValue, maxValue] = sliderValue;
-    console.log('sliderValue in toolbar', maxValue);
+    // console.log('sliderValue in toolbar', maxValue);
     
     useEffect(() => {
       setAllApiSuccess(allDataLoaded);
@@ -2010,9 +2010,18 @@ const CustomToolbar = memo(
                           //   { value: 1, label: '1.0' },
                           //   { value: 1.2, label: 'max' },
                           // ]}
+                          // valueLabelFormat={value =>
+                          //   value === maxValue ? 'max' : value
+                          // }
+                          // valueLabelFormat={value =>
+                          //   Math.abs(value - maxValue) < 0.0001
+                          //     ? 'max'
+                          //     : value.toFixed(1)
+                          // }
                           valueLabelFormat={value =>
-                            value === maxValue ? 'max' : value
+                            value === maxValue ? 'max' : value.toFixed(1)
                           }
+
                           // valueLabelFormat={value =>
                           //   value === 1.1
                           //     ? 'max'
