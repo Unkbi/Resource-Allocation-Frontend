@@ -67,7 +67,6 @@ import {
   HOURS,
   MISSING_PROJECT_ACTUALS_STATUS,
   TOTAL_ACTUALS_LESS_THAN_ONE,
-  TOTAL_HOURS_IN_WEEK,
 } from '@/app/constants/constants';
 import ActualsCard from '@/app/components/Actuals/ActualsCard';
 import {
@@ -1010,7 +1009,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           : actualAllocations?.[startDate] || [];
       setFormattingActualAllocations(true);
       const formattedData: ActualAllocationTableRow[] =
-        formattedAllActualAllocation
+        actualAllocations?.[startDate]
           ?.filter(
             (alloc: ActualAllocations) =>
               (alloc.AllocationEntered && alloc.AllocationEntered > 0) ||
