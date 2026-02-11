@@ -1077,16 +1077,14 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       return;
     setDisableView(
       (() => {
-        const common =
-          isFutureWeek(parseISO(startDate)) ||
-          (actualAllocationsStatuses?.[startDate] === 'Confirmed' &&
-            startDate !== null &&
-            !isCurrentWeek(parseISO(startDate)));
         if (isCurrentUserLoginUser) {
           return (
             (!permissions['ActualsStatus'].c &&
               !permissions['ActualsStatus'].u) ||
-            common
+            isFutureWeek(parseISO(startDate)) ||
+            (actualAllocationsStatuses?.[startDate] === 'Confirmed' &&
+              startDate !== null &&
+              !isCurrentWeek(parseISO(startDate)))
           );
         } else {
           return (
@@ -1096,7 +1094,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               !permissions['AllocationManagerActuals'].u &&
               !permissions['ManagerActuals'].c &&
               !permissions['ManagerActuals'].u) ||
-            common
+            actualAllocationsStatuses?.[startDate] === 'Confirmed'
           );
         }
       })()
@@ -1726,7 +1724,17 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 rowValidationErrors={rowValidationErrors}
                 setRowValidationErrors={setRowValidationErrors}
                 disableView={disableView}
-                enablePlannedColumn={isFutureWeek(parseISO(startDate || ''))}
+                enablePlannedColumn={
+                  isCurrentUserLoginUser
+                    ? isFutureWeek(parseISO(startDate || ''))
+                    : isFutureWeek(parseISO(startDate || '')) &&
+                      (permissions['AdminActuals'].c ||
+                        permissions['AdminActuals'].u ||
+                        permissions['AllocationManagerActuals'].c ||
+                        permissions['AllocationManagerActuals'].u ||
+                        permissions['ManagerActuals'].c ||
+                        permissions['ManagerActuals'].u)
+                }
                 startDate={startDate}
                 endDate={endDate}
                 apiRef={apiRef}
@@ -1843,23 +1851,29 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                         height: '36px',
                         borderRadius: '5px',
                       }}
-                      disabled={
-                        (!permissions['ActualsStatus'].c &&
-                          !permissions['ActualsStatus'].u) ||
-                        loadingPermissions ||
-                        dataProcessing ||
-                        formattingActualAllocations ||
-                        (startDate !== null &&
-                          actualAllocationsStatuses?.[startDate] !== null &&
-                          actualAllocationsStatuses?.[startDate] !==
-                            'In-Progress' &&
-                          actualAllocationsStatuses?.[startDate] !==
-                            'Not Started' &&
-                          // Enable button if it's the current week even if status is 'Confirmed'
-                          !isCurrentWeek(parseISO(startDate)) &&
-                          disableView &&
-                          !isFutureWeek(parseISO(startDate || '')))
-                      }
+                      disabled={(() => {
+                        if (isCurrentUserLoginUser) {
+                          return (
+                            (!permissions['ActualsStatus'].c &&
+                              !permissions['ActualsStatus'].u) ||
+                            loadingPermissions ||
+                            dataProcessing ||
+                            formattingActualAllocations ||
+                            (startDate !== null &&
+                              actualAllocationsStatuses?.[startDate] !== null &&
+                              actualAllocationsStatuses?.[startDate] !==
+                                'In-Progress' &&
+                              actualAllocationsStatuses?.[startDate] !==
+                                'Not Started' &&
+                              // Enable button if it's the current week even if status is 'Confirmed'
+                              !isCurrentWeek(parseISO(startDate)) &&
+                              disableView &&
+                              !isFutureWeek(parseISO(startDate || '')))
+                          );
+                        } else {
+                          return disableView;
+                        }
+                      })()}
                       onClick={validateDataBeforeConfirm}
                     >
                       <Typography
