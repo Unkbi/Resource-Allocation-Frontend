@@ -1071,7 +1071,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         }
       })()
     );
-  }, [loadingPermissions, dataProcessing, actualAllocationsStatusesLoading]);
+  }, [
+    loadingPermissions,
+    dataProcessing,
+    actualAllocationsStatusesLoading,
+    actualAllocationsStatuses,
+  ]);
 
   useEffect(() => {
     if (loadingPermissions) return;
