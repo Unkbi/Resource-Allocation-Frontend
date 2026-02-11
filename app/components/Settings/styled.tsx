@@ -271,7 +271,7 @@ const AddButton = styled(Button)({
 
 export const StyledRangeField = styled(TextField)<{ error?: boolean }>(
   ({ error }) => ({
-    width: '48px',
+    width: '55px',
     height: '27px',
 
     '& .MuiInputBase-root': {
@@ -302,7 +302,7 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }: ThemeProps) => ({
   borderRight: 'none',
   borderLeft: 'none',
   '& .MuiDataGrid-main': {
-    borderRight: '1px solid #DDE1E4'
+    borderRight: '1px solid #DDE1E4',
   },
   '& .MuiDataGrid-columnHeaders': {
     '& .MuiDataGrid-columnHeader': {
@@ -412,30 +412,30 @@ const StatusPill = styled('div')<{ status?: string }>(({ theme, status }) => {
   }
 
   return {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '4px',
-  borderRadius: '4px',
-  fontFamily: theme.typography.fontFamily,
-  fontSize: '12px',
-  fontWeight: 400,
-  lineHeight: '18px',
-  padding: '2px 6px',
-  backgroundColor: '#FFFFFF',
-  border: '1px solid #D0D5DD',
-  color: textColor,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '4px',
+    borderRadius: '4px',
+    fontFamily: theme.typography.fontFamily,
+    fontSize: '12px',
+    fontWeight: 400,
+    lineHeight: '18px',
+    padding: '2px 6px',
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #D0D5DD',
+    color: textColor,
 
-  '&::before': {
-    content: '""',
-    display: 'inline-block',
-    width: '6px',
-    height: '6px',
-    borderRadius: '50%',
-    backgroundColor: textColor,
-    flexShrink: 0
-  },
-}
+    '&::before': {
+      content: '""',
+      display: 'inline-block',
+      width: '6px',
+      height: '6px',
+      borderRadius: '50%',
+      backgroundColor: textColor,
+      flexShrink: 0,
+    },
+  };
 });
 
 const ScorePill = styled('div')<{ score?: number }>(({ score }) => {
@@ -525,5 +525,5 @@ export {
   StyledTableHeader,
   StatusPill,
   ScorePill,
-  commonTabSx
+  commonTabSx,
 };
