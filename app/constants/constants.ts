@@ -348,13 +348,13 @@ export const FAR_FUTURE_DATE = '2100-01-01';
 
 export const TOTAL_HOURS_IN_WEEK = 40;
 
-export const DEFAULT_ACTUALS_ALLOCATION_PREFERENCE = 'Fractions';
 export const HOURS = 'Hours';
 export const PERCENTAGES = 'Percentages';
 export const FRACTIONS = 'Fractions';
 export const ACTUALS_ALLOCATION_PREFERENCE_OPTIONS = [
-  PERCENTAGES,
+  // PERCENTAGES, // Sahadev : Uncomment when support is added.
   HOURS,
   FRACTIONS,
 ];
+export const DEFAULT_ACTUALS_ALLOCATION_PREFERENCE = FRACTIONS;
 export const STEP = 0.05;

@@ -16,6 +16,7 @@ import {
   GET_ACTUAL_ALLOCATIONS,
   GET_ACTUAL_ALLOCATIONS_STATUSES,
   GET_ACTUAL_STATUS,
+  UPDATE_ACTUAL_STATUS,
 } from '@/app/redux/actions/actualAllocationsActions';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { useSelector } from 'react-redux';
@@ -25,6 +26,7 @@ import {
   LoginUser,
   Resource,
   Team,
+  UpdateActualStatusForPeriodResponse,
 } from '@/app/types';
 import {
   formateToFloat,
@@ -38,7 +40,10 @@ import {
   isCurrentWeek,
   isFutureWeek,
 } from '@/app/utils/common';
-import { setCalendarDate } from '@/app/redux/reducers/actualAllocationsReducer';
+import {
+  setCalendarDate,
+  updateActualAllocationsStatusForPeriod,
+} from '@/app/redux/reducers/actualAllocationsReducer';
 // @ts-ignore
 import { format, parseISO, startOfWeek } from 'date-fns';
 import { GridValidRowModel, useGridApiRef } from '@mui/x-data-grid-premium';
@@ -101,8 +106,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     (state: RootState) => state.allResourcesDetail
   );
   const { projects } = useSelector((state: RootState) => state.projects);
-  const { scalarSettings } = useSelector(
-    (state: RootState) => state.allSettings
+  const { userPreferences } = useSelector(
+    (state: RootState) => state.userPreferences
   );
   const [formattedActualAllocations, setFormattedActualAllocations] = useState<
     ActualAllocationTableRow[]
@@ -137,20 +142,20 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   let max_allocation_error = useMemo(
     () =>
-      scalarSettings?.Actuals_Allocation_Preference === HOURS
-        ? Number(scalarSettings?.Max_Allocation_Error || '2.0') *
+      userPreferences?.Actuals_Allocation_Preference === HOURS
+        ? Number(userPreferences?.Max_Allocation_Error || '2.0') *
           TOTAL_HOURS_IN_WEEK
-        : Number(scalarSettings?.Max_Allocation_Error || '2.0'),
-    [scalarSettings]
+        : Number(userPreferences?.Max_Allocation_Error || '2.0'),
+    [userPreferences]
   );
 
   let max_allocation_warning = useMemo(
     () =>
-      scalarSettings?.Actuals_Allocation_Preference === HOURS
-        ? Number(scalarSettings?.Max_Allocation_Warning || '1.5') *
+      userPreferences?.Actuals_Allocation_Preference === HOURS
+        ? Number(userPreferences?.Max_Allocation_Warning || '1.5') *
           TOTAL_HOURS_IN_WEEK
-        : Number(scalarSettings?.Max_Allocation_Warning || '1.5'),
-    [scalarSettings]
+        : Number(userPreferences?.Max_Allocation_Warning || '1.5'),
+    [userPreferences]
   );
 
   const handleModificationChange = (modified: boolean) => {
@@ -353,7 +358,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const updatePlannedAllocationsIfNeeded = () => {
     if (!currentResource) return;
     const allRows =
-      scalarSettings?.Actuals_Allocation_Preference === HOURS
+      userPreferences?.Actuals_Allocation_Preference === HOURS
         ? formatAllocationTableDataWithToFTE(
             apiRef.current
               .getAllRowIds()
@@ -518,7 +523,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
     if (isFridayOrAfterFriday) {
       const allRows =
-        scalarSettings?.Actuals_Allocation_Preference === HOURS
+        userPreferences?.Actuals_Allocation_Preference === HOURS
           ? formatAllocationTableDataWithToFTE(
               apiRef.current
                 .getAllRowIds()
@@ -561,7 +566,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const handleConfirmed = (status = 'Confirmed') => {
     if (projects && currentResource) {
       const allData =
-        scalarSettings?.Actuals_Allocation_Preference === HOURS
+        userPreferences?.Actuals_Allocation_Preference === HOURS
           ? formatAllocationTableDataWithToFTE(
               apiRef.current
                 .getAllRowIds()
@@ -581,7 +586,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             return {
               ...allocations,
               ActualsEntered:
-                scalarSettings?.Actuals_Allocation_Preference === HOURS
+                userPreferences?.Actuals_Allocation_Preference === HOURS
                   ? (row.actuals ?? 0)
                   : normalizeAllocationValue(row.actuals || 0),
               Notes: row.comments || '',
@@ -612,7 +617,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             (project: any) => project.Name === tabData.project
           )?.Id,
           ActualsEntered:
-            scalarSettings?.Actuals_Allocation_Preference === HOURS
+            userPreferences?.Actuals_Allocation_Preference === HOURS
               ? (tabData.actuals ?? 0)
               : normalizeAllocationValue(tabData.actuals),
           Notes: tabData.comments || '',
@@ -729,8 +734,74 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   const handledRevertStatus = (status = 'In-Progress') => {
-    // Code to Revert Status
-    // Add API call to Update Actuals Status.
+    if (!status) return;
+    try {
+      new Promise((resolve, reject) => {
+        dispatch({
+          type: UPDATE_ACTUAL_STATUS,
+          payload: {
+            resource: currentResource?.Id,
+            status: status,
+            period: startDate,
+            resolve,
+            reject,
+          },
+        });
+      })
+        .then((response: any) => {
+          if ((response[0] as UpdateActualStatusForPeriodResponse)?.success) {
+            dispatch(
+              showToastAction(
+                true,
+                response[0]?.message ?? `Successfully updated status.`,
+                'success'
+              )
+            );
+            dispatch(
+              updateActualAllocationsStatusForPeriod({
+                period: response[0].period,
+                status: response[0].status,
+              })
+            );
+          } else {
+            console.error('Error updating status.');
+            dispatch(
+              showToast({
+                open: true,
+                message: `Failed to update status.`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        })
+        .catch((error: AxiosError) => {
+          console.error('Error updating status:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.response?.data
+                ? `Failed to update status. ${error?.response?.data}`
+                : `Failed to update status.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      dispatch(
+        showToast({
+          open: true,
+          message: `Failed to update status.`,
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+    }
   };
 
   const handleNext = () => {
@@ -922,7 +993,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (loadingPermissions || dataProcessing) return;
     if (startDate) {
       const formattedAllActualAllocation =
-        scalarSettings?.Actuals_Allocation_Preference === HOURS
+        userPreferences?.Actuals_Allocation_Preference === HOURS
           ? formatAllocationDataWithToHours(
               actualAllocations?.[startDate] || []
             )
@@ -993,7 +1064,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   }, [loadingPermissions]);
 
   const roundByPreference = (value: number) => {
-    if (scalarSettings?.Actuals_Allocation_Preference === HOURS) {
+    if (userPreferences?.Actuals_Allocation_Preference === HOURS) {
       return roundToNearestEven(value);
     }
     return roundToStep05(value);
@@ -1075,7 +1146,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           dispatch(
             showToastAction(
               true,
-              `Total of Planned cannot exceed ${max_allocation_error} (Current sum: ${scalarSettings?.Actuals_Allocation_Preference === HOURS ? updatedPlannedTotal + ' hours' : updatedPlannedTotal.toFixed(1)})`,
+              `Total of Planned cannot exceed ${max_allocation_error} (Current sum: ${userPreferences?.Actuals_Allocation_Preference === HOURS ? updatedPlannedTotal + ' hours' : updatedPlannedTotal.toFixed(1)})`,
               'error'
             )
           );
@@ -1084,7 +1155,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           dispatch(
             showToastAction(
               true,
-              `Warning: Total planned is >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${scalarSettings?.Actuals_Allocation_Preference === HOURS ? updatedPlannedTotal + ' hours' : updatedPlannedTotal.toFixed(1)}`,
+              `Warning: Total planned is >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${userPreferences?.Actuals_Allocation_Preference === HOURS ? updatedPlannedTotal + ' hours' : updatedPlannedTotal.toFixed(1)}`,
               'warning'
             )
           );
@@ -1142,7 +1213,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         dispatch(
           showToastAction(
             true,
-            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${scalarSettings?.Actuals_Allocation_Preference === HOURS ? updatedTotal + ' hours' : format2(roundByPreference(updatedTotal))})`,
+            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${userPreferences?.Actuals_Allocation_Preference === HOURS ? updatedTotal + ' hours' : format2(roundByPreference(updatedTotal))})`,
             'error'
           )
         );
@@ -1151,7 +1222,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         dispatch(
           showToastAction(
             true,
-            `Warning: Total actuals >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${scalarSettings?.Actuals_Allocation_Preference === HOURS ? updatedTotal + ' hours' : format2(roundByPreference(updatedTotal))}`,
+            `Warning: Total actuals >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${userPreferences?.Actuals_Allocation_Preference === HOURS ? updatedTotal + ' hours' : format2(roundByPreference(updatedTotal))}`,
             'warning'
           )
         );
@@ -1459,7 +1530,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       ) || ''
                     }
                     actualAllocationData={
-                      scalarSettings?.Actuals_Allocation_Preference === HOURS
+                      userPreferences?.Actuals_Allocation_Preference === HOURS
                         ? formatAllocationDataWithToHours(
                             actualAllocations[
                               generateDateWeekMath(
@@ -1549,7 +1620,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       ) || ''
                     }
                     actualAllocationData={
-                      scalarSettings?.Actuals_Allocation_Preference === HOURS
+                      userPreferences?.Actuals_Allocation_Preference === HOURS
                         ? formatAllocationDataWithToHours(
                             actualAllocations[
                               generateDateWeekMath(
@@ -1645,7 +1716,14 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     Prev Week
                   </Button>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      pl: 7.5,
+                    }}
+                  >
                     {/* Only For Past Weeks */}
                     {!isFutureWeek(parseISO(startDate || '')) &&
                       isFridayOrAfterFriday && (
@@ -1698,7 +1776,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                         // @ts-ignore
                         bgcolor: theme => theme.palette.sideBarColor.main,
                         px: 2,
-                        width: isFridayOrAfterFriday ? '137px' : '192px',
+                        width: '192px',
                         height: '36px',
                         borderRadius: '5px',
                       }}
@@ -1731,7 +1809,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                           textTransform: 'none',
                         }}
                       >
-                        {isFridayOrAfterFriday ? 'Confirm' : 'Save'}
+                        {isFridayOrAfterFriday ? 'Save and Confirm' : 'Save'}
                       </Typography>
                     </Button>
                   </Box>
@@ -1803,7 +1881,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           {showAlertDialog?.includes(TOTAL_ACTUALS_LESS_THAN_ONE) && (
             <>
               <span>
-                {`Total actuals for this week are < ${scalarSettings?.Actuals_Allocation_Preference === HOURS ? TOTAL_HOURS_IN_WEEK + ' hours' : '' + '1.0 FTWE (Full time weekly equivalent)'}. Please confirm all work has been accounted for before submitting.`}
+                {`Total actuals for this week are < ${userPreferences?.Actuals_Allocation_Preference === HOURS ? TOTAL_HOURS_IN_WEEK + ' hours' : '' + '1.0 FTWE (Full time weekly equivalent)'}. Please confirm all work has been accounted for before submitting.`}
               </span>
               <br />
             </>

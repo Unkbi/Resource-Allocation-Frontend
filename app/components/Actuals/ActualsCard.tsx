@@ -103,8 +103,8 @@ const ActualsCard = ({
   resourceStartMonday,
   resourceEndMonday,
 }: ActualsCardProps) => {
-  const { scalarSettings } = useSelector(
-    (state: RootState) => state.allSettings
+  const { userPreferences } = useSelector(
+    (state: RootState) => state.userPreferences
   );
   const totalPlannedAllocation = useMemo(() => {
     const sum =
@@ -113,10 +113,10 @@ const ActualsCard = ({
         0
       ) || 0;
 
-    return scalarSettings?.Actuals_Allocation_Preference === HOURS
+    return userPreferences?.Actuals_Allocation_Preference === HOURS
       ? sum
       : format2(roundToStep05(sum));
-  }, [actualAllocationData, scalarSettings]);
+  }, [actualAllocationData, userPreferences]);
 
   const totalActualAllocation = useMemo(() => {
     const sum =
@@ -125,10 +125,10 @@ const ActualsCard = ({
         0
       ) || 0;
 
-    return scalarSettings?.Actuals_Allocation_Preference === HOURS
+    return userPreferences?.Actuals_Allocation_Preference === HOURS
       ? sum
       : format2(roundToStep05(sum));
-  }, [actualAllocationData, scalarSettings]);
+  }, [actualAllocationData, userPreferences]);
 
   const isPastWeek = useMemo(() => {
     if (!period) {
@@ -343,7 +343,7 @@ const ActualsCard = ({
                     ? `${totalActualAllocation ? totalActualAllocation : '--'}`
                     : 'N/A'}
                 </Typography>
-                {scalarSettings?.Actuals_Allocation_Preference === HOURS && (
+                {userPreferences?.Actuals_Allocation_Preference === HOURS && (
                   <Typography
                     sx={{
                       position: 'relative',
