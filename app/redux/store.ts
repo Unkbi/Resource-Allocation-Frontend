@@ -26,7 +26,6 @@ import { RESET_STORE } from './actions/authActions';
 import businessImpactReducer from './reducers/businessImpactReducer';
 import aiSummaryReducer from './reducers/aiSummaryReducer';
 import filterReducer from './reducers/filterReducer';
-import userPreferencesReducer from './reducers/userPreferencesReducer';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -71,8 +70,7 @@ export const makeStore = () => {
         allSettings: allSettingsReducer(state?.allSettings, action),
         businessImpact: businessImpactReducer(state?.businessImpact, action),
         aiSummary: aiSummaryReducer(state?.aiSummary, action),
-        filters: filterReducer(state?.filters, action),
-        userPreferences: userPreferencesReducer(state?.userPreferences, action),
+        filters : filterReducer(state?.filters, action)
       };
     },
     middleware: getDefaultMiddleware =>

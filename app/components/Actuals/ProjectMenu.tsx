@@ -12,10 +12,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/app/redux/store';
 import { GridValidRowModel } from '@mui/x-data-grid-premium';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-  DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
-  UNPLANNED_PROJECT,
-} from '@/app/constants/constants';
+import { UNPLANNED_PROJECT } from '@/app/constants/constants';
 
 interface Project {
   Id: string | number;
@@ -95,9 +92,6 @@ const ProjectMenu = ({
   const { projects } = useSelector((state: RootState) => state.projects);
   const [searchValue, setSearchValue] = useState('');
   const [selectedProjects, setSelectedProjects] = useState<Project[]>([]);
-  const { userPreferences } = useSelector(
-    (state: RootState) => state.userPreferences
-  );
 
   const existingProjectIds = existingRows
     .filter(row => row.id !== 'divider')
@@ -134,9 +128,6 @@ const ProjectMenu = ({
       actuals: 0,
       comments: '',
       type: UNPLANNED_PROJECT,
-      __unit:
-        userPreferences?.Actuals_Allocation_Preference ||
-        DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
     }));
 
     if (newRows.length > 0) {
@@ -155,8 +146,7 @@ const ProjectMenu = ({
     >
       <Box
         sx={{
-          minWidth: '410px',
-          maxWidth: '820px',
+          width: 231,
           padding: 1,
           backgroundColor: '#fff',
           borderRadius: 2,
@@ -246,13 +236,12 @@ const ProjectMenu = ({
               >
                 <Typography
                   variant="body2"
+                  noWrap
                   sx={{
                     ...sharedFontStyles,
-                    fontSize: '14px',
+                    fontSize: '13px',
                     color: '#424242',
-                    lineHeight: '20px',
-                    whiteSpace: 'normal',
-                    wordBreak: 'break-word',
+                    lineHeight: '34px',
                   }}
                 >
                   {project.Name}

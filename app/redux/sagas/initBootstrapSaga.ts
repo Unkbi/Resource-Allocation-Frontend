@@ -14,7 +14,6 @@ import { fetchAllTeams } from '../actions/fetchTeamsAction';
 import { fetchAllProjects } from '../actions/fetchProjectsAction';
 import { getUserData, INIT_BOOTSTRAP } from '../actions/authActions';
 import { setLoadingAdvancedFilters } from '../reducers/dashboardReducer';
-import { FETCH_USER_PREFERENCES } from '../actions/userPreferencesActions';
 
 /**
  * Bootstrap saga - fetches all essential data on app initialization
@@ -30,7 +29,6 @@ function* initBootstrapSaga(action: any): any {
     yield put(getUserData(userId, true));
     yield put({ type: GET_USER_AND_PRIVILEGES, payload: { userId } });
     yield put({ type: FETCH_ALL_SETTINGS, payload: {} });
-    yield put({ type: FETCH_USER_PREFERENCES, payload: { userId } });
     yield put(fetchAllTeams());
     yield put(fetchAllProjects());
     yield put({ type: FETCH_PORTFOLIOS, payload: {} });

@@ -13,7 +13,8 @@ interface CommentCellProps extends GridRenderEditCellParams {
  * Truncate text to `maxChars` OR after `maxLines` line breaks, whichever comes first.
  * Returns { displayText, isTruncated }.
  */
-const MAX_CHARS = 45;
+const MAX_CHARS_PER_LAST_LINE = 30;
+const MAX_CHARS = 80;
 const MAX_LINES = 1;
 
 function truncateText(text: string, maxChars: number, maxLines: number) {
@@ -21,13 +22,27 @@ function truncateText(text: string, maxChars: number, maxLines: number) {
 
   const lines = text.split('\n');
   let isTruncated = false;
-  let truncated = text;
+  let truncated = '';
 
   // --- RULE 1: limit by maxLines first ---
-  if (lines.length > maxLines) {
+  if (lines.length >= maxLines) {
     const allowedLines = lines.slice(0, maxLines);
+    const lastIndex = maxLines - 1;
+    const lastLine = allowedLines[lastIndex];
+
+    // the max allowed length for the last line:
+    const lastLineLimit = Math.min(MAX_CHARS_PER_LAST_LINE, maxChars);
+
+    // truncate ONLY last line (this handles your failing case)
+    if (lastLine.length > lastLineLimit) {
+      allowedLines[lastIndex] = lastLine.slice(0, lastLineLimit);
+      isTruncated = true;
+    }
+
     truncated = allowedLines.join('\n');
     isTruncated = true;
+  } else {
+    truncated = text;
   }
 
   // --- RULE 2: global MAX_CHARS (fallback) ---
@@ -36,7 +51,7 @@ function truncateText(text: string, maxChars: number, maxLines: number) {
     isTruncated = true;
   }
 
-  // Append ... only if actually truncated
+  // Append ...
   if (isTruncated) truncated += '...';
 
   return { displayText: truncated, isTruncated };
