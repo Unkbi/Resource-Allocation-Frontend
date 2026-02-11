@@ -2,6 +2,7 @@ import {
   confirmActualsEnteredForPeriod,
   fetchActualAllocationsForPeriod,
   fetchActualStatusForPeriod,
+  updateActualStatusForPeriod,
 } from '@/app/services/actualAllocationServices';
 import { put, takeLatest } from 'redux-saga/effects';
 import {
@@ -9,11 +10,13 @@ import {
   GET_ACTUAL_ALLOCATIONS,
   GET_ACTUAL_ALLOCATIONS_STATUSES,
   GET_ACTUAL_STATUS,
+  UPDATE_ACTUAL_STATUS,
 } from '../actions/actualAllocationsActions';
 import {
   ActualAllocationsForPeriodPayload,
   ActualStatusForPeriodPayload,
   ConfirmActualAllocationsForPeriodRequest,
+  UpdateActualStatusForPeriodPayload,
 } from '@/app/types';
 import {
   setActualAllocations,
@@ -89,6 +92,26 @@ const fetchActualStatusForPeriodSagaFunction = function* (
   }
 };
 
+const updateActualStatusForPeriodSagaFunction = function* (
+  action: any
+): Generator<any, void, any> {
+  const { resource, status, period, resolve, reject } = action.payload;
+  try {
+    const postData: UpdateActualStatusForPeriodPayload = {
+      Resource: resource,
+      Status: status,
+      Period: period,
+    };
+    const response = yield updateActualStatusForPeriod(postData);
+    // Notify if async operation is completed
+    if (resolve) resolve(response);
+  } catch (error) {
+    console.error('Error updating Actual Status:', error);
+    // Notify if async operation is failed
+    if (reject) reject(error);
+  }
+};
+
 const confirmActualAllocationsForPeriodSagaFunction = function* (
   action: any
 ): Generator<any, void, any> {
@@ -120,6 +143,10 @@ export function* actualAllocationsSaga() {
     fetchActualAllocationsStatusesForPeriodSagaFunction
   );
   yield takeLatest(GET_ACTUAL_STATUS, fetchActualStatusForPeriodSagaFunction);
+  yield takeLatest(
+    UPDATE_ACTUAL_STATUS,
+    updateActualStatusForPeriodSagaFunction
+  );
   yield takeLatest(
     CONFIRM_ACTUAL_ALLOCATIONS,
     confirmActualAllocationsForPeriodSagaFunction
