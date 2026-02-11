@@ -111,6 +111,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const { userPreferences } = useSelector(
     (state: RootState) => state.userPreferences
   );
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   const [formattedActualAllocations, setFormattedActualAllocations] = useState<
     ActualAllocationTableRow[]
   >([]);
@@ -144,20 +147,20 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   let max_allocation_error = useMemo(
     () =>
-      userPreferences?.Actuals_Allocation_Preference === HOURS
-        ? Number(userPreferences?.Max_Allocation_Error || '2.0') *
+      scalarSettings?.Actuals_Allocation_Preference === HOURS
+        ? Number(scalarSettings?.Max_Allocation_Error || '2.0') *
           TOTAL_HOURS_IN_WEEK
-        : Number(userPreferences?.Max_Allocation_Error || '2.0'),
-    [userPreferences]
+        : Number(scalarSettings?.Max_Allocation_Error || '2.0'),
+    [scalarSettings]
   );
 
   let max_allocation_warning = useMemo(
     () =>
-      userPreferences?.Actuals_Allocation_Preference === HOURS
-        ? Number(userPreferences?.Max_Allocation_Warning || '1.5') *
+      scalarSettings?.Actuals_Allocation_Preference === HOURS
+        ? Number(scalarSettings?.Max_Allocation_Warning || '1.5') *
           TOTAL_HOURS_IN_WEEK
-        : Number(userPreferences?.Max_Allocation_Warning || '1.5'),
-    [userPreferences]
+        : Number(scalarSettings?.Max_Allocation_Warning || '1.5'),
+    [scalarSettings]
   );
 
   const handleModificationChange = (modified: boolean) => {
