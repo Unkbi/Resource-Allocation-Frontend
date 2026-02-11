@@ -220,6 +220,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     );
   }, [currentResource, user, resources]);
 
+  const isCurrentUserLoginUser = useMemo(() => {
+    if (!currentResource || !user) return false;
+    return currentResource.Email === (user as LoginUser).username;
+  }, [currentResource, user]);
+
   useEffect(() => {
     if (user && resources) {
       const loginUser =
@@ -1041,11 +1046,30 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     )
       return;
     setDisableView(
-      (!permissions['ActualsStatus'].c && !permissions['ActualsStatus'].u) ||
-        isFutureWeek(parseISO(startDate)) ||
-        (actualAllocationsStatuses?.[startDate] === 'Confirmed' &&
-          startDate !== null &&
-          !isCurrentWeek(parseISO(startDate)))
+      (() => {
+        const common =
+          isFutureWeek(parseISO(startDate)) ||
+          (actualAllocationsStatuses?.[startDate] === 'Confirmed' &&
+            startDate !== null &&
+            !isCurrentWeek(parseISO(startDate)));
+        if (isCurrentUserLoginUser) {
+          return (
+            (!permissions['ActualsStatus'].c &&
+              !permissions['ActualsStatus'].u) ||
+            common
+          );
+        } else {
+          return (
+            (!permissions['AdminActuals'].c &&
+              !permissions['AdminActuals'].u) ||
+            (!permissions['AllocationManagerActuals'].c &&
+              !permissions['AllocationManagerActuals'].u) ||
+            (!permissions['ManagerActuals'].c &&
+              !permissions['ManagerActuals'].u) ||
+            common
+          );
+        }
+      })()
     );
   }, [loadingPermissions, dataProcessing, actualAllocationsStatusesLoading]);
 
@@ -1734,6 +1758,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                             width: '137px',
                             height: '36px',
                             borderRadius: '5px',
+                            '&.Mui-disabled': {
+                              opacity: 0.5,
+                              cursor: 'not-allowed',
+                            },
                           }}
                           disabled={
                             (!permissions['ActualsStatus'].c &&

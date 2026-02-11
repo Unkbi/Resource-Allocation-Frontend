@@ -1080,8 +1080,21 @@ function ActualTable({
                   sx={{
                     '&:hover': { backgroundColor: 'transparent !important' },
                     pt: 1.25,
+                    '&.Mui-disabled': {
+                      opacity: 0.5,
+                      cursor: 'not-allowed',
+                      pointerEvents: 'auto',
+                    },
                   }}
                   onClick={() => handledRevertStatus()}
+                  disabled={
+                    !permissions['AdminActuals'].c &&
+                    !permissions['AdminActuals'].u &&
+                    !permissions['AllocationManagerActuals'].c &&
+                    !permissions['AllocationManagerActuals'].u &&
+                    !permissions['ManagerActuals'].c &&
+                    !permissions['ManagerActuals'].u
+                  }
                 >
                   <img
                     style={{ paddingRight: 4 }}
