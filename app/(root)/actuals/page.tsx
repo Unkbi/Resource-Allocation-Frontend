@@ -16,6 +16,7 @@ import {
   GET_ACTUAL_ALLOCATIONS,
   GET_ACTUAL_ALLOCATIONS_STATUSES,
   GET_ACTUAL_STATUS,
+  UPDATE_ACTUAL_STATUS,
 } from '@/app/redux/actions/actualAllocationsActions';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { useSelector } from 'react-redux';
@@ -25,6 +26,7 @@ import {
   LoginUser,
   Resource,
   Team,
+  UpdateActualStatusForPeriodResponse,
 } from '@/app/types';
 import {
   formateToFloat,
@@ -38,7 +40,10 @@ import {
   isCurrentWeek,
   isFutureWeek,
 } from '@/app/utils/common';
-import { setCalendarDate } from '@/app/redux/reducers/actualAllocationsReducer';
+import {
+  setCalendarDate,
+  updateActualAllocationsStatusForPeriod,
+} from '@/app/redux/reducers/actualAllocationsReducer';
 // @ts-ignore
 import { format, parseISO, startOfWeek } from 'date-fns';
 import { GridValidRowModel, useGridApiRef } from '@mui/x-data-grid-premium';
@@ -56,13 +61,24 @@ import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import {
   DATE_FORMAT,
+  DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
   FAR_FUTURE_DATE,
   FAR_PAST_DATE,
+  HOURS,
   MISSING_PROJECT_ACTUALS_STATUS,
   TOTAL_ACTUALS_LESS_THAN_ONE,
 } from '@/app/constants/constants';
 import ActualsCard from '@/app/components/Actuals/ActualsCard';
-import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
+import {
+  format2,
+  formatAllocationDataWithToHours,
+  formatAllocationTableDataWithToFTE,
+  formatAllocationTableDataWithToHours,
+  isPeriodWithinRange,
+  normalizeAllocationValue,
+  roundToNearestEven,
+  roundToStep05,
+} from '@/app/utils/actualsUtils';
 import { AxiosError } from 'axios';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 
@@ -91,6 +107,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     (state: RootState) => state.allResourcesDetail
   );
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { userPreferences } = useSelector(
+    (state: RootState) => state.userPreferences
+  );
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
   );
@@ -125,8 +144,23 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const [resourceList, setResourceList] = useState<Resource[]>([]);
   const [currentResource, setCurrentResource] = useState<Resource | null>(null);
 
-  let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
-  let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
+  let max_allocation_error = useMemo(
+    () =>
+      userPreferences?.Actuals_Allocation_Preference === HOURS
+        ? Number(scalarSettings?.Max_Allocation_Error || '2.0') *
+          TOTAL_HOURS_IN_WEEK
+        : Number(scalarSettings?.Max_Allocation_Error || '2.0'),
+    [userPreferences?.Actuals_Allocation_Preference]
+  );
+
+  let max_allocation_warning = useMemo(
+    () =>
+      userPreferences?.Actuals_Allocation_Preference === HOURS
+        ? Number(scalarSettings?.Max_Allocation_Warning || '1.5') *
+          TOTAL_HOURS_IN_WEEK
+        : Number(scalarSettings?.Max_Allocation_Warning || '1.5'),
+    [userPreferences?.Actuals_Allocation_Preference]
+  );
 
   const handleModificationChange = (modified: boolean) => {
     setShow(false);
@@ -189,6 +223,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       ) || false
     );
   }, [currentResource, user, resources]);
+
+  const isCurrentUserLoginUser = useMemo(() => {
+    if (!currentResource || !user) return false;
+    return currentResource.Email === (user as LoginUser).username;
+  }, [currentResource, user]);
 
   useEffect(() => {
     if (user && resources) {
@@ -327,9 +366,15 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   const updatePlannedAllocationsIfNeeded = () => {
     if (!currentResource) return;
-    const allRows = apiRef.current
-      .getAllRowIds()
-      .map(id => apiRef.current.getRow(id));
+    const allRows =
+      userPreferences?.Actuals_Allocation_Preference === HOURS
+        ? formatAllocationTableDataWithToFTE(
+            apiRef.current
+              .getAllRowIds()
+              .map(id => apiRef.current.getRow(id))
+              .filter(Boolean)
+          )
+        : apiRef.current.getAllRowIds().map(id => apiRef.current.getRow(id));
 
     // If there are validation errors, block the update
     if (Object.keys(rowValidationErrors || {}).length > 0) {
@@ -484,10 +529,18 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       updatePlannedAllocationsIfNeeded();
       return;
     }
+
     if (isFridayOrAfterFriday) {
-      const allRows = apiRef.current
-        .getAllRowIds()
-        .map(id => apiRef.current.getRow(id));
+      const allRows =
+        userPreferences?.Actuals_Allocation_Preference === HOURS
+          ? formatAllocationTableDataWithToFTE(
+              apiRef.current
+                .getAllRowIds()
+                .map(id => apiRef.current.getRow(id))
+                .filter(Boolean)
+            )
+          : apiRef.current.getAllRowIds().map(id => apiRef.current.getRow(id));
+
       const totalActuals =
         allRows.find(row => row.id === 'total')?.actuals ||
         allRows.reduce((sum, row) => sum + (row?.actuals || 0), 0);
@@ -515,16 +568,21 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         ]);
       }
     } else {
-      handleConfirmed();
+      handleConfirmed('In-Progress');
     }
   };
 
-  const handleConfirmed = () => {
+  const handleConfirmed = (status = 'Confirmed') => {
     if (projects && currentResource) {
-      const allData = apiRef.current
-        .getAllRowIds()
-        .map(id => apiRef.current.getRow(id))
-        .filter(row => row.id !== 'total' && row.project);
+      const allData =
+        userPreferences?.Actuals_Allocation_Preference === HOURS
+          ? formatAllocationTableDataWithToFTE(
+              apiRef.current
+                .getAllRowIds()
+                .map(id => apiRef.current.getRow(id))
+                .filter(row => row.id !== 'total' && row.project)
+            )
+          : apiRef.current.getAllRowIds().map(id => apiRef.current.getRow(id));
 
       if (!startDate) return;
       // Set deleted rows, actualAllocations to 0.
@@ -536,7 +594,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           if (row) {
             return {
               ...allocations,
-              ActualsEntered: row.actuals ?? 0,
+              ActualsEntered:
+                userPreferences?.Actuals_Allocation_Preference === HOURS
+                  ? (row.actuals ?? 0)
+                  : normalizeAllocationValue(row.actuals || 0),
               Notes: row.comments || '',
               ProjectActualsStatus:
                 row.projectActualsStatus === 'No Data'
@@ -564,7 +625,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           Project: projects?.find(
             (project: any) => project.Name === tabData.project
           )?.Id,
-          ActualsEntered: formateToFloat(tabData.actuals),
+          ActualsEntered:
+            userPreferences?.Actuals_Allocation_Preference === HOURS
+              ? (tabData.actuals ?? 0)
+              : normalizeAllocationValue(tabData.actuals),
           Notes: tabData.comments || '',
           ProjectActualsStatus:
             tabData.projectActualsStatus === 'No Data'
@@ -582,12 +646,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           ) // If Every Row has the same period.
             ? actualAllocations[startDate][0].Period
             : startDate,
-        status: isFridayOrAfterFriday ? 'Confirmed' : 'In-Progress',
+        status: status,
         actuals: [
           ...newData,
           ...(modifiedData?.map((row: ActualAllocations) => ({
             Project: row.Project,
-            ActualsEntered: formateToFloat(row.ActualsEntered),
+            ActualsEntered: row.ActualsEntered ?? 0,
             Notes: row.Notes || '',
             ProjectActualsStatus: row.ProjectActualsStatus,
           })) || []),
@@ -670,6 +734,77 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         showToast({
           open: true,
           message: `Failed to confirm Actual alloctions.`,
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+    }
+  };
+
+  const handledRevertStatus = (status = 'In-Progress') => {
+    if (!status) return;
+    try {
+      new Promise((resolve, reject) => {
+        dispatch({
+          type: UPDATE_ACTUAL_STATUS,
+          payload: {
+            resource: currentResource?.Id,
+            status: status,
+            period: startDate,
+            resolve,
+            reject,
+          },
+        });
+      })
+        .then((response: any) => {
+          if ((response[0] as UpdateActualStatusForPeriodResponse)?.success) {
+            dispatch(
+              showToastAction(
+                true,
+                response[0]?.message ?? `Successfully updated status.`,
+                'success'
+              )
+            );
+            dispatch(
+              updateActualAllocationsStatusForPeriod({
+                period: response[0].period,
+                status: response[0].status,
+              })
+            );
+          } else {
+            console.error('Error updating status.');
+            dispatch(
+              showToast({
+                open: true,
+                message: `Failed to update status.`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        })
+        .catch((error: AxiosError) => {
+          console.error('Error updating status:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.response?.data
+                ? `Failed to update status. ${error?.response?.data}`
+                : `Failed to update status.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      dispatch(
+        showToast({
+          open: true,
+          message: `Failed to update status.`,
           type: 'error',
           position: 'bottom-left',
           autoHideTimer: 4000,
@@ -866,6 +1001,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
     if (startDate) {
+      const formattedAllActualAllocation =
+        userPreferences?.Actuals_Allocation_Preference === HOURS
+          ? formatAllocationDataWithToHours(
+              actualAllocations?.[startDate] || []
+            )
+          : actualAllocations?.[startDate] || [];
       setFormattingActualAllocations(true);
       const formattedData: ActualAllocationTableRow[] =
         actualAllocations?.[startDate]
@@ -883,10 +1024,38 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             actuals: allocation.ActualsEntered,
             comments: allocation.Notes,
             projectActualsStatus: allocation.ProjectActualsStatus ?? 'No Data',
+            __unit:
+              userPreferences?.Actuals_Allocation_Preference ||
+              DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
           })) || [];
       setFormattedActualAllocations(formattedData);
     }
   }, [loadingPermissions, dataProcessing, actualAllocations]);
+
+  useEffect(() => {
+    if (loadingPermissions || dataProcessing) return;
+    if (!apiRef) return;
+    const allRows = apiRef?.current
+      ?.getAllRowIds()
+      ?.map(id => apiRef.current.getRow(id))
+      ?.filter(Boolean);
+
+    if (!allRows.length) return;
+
+    const currentFormatting = allRows[0].__unit;
+    if (userPreferences?.Actuals_Allocation_Preference !== currentFormatting) {
+      // Re-format to the latest preference
+      const formatted =
+        userPreferences?.Actuals_Allocation_Preference === HOURS
+          ? formatAllocationTableDataWithToHours(allRows)
+          : formatAllocationTableDataWithToFTE(allRows);
+      setFormattedActualAllocations(formatted);
+    }
+  }, [
+    loadingPermissions,
+    dataProcessing,
+    userPreferences?.Actuals_Allocation_Preference,
+  ]);
 
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
@@ -909,13 +1078,35 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     )
       return;
     setDisableView(
-      (!permissions['ActualsStatus'].c && !permissions['ActualsStatus'].u) ||
-        isFutureWeek(parseISO(startDate)) ||
-        (actualAllocationsStatuses?.[startDate] === 'Confirmed' &&
-          startDate !== null &&
-          !isCurrentWeek(parseISO(startDate)))
+      (() => {
+        if (isCurrentUserLoginUser) {
+          return (
+            (!permissions['ActualsStatus'].c &&
+              !permissions['ActualsStatus'].u) ||
+            isFutureWeek(parseISO(startDate)) ||
+            (actualAllocationsStatuses?.[startDate] === 'Confirmed' &&
+              startDate !== null &&
+              !isCurrentWeek(parseISO(startDate)))
+          );
+        } else {
+          return (
+            (!permissions['AdminActuals'].c &&
+              !permissions['AdminActuals'].u &&
+              !permissions['AllocationManagerActuals'].c &&
+              !permissions['AllocationManagerActuals'].u &&
+              !permissions['ManagerActuals'].c &&
+              !permissions['ManagerActuals'].u) ||
+            actualAllocationsStatuses?.[startDate] === 'Confirmed'
+          );
+        }
+      })()
     );
-  }, [loadingPermissions, dataProcessing, actualAllocationsStatusesLoading]);
+  }, [
+    loadingPermissions,
+    dataProcessing,
+    actualAllocationsStatusesLoading,
+    actualAllocationsStatuses,
+  ]);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -930,6 +1121,13 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       }
     }
   }, [loadingPermissions]);
+
+  const roundByPreference = (value: number) => {
+    if (userPreferences?.Actuals_Allocation_Preference === HOURS) {
+      return roundToNearestEven(value);
+    }
+    return roundToStep05(value);
+  };
 
   const handleConfirm = () => {
     setDeleteDialogOpen(false);
@@ -982,8 +1180,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       // Planned total validation (same logic as Actuals)
       const plannedChangedOrNew = isNewRow || plannedChanged;
       if (plannedChangedOrNew) {
-        const newPlanned =
-          Math.round((parseFloat(newRow.planned) || 0) * 10) / 10;
+        const newPlanned = format2(
+          roundByPreference(parseFloat(newRow.planned) || 0)
+        );
         const updatedPlannedTotal = rows.reduce((sum, row) => {
           if (row.id === newRow.id) {
             return sum + newPlanned;
@@ -992,7 +1191,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             return (
               Math.round(
                 (sum +
-                  (row?.planned ? parseFloat(row?.planned?.toFixed(1)) : 0)) *
+                  (row?.planned
+                    ? format2(roundByPreference(row.planned))
+                    : 0)) *
                   10
               ) / 10
             );
@@ -1004,7 +1205,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           dispatch(
             showToastAction(
               true,
-              `Total of Planned cannot exceed ${max_allocation_error} (Current sum: ${updatedPlannedTotal.toFixed(1)})`,
+              `Total of Planned cannot exceed ${max_allocation_error} (Current sum: ${userPreferences?.Actuals_Allocation_Preference === HOURS ? updatedPlannedTotal + ' hours' : updatedPlannedTotal.toFixed(1)})`,
               'error'
             )
           );
@@ -1013,7 +1214,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           dispatch(
             showToastAction(
               true,
-              `Warning: Total planned is >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${updatedPlannedTotal.toFixed(1)}`,
+              `Warning: Total planned is >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${userPreferences?.Actuals_Allocation_Preference === HOURS ? updatedPlannedTotal + ' hours' : updatedPlannedTotal.toFixed(1)}`,
               'warning'
             )
           );
@@ -1054,28 +1255,24 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     const actualsChanged = newRow.actuals !== oldRow.actuals;
     let newActual = parseFloat(newRow.actuals) || 0;
     if (actualsChanged) {
-      newActual = Math.round(newActual * 10) / 10;
-      const updatedTotal = rows.reduce((sum, row) => {
-        if (row.id === newRow.id) {
-          return sum + newActual;
-        }
-        if (row.id !== 'total' && row.id !== 'second-total') {
-          return (
-            Math.round(
-              (sum +
-                (row?.actuals ? parseFloat(row?.actuals?.toFixed(1)) : 0)) *
-                10
-            ) / 10
-          );
-        }
-        return sum;
-      }, 0);
+      newActual = format2(roundByPreference(newActual));
+      const updatedTotal = format2(
+        rows.reduce((sum, row) => {
+          if (row.id === newRow.id) {
+            return sum + newActual;
+          }
+          if (row.id !== 'total' && row.id !== 'second-total') {
+            return sum + (row?.actuals ? roundByPreference(row.actuals) : 0);
+          }
+          return sum;
+        }, 0)
+      );
 
       if (updatedTotal > Number(max_allocation_error)) {
         dispatch(
           showToastAction(
             true,
-            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${updatedTotal.toFixed(1)})`,
+            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${userPreferences?.Actuals_Allocation_Preference === HOURS ? updatedTotal + ' hours' : format2(roundByPreference(updatedTotal))})`,
             'error'
           )
         );
@@ -1084,7 +1281,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         dispatch(
           showToastAction(
             true,
-            `Warning: Total actuals >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${updatedTotal.toFixed(1)}`,
+            `Warning: Total actuals >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${userPreferences?.Actuals_Allocation_Preference === HOURS ? updatedTotal + ' hours' : format2(roundByPreference(updatedTotal))}`,
             'warning'
           )
         );
@@ -1187,7 +1384,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             justifyContent="center"
             marginTop={0}
           >
-            <Box mx={2} maxWidth={780} minHeight={350}>
+            <Box mx={2} maxWidth={1000} minHeight={350}>
               <Box
                 sx={{
                   display: 'flex',
@@ -1392,13 +1589,23 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       ) || ''
                     }
                     actualAllocationData={
-                      actualAllocations[
-                        generateDateWeekMath(
-                          'WEEK_MINUS',
-                          1,
-                          parseISO(startDate ?? '')
-                        ) || ''
-                      ]
+                      userPreferences?.Actuals_Allocation_Preference === HOURS
+                        ? formatAllocationDataWithToHours(
+                            actualAllocations[
+                              generateDateWeekMath(
+                                'WEEK_MINUS',
+                                1,
+                                parseISO(startDate ?? '')
+                              ) || ''
+                            ]
+                          )
+                        : actualAllocations[
+                            generateDateWeekMath(
+                              'WEEK_MINUS',
+                              1,
+                              parseISO(startDate ?? '')
+                            ) || ''
+                          ]
                     }
                     actualAllocationStatus={
                       actualAllocationsStatuses[
@@ -1472,13 +1679,23 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       ) || ''
                     }
                     actualAllocationData={
-                      actualAllocations[
-                        generateDateWeekMath(
-                          'WEEK_PLUS',
-                          1,
-                          parseISO(startDate ?? '')
-                        ) || ''
-                      ]
+                      userPreferences?.Actuals_Allocation_Preference === HOURS
+                        ? formatAllocationDataWithToHours(
+                            actualAllocations[
+                              generateDateWeekMath(
+                                'WEEK_PLUS',
+                                1,
+                                parseISO(startDate ?? '')
+                              ) || ''
+                            ]
+                          )
+                        : actualAllocations[
+                            generateDateWeekMath(
+                              'WEEK_PLUS',
+                              1,
+                              parseISO(startDate ?? '')
+                            ) || ''
+                          ]
                     }
                     actualAllocationStatus={
                       actualAllocationsStatuses[
@@ -1509,7 +1726,17 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 rowValidationErrors={rowValidationErrors}
                 setRowValidationErrors={setRowValidationErrors}
                 disableView={disableView}
-                enablePlannedColumn={isFutureWeek(parseISO(startDate || ''))}
+                enablePlannedColumn={
+                  isCurrentUserLoginUser
+                    ? isFutureWeek(parseISO(startDate || ''))
+                    : isFutureWeek(parseISO(startDate || '')) &&
+                      (permissions['AdminActuals'].c ||
+                        permissions['AdminActuals'].u ||
+                        permissions['AllocationManagerActuals'].c ||
+                        permissions['AllocationManagerActuals'].u ||
+                        permissions['ManagerActuals'].c ||
+                        permissions['ManagerActuals'].u)
+                }
                 startDate={startDate}
                 endDate={endDate}
                 apiRef={apiRef}
@@ -1527,6 +1754,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 actualsErrorType={actualsErrorType}
                 disablePrev={disablePrev}
                 disableNext={disableNext}
+                handledRevertStatus={handledRevertStatus}
               />
               {!actualsErrorType && (
                 <Box display="flex" justifyContent="space-between" mt={1}>
@@ -1557,49 +1785,118 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     Prev Week
                   </Button>
 
-                  <Button
-                    variant="contained"
+                  <Box
                     sx={{
-                      // @ts-ignore
-                      bgcolor: theme => theme.palette.sideBarColor.main,
-                      px: 2,
-                      width: '192px',
-                      height: '36px',
-                      borderRadius: '5px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      pl: 7.5,
                     }}
-                    disabled={
-                      (!permissions['ActualsStatus'].c &&
-                        !permissions['ActualsStatus'].u) ||
-                      loadingPermissions ||
-                      dataProcessing ||
-                      formattingActualAllocations ||
-                      (startDate !== null &&
-                        actualAllocationsStatuses?.[startDate] !== null &&
-                        actualAllocationsStatuses?.[startDate] !==
-                          'In-Progress' &&
-                        actualAllocationsStatuses?.[startDate] !==
-                          'Not Started' &&
-                        // Enable button if it's the current week even if status is 'Confirmed'
-                        !isCurrentWeek(parseISO(startDate)) &&
-                        disableView &&
-                        !isFutureWeek(parseISO(startDate || '')))
-                    }
-                    onClick={validateDataBeforeConfirm}
                   >
-                    <Typography
+                    {/* Only For Past Weeks */}
+                    {!isFutureWeek(parseISO(startDate || '')) &&
+                      isFridayOrAfterFriday && (
+                        <Button
+                          variant="outlined"
+                          sx={{
+                            px: 2,
+                            width: '137px',
+                            height: '36px',
+                            borderRadius: '5px',
+                            '&.Mui-disabled': {
+                              opacity: 0.5,
+                              cursor: 'not-allowed',
+                            },
+                          }}
+                          disabled={
+                            (!permissions['ActualsStatus'].c &&
+                              !permissions['ActualsStatus'].u) ||
+                            loadingPermissions ||
+                            dataProcessing ||
+                            formattingActualAllocations ||
+                            disableView
+                          }
+                          onClick={() => {
+                            if (startDate === null) return;
+                            const oldStatus =
+                              actualAllocationsStatuses?.[startDate];
+                            const newStatus =
+                              oldStatus !== 'Confirmed' &&
+                              oldStatus !== 'In-Progress'
+                                ? 'In-Progress'
+                                : oldStatus;
+                            handleConfirmed(newStatus);
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              // @ts-ignore
+                              color: theme => theme.palette.sideBarColor.main,
+                              textAlign: 'center',
+                              fontFamily: 'Open Sans',
+                              fontSize: 14,
+                              fontWeight: 600,
+                              textTransform: 'none',
+                            }}
+                          >
+                            Save
+                          </Typography>
+                        </Button>
+                      )}
+                    <Button
+                      variant="contained"
                       sx={{
-                        color: '#FFF',
-                        textAlign: 'center',
-                        fontFamily: 'Open Sans',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        textTransform: 'none',
+                        // @ts-ignore
+                        bgcolor: theme => theme.palette.sideBarColor.main,
+                        px: 2,
+                        width: '192px',
+                        height: '36px',
+                        borderRadius: '5px',
                       }}
+                      disabled={(() => {
+                        if (isCurrentUserLoginUser) {
+                          return (
+                            (!permissions['ActualsStatus'].c &&
+                              !permissions['ActualsStatus'].u) ||
+                            loadingPermissions ||
+                            dataProcessing ||
+                            formattingActualAllocations ||
+                            (startDate !== null &&
+                              actualAllocationsStatuses?.[startDate] !== null &&
+                              actualAllocationsStatuses?.[startDate] !==
+                                'In-Progress' &&
+                              actualAllocationsStatuses?.[startDate] !==
+                                'Not Started' &&
+                              // Enable button if it's the current week even if status is 'Confirmed'
+                              !isCurrentWeek(parseISO(startDate)) &&
+                              disableView &&
+                              !isFutureWeek(parseISO(startDate || '')))
+                          );
+                        } else {
+                          return (
+                            loadingPermissions ||
+                            dataProcessing ||
+                            formattingActualAllocations ||
+                            disableView
+                          );
+                        }
+                      })()}
+                      onClick={validateDataBeforeConfirm}
                     >
-                      {isFridayOrAfterFriday ? 'Save and Confirm' : 'Save'}
-                    </Typography>
-                  </Button>
-
+                      <Typography
+                        sx={{
+                          color: '#FFF',
+                          textAlign: 'center',
+                          fontFamily: 'Open Sans',
+                          fontSize: 14,
+                          fontWeight: 600,
+                          textTransform: 'none',
+                        }}
+                      >
+                        {isFridayOrAfterFriday ? 'Save and Confirm' : 'Save'}
+                      </Typography>
+                    </Button>
+                  </Box>
                   <Button
                     endIcon={<ChevronRightIcon />}
                     onClick={() => {
@@ -1668,9 +1965,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           {showAlertDialog?.includes(TOTAL_ACTUALS_LESS_THAN_ONE) && (
             <>
               <span>
-                {
-                  'Total actuals for this week are < 1.0 FTWE (Full time weekly equivalent). Please confirm all work has been accounted for before submitting.'
-                }
+                {`Total actuals for this week are < ${userPreferences?.Actuals_Allocation_Preference === HOURS ? TOTAL_HOURS_IN_WEEK + ' hours' : '' + '1.0 FTWE (Full time weekly equivalent)'}. Please confirm all work has been accounted for before submitting.`}
               </span>
               <br />
             </>
