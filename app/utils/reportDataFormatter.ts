@@ -30,7 +30,7 @@ const safeGet = (obj: any, path: string, defaultValue: any = null) => {
 
 // Format date to MM/DD/YYYY or return null
 // Handles date strings without timezone conversion to avoid shifting dates
-const formatDate = (dateValue: any): string | null => {
+export const formatDate = (dateValue: any): string | null => {
     if (!dateValue) return null;
     try {
         const dateStr = String(dateValue);
