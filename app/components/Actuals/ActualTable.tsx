@@ -1078,7 +1078,8 @@ function ActualTable({
               )}
             </Typography>
 
-            {permissions &&
+            {actualAllocationsStatuses?.[startDate] === 'Confirmed' &&
+              permissions &&
               (permissions['AdminActuals']?.r ||
                 permissions['AllocationManagerActuals']?.r ||
                 permissions['ManagerActuals']?.r) &&
