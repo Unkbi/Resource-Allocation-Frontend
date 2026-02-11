@@ -1061,10 +1061,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         } else {
           return (
             (!permissions['AdminActuals'].c &&
-              !permissions['AdminActuals'].u) ||
-            (!permissions['AllocationManagerActuals'].c &&
-              !permissions['AllocationManagerActuals'].u) ||
-            (!permissions['ManagerActuals'].c &&
+              !permissions['AdminActuals'].u &&
+              !permissions['AllocationManagerActuals'].c &&
+              !permissions['AllocationManagerActuals'].u &&
+              !permissions['ManagerActuals'].c &&
               !permissions['ManagerActuals'].u) ||
             common
           );
