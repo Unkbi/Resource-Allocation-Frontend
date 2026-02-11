@@ -1012,20 +1012,16 @@ function ReportBuilderPage({
   useEffect(() => {
     const tabFromUrl = searchParams?.get('tab');
 
-    const params = new URLSearchParams(searchParams?.toString() || '');
-    params.set('tab', 'reports');
-    setActiveTab('reports');
-    router.replace(`${pathname}?${params.toString()}`);
-    // if (tabFromUrl && tabFromUrl !== activeTab) {
-    //   // Tab in URL is different from current, sync it
-    //   setActiveTab(tabFromUrl);
-    // } else if (!tabFromUrl && activeTab === 'reports') {
-    //   // No tab parameter in URL and default is 'reports', add it to URL
-    //   const params = new URLSearchParams(searchParams?.toString() || '');
-    //   params.set('tab', 'reports');
-    //   router.replace(`${pathname}?${params.toString()}`);
-    // }
-  }, [searchParams, activeTab, pathname, router]);
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+
+    if (!tabFromUrl) {
+      const params = new URLSearchParams(searchParams?.toString() || '');
+      params.set('tab', 'reports');
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+  }, [searchParams]);
 
   return (
     <Box
@@ -1306,68 +1302,68 @@ function ReportBuilderPage({
           )}
 
           {/* AI Summary Tab */}
-          {/* {activeTab === 'aisummary' && (
-        <>
-         <ReportBuilderToolbar
-            reportType={summaryFilters.reportType as ReportType}
-            tab='aisummary'
-            onGenerateReport={handleGenerateSummary}
-            onExport={handleExport}
-            onShare={handleShare}
-            isLoading={isLoading}
-            onSummaryTypeChange={(summaryType: SummaryType) => {
-              setReportGenerated(false);
-              setShowData(false);
-              setReportData([]);
-              setSummaryFilters({
-                reportType: 'resourceProjectPeriod',
-                summaryType: summaryType,
-                period: 'last_week',
-                customDateRange: undefined,
-                team: [],
-                organization: [],
-                resourceType: [],
-                resource: [],
-                projectType: [],
-                projectTypeGroup: [],
-                project: [],
-                portfolio: [],
-                projectManager: [],
-                allocationManager: [],
-                resourceStatuses: [],
-                resourceLocations: [],
-                resourceWorkLocationGroup: [],
-                projectStatuses: [],
-              });
-              setFiltersExpanded(true);
-            }}
-            selectedFiltersCount={getSummarySelectedFiltersCount()}
-          />
-          
-          <ReportBuilderFilters
-            expanded={filtersExpanded}
-            onToggle={() => setFiltersExpanded(!filtersExpanded)}
-            filters={summaryFilters}
-            onFiltersChange={handleSummaryFiltersChange}
-            onResetFilters={handleResetSummaryFilters}
-            mode="aisummary"
-          />
-          
-          <Box
-            sx={{ 
-              flex: 1,
-              backgroundColor: "#F9FAFB",
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <AISummaryTab />
-          </Box>
-        </>
-      )}
+          {activeTab === 'aisummary' && (
+            <>
+              <ReportBuilderToolbar
+                reportType={summaryFilters.reportType as ReportType}
+                tab="aisummary"
+                onGenerateReport={handleGenerateSummary}
+                onExport={handleExport}
+                onShare={handleShare}
+                isLoading={isLoading}
+                onSummaryTypeChange={(summaryType: SummaryType) => {
+                  setReportGenerated(false);
+                  setShowData(false);
+                  setReportData([]);
+                  setSummaryFilters({
+                    reportType: 'resourceProjectPeriod',
+                    summaryType: summaryType,
+                    period: 'last_week',
+                    customDateRange: undefined,
+                    team: [],
+                    organization: [],
+                    resourceType: [],
+                    resource: [],
+                    projectType: [],
+                    projectTypeGroup: [],
+                    project: [],
+                    portfolio: [],
+                    projectManager: [],
+                    allocationManager: [],
+                    resourceStatuses: [],
+                    resourceLocations: [],
+                    resourceWorkLocationGroup: [],
+                    projectStatuses: [],
+                  });
+                  setFiltersExpanded(true);
+                }}
+                selectedFiltersCount={getSummarySelectedFiltersCount()}
+              />
 
-      {/* Custom Tab */}
+              <ReportBuilderFilters
+                expanded={filtersExpanded}
+                onToggle={() => setFiltersExpanded(!filtersExpanded)}
+                filters={summaryFilters}
+                onFiltersChange={handleSummaryFiltersChange}
+                onResetFilters={handleResetSummaryFilters}
+                mode="aisummary"
+              />
+
+              <Box
+                sx={{
+                  flex: 1,
+                  backgroundColor: '#F9FAFB',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <AISummaryTab />
+              </Box>
+            </>
+          )}
+
+          {/* Custom Tab*/}
           {activeTab === 'custom' && (
             <>
               <ReportBuilderToolbar
