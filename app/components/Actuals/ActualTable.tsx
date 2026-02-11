@@ -63,6 +63,7 @@ import {
   OTHER_WORK,
   past,
   PERSONAL_TIME,
+  TOTAL_HOURS_IN_WEEK,
   UNPLANNED_PROJECT,
 } from '@/app/constants/constants';
 import {
