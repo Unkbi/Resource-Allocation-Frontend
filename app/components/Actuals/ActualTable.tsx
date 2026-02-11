@@ -1435,7 +1435,9 @@ function ActualTable({
             <Switch
               size="small"
               checked={
-                userPreferences?.Actuals_Allocation_Preference === FRACTIONS
+                userPreferences?.Actuals_Allocation_Preference
+                  ? userPreferences?.Actuals_Allocation_Preference === FRACTIONS
+                  : DEFAULT_ACTUALS_ALLOCATION_PREFERENCE === FRACTIONS
               }
               onChange={handleHoursFractionsChange}
               disabled={loading}
