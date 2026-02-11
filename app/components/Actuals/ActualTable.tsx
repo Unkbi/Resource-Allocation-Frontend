@@ -54,6 +54,7 @@ import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import ActualsErrorPage from '../ErrorPage/ActualsErrorPage';
 import {
   current,
+  DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
   FAR_FUTURE_DATE,
   FAR_PAST_DATE,
   FRACTIONS,
@@ -720,6 +721,9 @@ function ActualTable({
             actuals: 0,
             comments: '',
             type: OTHER_WORK,
+            __unit:
+              userPreferences?.Actuals_Allocation_Preference ||
+              DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
           };
           addNewRow(newOtherWorkRow);
           setHasOtherWork(true);
@@ -734,6 +738,9 @@ function ActualTable({
             actuals: 0,
             comments: '',
             type: PERSONAL_TIME,
+            __unit:
+              userPreferences?.Actuals_Allocation_Preference ||
+              DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
           };
           addNewRow(newPersonalTimeRow);
           setHasPersonalTime(true);
