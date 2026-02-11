@@ -9,7 +9,7 @@ import {
   TextField,
 } from '@mui/material';
 import ActualTable from '@/app/components/Actuals/ActualTable';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
   CONFIRM_ACTUAL_ALLOCATIONS,
@@ -73,7 +73,6 @@ import {
   format2,
   formatAllocationDataWithToHours,
   formatAllocationTableDataWithToFTE,
-  formatAllocationTableDataWithToHours,
   isPeriodWithinRange,
   normalizeAllocationValue,
   roundToNearestEven,
@@ -1025,37 +1024,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       setFormattedActualAllocations(formattedData);
     }
   }, [loadingPermissions, dataProcessing, actualAllocations]);
-
-  const hasMountedRef = useRef(false);
-
-  useEffect(() => {
-    if (loadingPermissions || dataProcessing || formattingActualAllocations)
-      return;
-
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      return;
-    }
-
-    const rows = apiRef.current
-      .getAllRowIds()
-      .map(id => apiRef.current.getRow(id))
-      .filter(Boolean);
-
-    if (!rows.length) return;
-
-    const formatted =
-      userPreferences?.Actuals_Allocation_Preference === HOURS
-        ? formatAllocationTableDataWithToHours(rows)
-        : formatAllocationTableDataWithToFTE(rows);
-
-    setFormattedActualAllocations(formatted);
-  }, [
-    userPreferences?.Actuals_Allocation_Preference,
-    loadingPermissions,
-    dataProcessing,
-    formattingActualAllocations,
-  ]);
 
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
