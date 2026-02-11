@@ -13,6 +13,8 @@ import {
   Link,
   Tooltip,
   Icon,
+  Stack,
+  Switch,
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -33,7 +35,7 @@ import ProjectMenu from './ProjectMenu';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { ActualAllocationTableRow, Resource } from '@/app/types';
+import { ActualAllocationTableRow, LoginUser, Resource } from '@/app/types';
 import {
   generateFirstAndLastMonthYear,
   isCurrentWeek,
@@ -54,6 +56,7 @@ import {
   current,
   FAR_FUTURE_DATE,
   FAR_PAST_DATE,
+  FRACTIONS,
   future,
   HOURS,
   OTHER_WORK,
@@ -68,6 +71,9 @@ import {
   roundToStep05,
 } from '@/app/utils/actualsUtils';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import { SET_USER_PREFERENCES } from '@/app/redux/actions/userPreferencesActions';
+import { showToastAction } from '@/app/redux/actions/toastAction';
+import { AxiosError } from 'axios';
 
 export function formatWeekRangeFromStrings(
   startDate: string | null,
@@ -203,9 +209,10 @@ function ActualTable({
   );
   const { actualAllocationsStatuses, actualAllocationsStatusesLoading } =
     useSelector((state: RootState) => state.actualAllocations);
-  const { scalarSettings } = useSelector(
-    (state: RootState) => state.allSettings
+  const { userPreferences, loading } = useSelector(
+    (state: RootState) => state.userPreferences
   );
+  const { user } = useSelector((state: RootState) => state.user);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
@@ -367,7 +374,7 @@ function ActualTable({
     if (isNaN(value)) return '';
     if (params.row.id === 'total' && allocationTheme.length) {
       const matched = allocationTheme.find(range =>
-        scalarSettings?.Actuals_Allocation_Preference === HOURS
+        userPreferences?.Actuals_Allocation_Preference === HOURS
           ? value >= parseFloat(range.From) * TOTAL_HOURS_IN_WEEK &&
             value <= parseFloat(range.To) * TOTAL_HOURS_IN_WEEK
           : value >= parseFloat(range.From) && value <= parseFloat(range.To)
@@ -392,18 +399,18 @@ function ActualTable({
           <Typography
             sx={{
               pt:
-                scalarSettings?.Actuals_Allocation_Preference === HOURS
+                userPreferences?.Actuals_Allocation_Preference === HOURS
                   ? 0.5
                   : 0,
               fontWeight: 600,
             }}
           >
             {' '}
-            {scalarSettings?.Actuals_Allocation_Preference === HOURS
+            {userPreferences?.Actuals_Allocation_Preference === HOURS
               ? value
               : format2(roundToStep05(value))}
           </Typography>
-          {scalarSettings?.Actuals_Allocation_Preference === HOURS && (
+          {userPreferences?.Actuals_Allocation_Preference === HOURS && (
             <Typography
               sx={{
                 position: 'relative',
@@ -428,7 +435,7 @@ function ActualTable({
         </Box>
       );
     }
-    return scalarSettings?.Actuals_Allocation_Preference === HOURS
+    return userPreferences?.Actuals_Allocation_Preference === HOURS
       ? value
       : format2(roundToStep05(value));
   };
@@ -517,7 +524,7 @@ function ActualTable({
       valueParser: value => {
         if (value == null || value === '') return null;
 
-        if (scalarSettings?.Actuals_Allocation_Preference !== HOURS)
+        if (userPreferences?.Actuals_Allocation_Preference !== HOURS)
           return value;
 
         const parsed = Math.round(Number(value));
@@ -547,7 +554,7 @@ function ActualTable({
       valueParser: value => {
         if (value == null || value === '') return null;
 
-        if (scalarSettings?.Actuals_Allocation_Preference !== HOURS)
+        if (userPreferences?.Actuals_Allocation_Preference !== HOURS)
           return value;
 
         const parsed = Math.round(Number(value));
@@ -913,6 +920,59 @@ function ActualTable({
 
       router.replace(`/actuals?startDate=${monday}`, { scroll: false });
     }
+  };
+
+  const handleHoursFractionsChange = () => {
+    if (!user) {
+      dispatch(
+        showToastAction(
+          true,
+          'Failed to set User Preferences. No User Id Found.',
+          'error'
+        )
+      );
+      return;
+    }
+
+    dispatch(showToastAction(true, 'Updating User Preferences...', 'info'));
+
+    // Set userPreferences?.Actuals_Allocation_Preference, toggle between HOURS and FRACTIONS
+    new Promise((resolve, reject) => {
+      dispatch({
+        type: SET_USER_PREFERENCES,
+        payload: {
+          postData: {
+            User: (user as LoginUser)?.id,
+            Key: 'Actuals_Allocation_Preference',
+            Value:
+              userPreferences?.Actuals_Allocation_Preference === FRACTIONS
+                ? HOURS
+                : FRACTIONS,
+          },
+          resolve,
+          reject,
+        },
+      });
+    })
+      .then(() => {
+        dispatch(
+          showToastAction(
+            true,
+            'Updating User Preference successfully.',
+            'success'
+          )
+        );
+      })
+      .catch((err: AxiosError) => {
+        console.log('Error Updating User Preference : ', err);
+        dispatch(
+          showToastAction(
+            true,
+            `Failed to set User Preferences. ${err?.response?.data}`,
+            'error'
+          )
+        );
+      });
   };
 
   const first = generateFirstAndLastMonthYear(
@@ -1337,10 +1397,38 @@ function ActualTable({
               marginLeft: '4px',
             }}
           >
-            {scalarSettings?.Actuals_Allocation_Preference === HOURS
+            {userPreferences?.Actuals_Allocation_Preference === HOURS
               ? 'Hours per week, 40 hrs = full-time'
               : 'Allocation • 1.0 = full-time • 0.1 = 4 hrs'}
           </Typography>
+          <Stack direction="row" sx={{ ml: 2, alignItems: 'center' }}>
+            <Typography
+              sx={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: '#344665',
+              }}
+            >
+              {HOURS}
+            </Typography>
+            <Switch
+              size="small"
+              checked={
+                userPreferences?.Actuals_Allocation_Preference === FRACTIONS
+              }
+              onChange={handleHoursFractionsChange}
+              disabled={loading}
+            />
+            <Typography
+              sx={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: '#344665',
+              }}
+            >
+              {FRACTIONS}
+            </Typography>
+          </Stack>
         </Box>
       </Box>
       {showProjectMenu && (

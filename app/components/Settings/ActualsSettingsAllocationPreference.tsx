@@ -7,7 +7,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/app/redux/store';
+import { AppDispatch, RootState } from '@/app/redux/store';
 import { useEffect, useState } from 'react';
 import {
   ACTUALS_ALLOCATION_PREFERENCE_OPTIONS,
@@ -15,58 +15,78 @@ import {
 } from '@/app/constants/constants';
 import { useDispatch } from 'react-redux';
 import {
-  ADD_SCALAR_SETTING,
-  UPDATE_SCALAR_SETTING,
-} from '@/app/redux/actions/allSettingsActions';
+  FETCH_USER_PREFERENCES,
+  SET_USER_PREFERENCES,
+} from '@/app/redux/actions/userPreferencesActions';
+import { LoginUser } from '@/app/types';
+import { AxiosError } from 'axios';
+import { showToastAction } from '@/app/redux/actions/toastAction';
 
 function ActualsSettingsAllocationPreference() {
-  const { scalarSettings } = useSelector(
-    (state: RootState) => state.allSettings
+  const { userPreferences } = useSelector(
+    (state: RootState) => state.userPreferences
   );
+  const { user } = useSelector((state: RootState) => state.user);
 
   const [
     currentActualsAllocationPreference,
     setCurrentActualsAllocationPreference,
   ] = useState<string>(DEFAULT_ACTUALS_ALLOCATION_PREFERENCE);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    if (user && !userPreferences) {
+      dispatch({
+        type: FETCH_USER_PREFERENCES,
+        payload: { userId: (user as LoginUser)?.id },
+      });
+    }
+  }, []);
 
   useEffect(() => {
     setCurrentActualsAllocationPreference(
-      (scalarSettings?.Actuals_Allocation_Preference ||
+      (userPreferences?.Actuals_Allocation_Preference ||
         DEFAULT_ACTUALS_ALLOCATION_PREFERENCE) as string
     );
-  }, [scalarSettings]);
+  }, [userPreferences]);
 
   const handleUpdateActualsAllocationPreference = () => {
+    if (!user) return;
     if (currentActualsAllocationPreference) {
-      if (scalarSettings?.Actuals_Allocation_Preference) {
-        if (
-          scalarSettings?.Actuals_Allocation_Preference !==
-          currentActualsAllocationPreference
-        ) {
-          // Update Actuals_Allocation_Preference
-          dispatch({
-            type: UPDATE_SCALAR_SETTING,
-            payload: {
-              postData: {
-                SettingKey: 'Actuals_Allocation_Preference',
-                SettingValue: currentActualsAllocationPreference,
-              },
-            },
-          });
-        }
-      } else {
-        // Add to Scalar Settings.
+      // Add to User Preferences.
+      new Promise((resolve, reject) => {
         dispatch({
-          type: ADD_SCALAR_SETTING,
+          type: SET_USER_PREFERENCES,
           payload: {
             postData: {
-              SettingKey: 'Actuals_Allocation_Preference',
-              SettingValue: currentActualsAllocationPreference,
+              User: (user as LoginUser)?.id,
+              Key: 'Actuals_Allocation_Preference',
+              Value: currentActualsAllocationPreference,
             },
+            resolve,
+            reject,
           },
         });
-      }
+      })
+        .then(() => {
+          dispatch(
+            showToastAction(
+              true,
+              'Updating User Preference successfully.',
+              'success'
+            )
+          );
+        })
+        .catch((err: AxiosError) => {
+          console.log('Error Updating User Preference : ', err);
+          dispatch(
+            showToastAction(
+              true,
+              `Failed to set User Preferences. ${err?.response?.data}`,
+              'error'
+            )
+          );
+        });
     }
   };
 
@@ -137,7 +157,7 @@ function ActualsSettingsAllocationPreference() {
           variant="outlined"
           onClick={() => {
             setCurrentActualsAllocationPreference(
-              (scalarSettings?.Actuals_Allocation_Preference ||
+              (userPreferences?.Actuals_Allocation_Preference ||
                 DEFAULT_ACTUALS_ALLOCATION_PREFERENCE) as string
             );
           }}
@@ -155,7 +175,7 @@ function ActualsSettingsAllocationPreference() {
         <Button
           disabled={
             currentActualsAllocationPreference ===
-            scalarSettings?.Actuals_Allocation_Preference
+            userPreferences?.Actuals_Allocation_Preference
           }
           variant="contained"
           onClick={handleUpdateActualsAllocationPreference}
