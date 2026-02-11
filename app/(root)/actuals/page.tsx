@@ -1871,7 +1871,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                               !isFutureWeek(parseISO(startDate || '')))
                           );
                         } else {
-                          return disableView;
+                          return (
+                            loadingPermissions ||
+                            dataProcessing ||
+                            formattingActualAllocations ||
+                            disableView
+                          );
                         }
                       })()}
                       onClick={validateDataBeforeConfirm}
