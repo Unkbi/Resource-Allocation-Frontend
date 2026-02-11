@@ -58,7 +58,7 @@ const AddProjectTypesGroupForm = ({
     <Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
-          Project Type Group Name <span style={{ color: 'red' }}>*</span>
+          Project Category Name <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledInput
           disabled={readOnly}

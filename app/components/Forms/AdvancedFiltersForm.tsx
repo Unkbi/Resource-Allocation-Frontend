@@ -193,11 +193,11 @@ const AdvancedFiltersForm = ({
     return (
         <Box>
             <Box sx={{ pb: 1 }}>
-                <StyledLabel>Project Type Group</StyledLabel>
+                <StyledLabel>Project Category</StyledLabel>
                 <StyledAutocomplete
                     disabled={!permissions['ProjectTypeGroup'].r}
                     name="ProjectTypeGroup"
-                    label="Select Project Type Group"
+                    label="Select Project Category"
                     multiple={true}
                     options={projectTypeGroupNameOptions}
                     value={values.ProjectTypeGroup || []}

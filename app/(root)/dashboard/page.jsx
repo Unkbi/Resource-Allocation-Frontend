@@ -1416,7 +1416,7 @@ export default function ExecutiveDashboardPage() {
     activeProjectsByType: (
       <DashboardWidget
         onClick={() =>
-          handleChartClick('Active Projects by Project Type Group')
+          handleChartClick('Active Projects by Project Category')
         }
         minWidth={400}
         minHeight={300}
@@ -1468,7 +1468,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Active & Approved Projects by Project Type Group
+                Active & Approved Projects by Project Category
               </Typography>
 
               <Box
@@ -1505,7 +1505,7 @@ export default function ExecutiveDashboardPage() {
                       label: 'Active',
                       stack: 'total',
                       color: '#4CAF50',
-                      valueFormatter: (value) => `${value} active`,
+                      valueFormatter: value => `${value} active`,
                     },
                     {
                       data: approvedCounts,
@@ -1513,21 +1513,24 @@ export default function ExecutiveDashboardPage() {
                       label: 'Approved',
                       stack: 'total',
                       color: '#2196F3',
-                      valueFormatter: (value) => `${value} approved`,
+                      valueFormatter: value => `${value} approved`,
                     },
                   ]}
                   onItemClick={(event, barItemIdentifier) => {
                     const { dataIndex, seriesId } = barItemIdentifier || {};
                     if (dataIndex !== undefined && sortedData[dataIndex]) {
                       const projectType = sortedData[dataIndex]._type;
-                      const projectTypeId = projectTypeGroups.find(pt => pt.Name === projectType)?.Id;
+                      const projectTypeId = projectTypeGroups.find(
+                        pt => pt.Name === projectType
+                      )?.Id;
 
-                      const status = seriesId === 'activeProjects' ? 'Active' : 'Approved';
-                      
+                      const status =
+                        seriesId === 'activeProjects' ? 'Active' : 'Approved';
+
                       if (projectTypeId) {
                         navigateToReportWithFilters('activeProjectsByType', {
                           projectTypeGroup: projectTypeId,
-                          projectStatuses: [status]
+                          projectStatuses: [status],
                         });
                       }
                     }
@@ -1709,7 +1712,7 @@ export default function ExecutiveDashboardPage() {
 
     allocation_by_project_type_group: (
       <DashboardWidget
-        onClick={() => handleChartClick('Allocation by Project Type Group')}
+        onClick={() => handleChartClick('Allocation by Project Category')}
         minWidth={320}
         minHeight={280}
         showNoData={
@@ -1794,7 +1797,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Allocation by Project Type Group
+                Allocation by Project Category
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
                 <BarChart

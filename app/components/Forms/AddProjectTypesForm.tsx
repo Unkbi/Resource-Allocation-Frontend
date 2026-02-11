@@ -128,12 +128,12 @@ const AddProjectTypesForm = ({
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
           {' '}
-          Project Type Group <span style={{ color: 'red' }}>*</span>
+          Project Category <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledAutocomplete
           disabled={readOnly}
           name="ProjectTypeGroup"
-          label="Select Project Type Group"
+          label="Select Project Category"
           options={projectTypeGroupNameOptions}
           value={values.ProjectTypeGroup || ''}
           formikProps={formikProps}

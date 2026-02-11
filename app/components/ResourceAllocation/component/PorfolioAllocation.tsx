@@ -573,7 +573,7 @@ function PortfolioAllocation({
     },
     {
       field: 'projectTypeGroup',
-      headerName: 'Project Type Group',
+      headerName: 'Project Category',
       width: 130,
       type: 'string',
       headerClassName: 'secondary-header',

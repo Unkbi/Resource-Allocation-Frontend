@@ -105,7 +105,7 @@ function* createProjectTypeGroupsSaga(action: any): Generator<any, void, any> {
     yield call(fetchProjectTypeGroupsSaga);
     if (resolve) resolve(response);
   } catch (error) {
-    console.error('Saga error, Failed to create Project Type Group : ', error);
+    console.error('Saga error, Failed to create Project Category : ', error);
     if (reject) reject(error);
   } finally {
     yield put(setLoading(false));
@@ -121,7 +121,7 @@ function* updateProjectTypeGroupsSaga(action: any): Generator<any, void, any> {
     yield call(fetchProjectTypeGroupsSaga);
     if (resolve) resolve(response);
   } catch (error) {
-    console.error('Saga error, Failed to update Project Type Group : ', error);
+    console.error('Saga error, Failed to update Project Category : ', error);
     if (reject) reject(error);
   } finally {
     yield put(setLoading(false));
@@ -136,7 +136,7 @@ function* deleteProjectTypeGroupsSaga(action: any): Generator<any, void, any> {
     yield call(fetchProjectTypeGroupsSaga);
     if (resolve) resolve(response);
   } catch (error) {
-    console.error('Saga error, Failed to delete Project Type Group : ', error);
+    console.error('Saga error, Failed to delete Project Category : ', error);
     if (reject) reject(error);
   } finally {
     yield put(setLoading(false));

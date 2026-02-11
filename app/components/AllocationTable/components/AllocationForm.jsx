@@ -3084,7 +3084,7 @@ const AllocationForm = () => {
           dispatch(
             showToast({
               open: true,
-              message: 'Project Type Group added successfully.',
+              message: 'Project Category added successfully.',
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -3093,10 +3093,10 @@ const AllocationForm = () => {
           dispatch(setHighlightedRowId(response?.Id));
           dispatch(closeDialog());
         } catch (error) {
-          console.error('Failed to add project type group:', error);
+          console.error('Failed to add project category:', error);
           const message =
             error?.response?.data?.exception ||
-            'Failed to add project type group.';
+            'Failed to add project category.';
           dispatch(
             showToast({
               open: true,
@@ -3127,7 +3127,7 @@ const AllocationForm = () => {
           dispatch(
             showToast({
               open: true,
-              message: 'Project Type Group updated successfully.',
+              message: 'Project Category updated successfully.',
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -3136,10 +3136,10 @@ const AllocationForm = () => {
           dispatch(setHighlightedRowId(response?.Id));
           dispatch(closeDialog());
         } catch (error) {
-          console.error('Failed to update project type group:', error);
+          console.error('Failed to update project category:', error);
           const message =
             error?.response?.data?.exception ||
-            'Failed to update project type group.';
+            'Failed to update project category.';
           dispatch(
             showToast({
               open: true,

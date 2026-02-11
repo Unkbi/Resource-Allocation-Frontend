@@ -95,8 +95,8 @@ const tabConfig = [
     entity: 'ProjectType',
   },
   {
-    label: 'Project Types Group',
-    value: 'project-types-group',
+    label: 'Project Category',
+    value: 'project-category',
     icon: '/images/icons/ProjectTypesGroup.svg',
     entity: 'ProjectTypeGroup',
   },
@@ -138,7 +138,7 @@ function ProjectSettingPage({
     const accessMap = [
       { key: 'Portfolio', value: 'project-general' },
       { key: 'ProjectType', value: 'project-types' },
-      { key: 'ProjectTypeGroup', value: 'project-types-group' },
+      { key: 'ProjectTypeGroup', value: 'project-category' },
     ];
 
     const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
@@ -242,7 +242,7 @@ function ProjectSettingPage({
   const handleAddNewProjectTypesGroup = () => {
     dispatch(
       openDialog({
-        title: 'Add Project Type Group',
+        title: 'Add Project Category',
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
         formType: 'add_project_type_group',
@@ -252,7 +252,7 @@ function ProjectSettingPage({
 
   const handleEditProjectTypesGroup = (
     assignment: any,
-    title = 'Edit Project Type Group',
+    title = 'Edit Project Category',
     dialogOptions = {}
   ) => {
     dispatch(
@@ -341,7 +341,7 @@ function ProjectSettingPage({
             })
           );
         }
-      } else if (tab === 'project-types-group' && deletingProjectTypesGroup) {
+      } else if (tab === 'project-category' && deletingProjectTypesGroup) {
         const groupToDelete = projectTypeGroups.find(
           (g: any) => g.Name === deletingProjectTypesGroup
         );
@@ -412,7 +412,7 @@ function ProjectSettingPage({
     },
     {
       field: 'projectTypesGroup',
-      headerName: 'Project Type Group',
+      headerName: 'Project Category',
       flex: 1,
       renderCell: (params: any) => (
         <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
@@ -499,7 +499,7 @@ function ProjectSettingPage({
   const ProjectTypesGroupColumns = [
     {
       field: 'projectTypeGroup',
-      headerName: 'Project Type Group',
+      headerName: 'Project Category',
       flex: 1,
       renderCell: (params: any) => (
         <Typography
@@ -509,7 +509,7 @@ function ProjectSettingPage({
             } else {
               handleEditProjectTypesGroup(
                 params.row,
-                `Project Type Group: ${params.value}`,
+                `Project Category: ${params.value}`,
                 {
                   readOnly: true,
                 }
@@ -720,13 +720,13 @@ function ProjectSettingPage({
           loading={loading || loadingPermissions}
         />
       )}
-      {tab === 'project-types-group' && (
+      {tab === 'project-category' && (
         <SettingsTable
-          title="Project Types Group"
+          title="Project Category"
           data={permissions!['ProjectTypeGroup'].r ? ProjectTypesGroupData : []}
           onAdd={handleAddNewProjectTypesGroup}
           buttonLabel={
-            permissions!['ProjectTypeGroup'].c ? 'Add Project Type Group' : ''
+            permissions!['ProjectTypeGroup'].c ? 'Add Project Category' : ''
           }
           columns={ProjectTypesGroupColumns}
           loading={loading || loadingPermissions}
@@ -743,7 +743,7 @@ function ProjectSettingPage({
         {deletingProjectTypes || deletingProjectTypesGroup
           ? tab === 'project-types'
             ? `the project type "${deletingProjectTypes}"`
-            : `project type group "${deletingProjectTypesGroup}"`
+            : `project category "${deletingProjectTypesGroup}"`
           : 'this item'}
         ?
       </ConfirmDialog>

@@ -120,7 +120,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
 
   // Default filter labels for advanced filters mode
   const defaultFilterLabels: Record<string, string> = {
-    ProjectTypeGroup: 'Project Type Group',
+    ProjectTypeGroup: 'Project Category',
     ProjectType: 'Project Type',
     Team: 'Team Name',
     Resource: 'Resource',

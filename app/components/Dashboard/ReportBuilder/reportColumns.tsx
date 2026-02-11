@@ -229,7 +229,7 @@ const projectsOnlyColumns: GridColDef[] = [
     )
    },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
-  { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
+  { field: 'project_type_group', headerName: 'Project Category', minWidth: 160 },
   {
     field: 'project_type_color', headerName: 'Project Type Color', minWidth: 160,
     renderCell: (params: any) => {
@@ -329,7 +329,7 @@ const projectPeriodColumns: GridColDef[] = [
   { field: 'project_id', headerName: 'Project ID', minWidth: 120 },
   { field: 'project_name', headerName: 'Project', minWidth: 200, flex: 1 },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
-  { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
+  { field: 'project_type_group', headerName: 'Project Category', minWidth: 160 },
   { field: 'status', headerName: 'Project Status', minWidth: 150,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
@@ -424,7 +424,7 @@ const resourceProjectPeriodColumns: GridColDef[] = [
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
-  { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
+  { field: 'project_type_group', headerName: 'Project Category', minWidth: 160 },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
   { field: 'portfolio_name', headerName: 'Portfolio', minWidth: 140 },
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
@@ -472,7 +472,7 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
     renderCell: (params) => getAllocationManagerFromPath(params.value, GetResources())?.FullName || params.value,
   },
   { field: 'project_name', headerName: 'Project', minWidth: 200 },
-  { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
+  { field: 'project_type_group', headerName: 'Project Category', minWidth: 160 },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
   { field: 'project_status', headerName: 'Project Status', minWidth: 150,
     renderCell: (params: any) => (
