@@ -16,13 +16,10 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import AISummaryTab from './AISummaryTab';
-import CustomTab from './CustomTab';
 import { fetchProjectSummary } from '@/app/redux/actions/aiSummaryAction';
-import { fetchCustomReportRequest } from '@/app/redux/actions/customReportActions';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import ErrorPage from '../../ErrorPage/ErrorPage';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
-import { calculateDateRange } from '@/app/utils/dateUtils';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
@@ -200,28 +197,6 @@ function ReportBuilderPage({
     projectStatuses: [],
   });
   
-  // Separate filter state for Custom tab
-  const [customFilters, setCustomFilters] = useState<ReportFilters>({
-    reportType: 'resourceProjectPeriod', // Dummy value
-    period: 'last_week',
-    customDateRange: undefined,
-    team: [],
-    organization: [],
-    resourceType: [],
-    resource: [],
-    projectType: [],
-    projectTypeGroup: [],
-    project: [],
-    portfolio: [],
-    projectManager: [],
-    allocationManager: [],
-    resourceStatuses: [],
-    resourceLocations: [],
-    resourceWorkLocationGroup: [],
-    projectStatuses: [],
-    show_actuals: false,
-  });
-  
   const [isLoading, setIsLoading] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
   const [showData, setShowData] = useState(false);
@@ -237,7 +212,6 @@ function ReportBuilderPage({
   const reportSlice = useSelector((state: RootState) => state.dashboard.report);
   const currentReport = reportSlice?.[filters.reportType as ReportType];
   const aiSummaryState = useSelector((state: RootState) => state.aiSummary);
-  const customReportState = useSelector((state: RootState) => state.customReport);
   
   // Get Redux data to check if it's loaded
   const { projectTypeGroups, projectTypes } = useSelector((state: RootState) => state.allSettings);
@@ -246,8 +220,6 @@ function ReportBuilderPage({
   const { resources } = useSelector((state: RootState) => state.resources);
   const { organisations } = useSelector((state: RootState) => state.organisations);
   const { projects } = useSelector((state: RootState) => state.projects);
-
-  const [APIFilters, setAPIFilters] = useState<any>(null);
   
   // Check if all necessary data is loaded
   const isDataLoaded = (teams?.length ?? 0) > 0 && (resources?.length ?? 0) > 0 && (projects?.length ?? 0) > 0 && (projectTypes?.length ?? 0) > 0 && (projectTypeGroups?.length ?? 0) > 0 && (organisations?.length ?? 0) > 0 && (portfolios?.length ?? 0) > 0;
@@ -419,93 +391,6 @@ function ReportBuilderPage({
       resourceWorkLocationGroup: [],
       projectStatuses: [],
     });
-  };
-
-  // Handler functions for Custom tab
-  const handleGenerateCustomReport = async () => {
-    setIsLoading(true);
-    setShowData(false);
-    setFiltersExpanded(false);
-    
-    const customStart = customFilters.customDateRange ? customFilters?.customDateRange[0]?.format('MMM DD, YYYY') : undefined;
-    const customEnd = customFilters.customDateRange ? customFilters?.customDateRange[1]?.format('MMM DD, YYYY') : undefined;
-    // Serialize custom date range
-    const {start, end} = calculateDateRange(customFilters.period, customStart, customEnd);
-    
-    const apiFilters: any = {
-      Projects: customFilters.project,
-      ProjectTypeGroups: customFilters.projectTypeGroup,
-      ProjectTypes: customFilters.projectType,
-      Teams: customFilters.team,
-      Organizations: customFilters.organization,
-      ProjectStatuses: ["Active"],
-      StartDate: start || undefined,
-      EndDate: end || undefined,
-    };
-
-    setAPIFilters(apiFilters);
-    
-    try {
-      dispatch(fetchCustomReportRequest(apiFilters));
-      setShowData(true);
-    } catch (error) {
-      console.error('Error generating custom report:', error);
-      dispatch(showToast({ message: 'Failed to generate custom report. Please try again.', severity: 'error' }));
-      setIsLoading(false);
-      setShowData(false);
-    }
-  };
-
-  const handleCustomFiltersChange = (newFilters: ReportFilters) => {
-    setCustomFilters(newFilters);
-  };
-
-  const handleResetCustomFilters = () => {
-    setCustomFilters({
-      reportType: 'resourceProjectPeriod',
-      period: 'last_week',
-      customDateRange: undefined,
-      team: [],
-      organization: [],
-      resourceType: [],
-      resource: [],
-      projectType: [],
-      projectTypeGroup: [],
-      project: [],
-      portfolio: [],
-      projectManager: [],
-      allocationManager: [],
-      resourceStatuses: [],
-      resourceLocations: [],
-      resourceWorkLocationGroup: [],
-      projectStatuses: [],
-      show_actuals: false,
-    });
-  };
-
-  const getCustomSelectedFiltersCount = () => {
-    let count = 0;
-    
-    if (customFilters.period && customFilters.period !== 'last_week') {
-      count++;
-    }
-    
-    const arrayFilters: (keyof ReportFilters)[] = [
-      'project',
-      'projectTypeGroup',
-      'projectType',
-      'team',
-      'organization',
-    ];
-    
-    arrayFilters.forEach(key => {
-      const value = customFilters[key];
-      if (Array.isArray(value) && value.length > 0) {
-        count++;
-      }
-    });
-    
-    return count;
   };
 
   const getSummarySelectedFiltersCount = () => {
@@ -918,7 +803,6 @@ function ReportBuilderPage({
         >
           <Tab label="Reports" value="reports" />
           <Tab label="AI Summary" value="aisummary" />
-          <Tab label="Custom" value="custom" />
         </Tabs>
       </Box>
 
@@ -1190,44 +1074,6 @@ function ReportBuilderPage({
             }}
           >
             <AISummaryTab />
-          </Box>
-        </>
-      )}
-
-      {/* Custom Tab */}
-      {activeTab === 'custom' && (
-        <>
-          <ReportBuilderToolbar
-            reportType={customFilters.reportType as ReportType}
-            tab='custom'
-            onGenerateReport={handleGenerateCustomReport}
-            onExport={handleExport}
-            onShare={handleShare}
-            isLoading={customReportState.loading}
-            selectedFiltersCount={getCustomSelectedFiltersCount()}
-          />
-          
-          {/* Filters for Custom tab */}
-          <ReportBuilderFilters
-            expanded={filtersExpanded}
-            onToggle={() => setFiltersExpanded(!filtersExpanded)}
-            filters={customFilters}
-            onFiltersChange={handleCustomFiltersChange}
-            onResetFilters={handleResetCustomFilters}
-            mode="custom"
-          />
-          
-          <Box
-            sx={{ 
-              flex: 1,
-              backgroundColor: "#F9FAFB",
-              overflow: "auto",
-              display: "flex",
-              flexDirection: "column",
-              p: 0,
-            }}
-          >
-            <CustomTab showActuals={customFilters.show_actuals || false} APIFilters={APIFilters} />
           </Box>
         </>
       )}

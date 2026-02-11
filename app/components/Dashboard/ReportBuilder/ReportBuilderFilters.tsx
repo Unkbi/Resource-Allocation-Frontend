@@ -14,8 +14,6 @@ import {
   Menu,
   MenuItem,
   Select,
-  Checkbox,
-  FormControlLabel,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CloseIcon from '@mui/icons-material/Close';
@@ -108,7 +106,6 @@ export interface ReportFilters {
   resourceLocations: string[];
   resourceWorkLocationGroup: string[];
   projectStatuses: string[];
-  show_actuals?: boolean; // For custom tab
 }
 
 interface FilterSectionProps {
@@ -168,7 +165,7 @@ interface ReportBuilderFiltersProps {
   filters: ReportFilters;
   onFiltersChange: (filters: ReportFilters) => void;
   onResetFilters: () => void;
-  mode?: 'reports' | 'aisummary' | 'custom'; // Mode to determine which filters to show
+  mode?: 'reports' | 'aisummary'; // Mode to determine which filters to show
   permissions?: Record<string, CrudPermissions>
 }
 
@@ -185,10 +182,6 @@ function ReportBuilderFilters({
   
   // Helper to check if filter is enabled based on mode
   const checkFilterEnabled = (filterKey: string): boolean => {
-    if (mode === 'custom') {
-      // For custom tab, only show specific filters
-      return [ 'project','projectType', 'projectTypeGroup','team', 'organization'].includes(filterKey);
-    }
     if (mode === 'aisummary' && filters.summaryType) {
       return isSummaryFilterEnabled(filters.summaryType, filterKey as any);
     }
@@ -197,9 +190,6 @@ function ReportBuilderFilters({
   
   // Helper to check if period is required based on mode
   const checkPeriodRequired = (): boolean => {
-    if (mode === 'custom') {
-      return true; // Custom tab requires period
-    }
     if (mode === 'aisummary' && filters.summaryType) {
       return isSummaryPeriodRequired(filters.summaryType);
     }
@@ -901,6 +891,18 @@ function ReportBuilderFilters({
         />
         )}
 
+        {checkFilterEnabled( 'project') && (
+        <FilterSection
+          disabled={!permissions?.['Project']?.r}
+          title="Project"
+          name="project"
+          options={projectOptions}
+          selected={filters.project}
+          onChange={(value) => handleFilterChange('project', value)}
+          formikProps={formikProps}
+        />
+        )}
+
         {checkFilterEnabled( 'team') && (
         <FilterSection
           disabled={!permissions?.['Team']?.r}
@@ -973,18 +975,6 @@ function ReportBuilderFilters({
         />
         )}
 
-        {checkFilterEnabled( 'project') && (
-        <FilterSection
-          disabled={!permissions?.['Project']?.r}
-          title="Project"
-          name="project"
-          options={projectOptions}
-          selected={filters.project}
-          onChange={(value) => handleFilterChange('project', value)}
-          formikProps={formikProps}
-        />
-        )}
-
         {checkFilterEnabled( 'portfolio') && (
         <FilterSection
           disabled={!permissions?.['Portfolio']?.r}
@@ -1045,45 +1035,10 @@ function ReportBuilderFilters({
         )}
         </Box>
 
-        {/* Show Actuals Checkbox - Only for Custom Tab */}
-        {mode === 'custom' && (
-          <Box sx={{ mt: 1 }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={filters.show_actuals || false}
-                  onChange={(e) => {
-                    onFiltersChange({
-                      ...filters,
-                      show_actuals: e.target.checked,
-                    });
-                  }}
-                  sx={{
-                    color: '#152E75',
-                    '&.Mui-checked': {
-                      color: '#152E75',
-                    },
-                  }}
-                />
-              }
-              label={
-                <Typography
-                  sx={{
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: '#1C2D5F',
-                  }}
-                >
-                  Show Actuals
-                </Typography>
-              }
-            />
-          </Box>
-        )}
 
         {/* Reset Filters Button */}
         {permissions?.['Reports']?.r && (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
         <Button
           variant="text"
           onClick={onResetFilters}

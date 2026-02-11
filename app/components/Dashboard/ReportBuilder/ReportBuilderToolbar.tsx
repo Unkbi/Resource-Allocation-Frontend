@@ -144,26 +144,21 @@ function ReportBuilderToolbar({
           >
             {tab === 'reports' ?
             'Choose a report type, period and to analyze your data based on your requirements.'
-            : tab === 'aisummary' ? 'Choose a summary type, period and to analyze your data based on your requirements.'
-            : 'Choose filters and period to analyze allocation data with custom visualizations.'}
+            : 'Choose a summary type, period and to analyze your data based on your requirements.'}
           </Typography>
         </Box>
         
         {/* Report Type and Select - horizontal */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          {tab !== 'custom' && (
-            <>
-              <Typography
-                sx={{
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#1C2D5F',
-                }}
-              >
-                {tab === 'reports' ? 'Report Type' : 'Summary Type'}
-              </Typography>
-            
-         
+          <Typography
+            sx={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#1C2D5F',
+            }}
+          >
+            {tab === 'reports' ? 'Report Type' : 'Summary Type'}
+          </Typography>
           {tab === 'reports' ? (
           <Select
             disabled={permissions?.['Reports'].r === false}
@@ -277,8 +272,6 @@ function ReportBuilderToolbar({
             {/* <MenuItem value="team" sx={{ pl: 4 }}>Team</MenuItem> */}
           </Select>
           )}
-          </>
-           )}
         </Box>
       </Box>
       {/* Right side - Actions */}
@@ -434,7 +427,7 @@ function ReportBuilderToolbar({
             },
           }}
         >
-          {isLoading ? 'Generating...' : tab === 'reports' ? 'Generate Report' : tab === 'aisummary' ? 'Generate Summary' : 'Generate Report'}
+          {isLoading ? 'Generating...' : tab === 'reports' ? 'Generate Report' : 'Generate Summary'}
         </Button>
       </Box>
     </Box>
