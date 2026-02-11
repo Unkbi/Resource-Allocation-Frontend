@@ -147,20 +147,20 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   let max_allocation_error = useMemo(
     () =>
-      scalarSettings?.Actuals_Allocation_Preference === HOURS
+      userPreferences?.Actuals_Allocation_Preference === HOURS
         ? Number(scalarSettings?.Max_Allocation_Error || '2.0') *
           TOTAL_HOURS_IN_WEEK
         : Number(scalarSettings?.Max_Allocation_Error || '2.0'),
-    [scalarSettings]
+    [userPreferences?.Actuals_Allocation_Preference]
   );
 
   let max_allocation_warning = useMemo(
     () =>
-      scalarSettings?.Actuals_Allocation_Preference === HOURS
+      userPreferences?.Actuals_Allocation_Preference === HOURS
         ? Number(scalarSettings?.Max_Allocation_Warning || '1.5') *
           TOTAL_HOURS_IN_WEEK
         : Number(scalarSettings?.Max_Allocation_Warning || '1.5'),
-    [scalarSettings]
+    [userPreferences?.Actuals_Allocation_Preference]
   );
 
   const handleModificationChange = (modified: boolean) => {
