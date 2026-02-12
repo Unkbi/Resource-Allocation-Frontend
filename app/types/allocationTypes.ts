@@ -39,7 +39,7 @@ export interface AllocationGridCell {
   projectEndDate?: string | null; // Only for Projects View
   projectLocation?: string | null; // Only for Projects View
   projectManager?: string | null; // Only for Projects View
-  projectOvertimeAllowed?: string |boolean | null; // Only for Projects View
+  projectOvertimeAllowed?: string | boolean | null; // Only for Projects View
   projectSponsor?: string | null; // Only for Projects View
   projectStatus?: string | null; // Only for Projects View
   projectType?: string | null; // Only for Projects View
@@ -188,6 +188,21 @@ export interface ActualStatusForPeriodPayload {
   Status: string | null;
   StartDate: string;
   EndDate: string;
+}
+
+export interface UpdateActualStatusForPeriodPayload {
+  Resource: string;
+  Status: string | null;
+  Period: string;
+}
+
+export interface UpdateActualStatusForPeriodResponse {
+  id: string;
+  message: string;
+  period: string;
+  resource: string;
+  status: string;
+  success: boolean;
 }
 
 export interface ConfirmActuals {

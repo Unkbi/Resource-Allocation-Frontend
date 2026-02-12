@@ -146,7 +146,8 @@ const ProjectMenu = ({
     >
       <Box
         sx={{
-          width: 231,
+          minWidth: '410px',
+          maxWidth: '820px',
           padding: 1,
           backgroundColor: '#fff',
           borderRadius: 2,
@@ -236,12 +237,13 @@ const ProjectMenu = ({
               >
                 <Typography
                   variant="body2"
-                  noWrap
                   sx={{
                     ...sharedFontStyles,
-                    fontSize: '13px',
+                    fontSize: '14px',
                     color: '#424242',
-                    lineHeight: '34px',
+                    lineHeight: '20px',
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word',
                   }}
                 >
                   {project.Name}

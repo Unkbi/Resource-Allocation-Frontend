@@ -30,7 +30,7 @@ const safeGet = (obj: any, path: string, defaultValue: any = null) => {
 
 // Format date to MM/DD/YYYY or return null
 // Handles date strings without timezone conversion to avoid shifting dates
-const formatDate = (dateValue: any): string | null => {
+export const formatDate = (dateValue: any): string | null => {
     if (!dateValue) return null;
     try {
         const dateStr = String(dateValue);
@@ -175,7 +175,7 @@ const formatResourcePeriod = (data: any[]): any[] => {
         allocation_manager: safeGet(item, 'Team.AllocationManager', ''),
         period: formatDate(safeGet(item, 'Allocation.Period')),
         actuals_status: safeGet(item, 'ActualsStatus.Status', ''),
-        confirmation_at: formatDate(safeGet(item, 'Resourceperiod.ActualsConfirmedAt')),
+        confirmed_at: formatDate(safeGet(item, 'Resourceperiod.ActualsConfirmedAt')),
         planned_allocation: safeGet(item, 'Allocation.AllocationEntered', 0),
         actuals_allocation: safeGet(item, 'Allocation.ActualsEntered', 0),
         variance: safeGet(item, 'Allocation.Variance', 0),
