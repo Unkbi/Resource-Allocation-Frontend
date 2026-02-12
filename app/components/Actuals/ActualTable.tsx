@@ -1415,7 +1415,7 @@ function ActualTable({
               ? 'Hours per week, 40 hrs = full-time'
               : 'Allocation • 1.0 = full-time • 0.1 = 4 hrs'}
           </Typography>
-          <Stack direction="row" sx={{ ml: 2, alignItems: 'center' }}>
+          {/* <Stack direction="row" sx={{ ml: 2, alignItems: 'center' }}>
             <Typography
               sx={{
                 fontSize: '0.875rem',
@@ -1444,7 +1444,7 @@ function ActualTable({
             >
               {FRACTIONS}
             </Typography>
-          </Stack>
+          </Stack> */}
         </Box>
       </Box>
       {showProjectMenu && (
