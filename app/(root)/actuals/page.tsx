@@ -1010,7 +1010,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           : actualAllocations?.[startDate] || [];
       setFormattingActualAllocations(true);
       const formattedData: ActualAllocationTableRow[] =
-        actualAllocations?.[startDate]
+        formattedAllActualAllocation
           ?.filter(
             (alloc: ActualAllocations) =>
               (alloc.AllocationEntered && alloc.AllocationEntered > 0) ||
