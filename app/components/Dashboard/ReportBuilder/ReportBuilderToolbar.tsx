@@ -450,12 +450,14 @@ function ReportBuilderToolbar({
           variant="contained"
           onClick={onGenerateReport}
           disabled={
-            !(
+            (!(
               permissions &&
               (permissions['Reports'].r ||
                 permissions['AISummary'].r ||
                 permissions['CustomReports'].r)
-            ) || isLoading
+            ) &&
+              !(selectedFiltersCount > 0)) ||
+            isLoading
           }
           sx={{
             height: 36,

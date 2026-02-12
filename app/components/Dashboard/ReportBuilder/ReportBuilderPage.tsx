@@ -1082,6 +1082,9 @@ function ReportBuilderPage({
     }
   }, [searchParams]);
 
+  // Track if we're in a drill-down scenario (have pending or applied query filters)
+  const isDrillingDown = pendingQueryFilters !== null || hasAppliedQueryParams;
+
   // loading permissions
   if (loadingPermissions) {
     return <LoadingScreen />;
@@ -1118,7 +1121,8 @@ function ReportBuilderPage({
       {/* Reports Tab */}
       {(permissions?.['Reports']?.r ||
         permissions?.['AISummary']?.r ||
-        permissions?.['CustomReports']?.r) && (
+        permissions?.['CustomReports']?.r ||
+        isDrillingDown) && (
         <Box
           sx={{
             borderBottom: 1,
@@ -1148,7 +1152,7 @@ function ReportBuilderPage({
               },
             }}
           >
-            {permissions?.['Reports']?.r && (
+            {(permissions?.['Reports']?.r || isDrillingDown) && (
               <Tab label="Reports" value="reports" />
             )}
             {permissions?.['AISummary']?.r && (
