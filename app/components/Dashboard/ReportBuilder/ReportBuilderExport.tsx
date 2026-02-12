@@ -37,7 +37,9 @@ const ReportBuilderExport = () => {
   });
 
   const handleCsvExport = () => {
-    const csv = apiRef.current.getDataAsCsv?.();
+    const csv = apiRef.current.getDataAsCsv({
+      escapeFormulas: false,
+    });
     if (!csv) return;
     download(csvConfig)(csv as any);
   };
