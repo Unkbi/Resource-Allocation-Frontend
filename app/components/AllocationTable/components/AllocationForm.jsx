@@ -3958,138 +3958,111 @@ const AllocationForm = () => {
           }
 
           // If result is empty, return immediately
-          if (response === null) {
+          if (response === null || !Array.isArray(response) || response.length === 0) {
             setHistoryStatus('no-data');
             setHistoryData([]);
             return;
           }
 
-          response = formatAPIResponse('AllocationHistoryOut', response).map(
-            item => ({
-              ...item,
-              ChangesLog: formatAPIResponse('ChangesLog', item.ChangesLog),
-            })
-          );
-          const formattedHistory = [];
-          (response ? response : [])
-            .filter(
-              item =>
-                Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
-            )
-            .forEach((item, idx) => {
-              const {
-                ResourceName,
-                ProjectName,
-                Period,
-                AllocationEntered,
-                ChangesLog = [],
-                AllocationId,
-              } = item;
 
-              // Helper functions
-              const getUserInitials = email => {
-                if (!email) return '';
-                const [name] = email.split('@');
-                const parts = name.split(/[.\s_]/);
-                return parts
-                  .map(p => p[0]?.toUpperCase())
-                  .join('')
-                  .slice(0, 2);
-              };
-              const getUserName = email => {
-                if (!email) return '';
-                const [name] = email.split('@');
-                return name
-                  .split(/[.\s_]/)
-                  .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-                  .join(' ');
-              };
-              const getDateString = ts => {
-                if (!ts) return '';
-                return format(parseISO(ts), DATE_FORMAT);
-              };
-              const getRelativeTime = ts => {
-                if (!ts) return '';
-                const now = Date.now();
-                const diff = now - ts * 1000;
-                const min = Math.floor(diff / 60000);
-                if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
-                const hr = Math.floor(min / 60);
-                if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
-                const day = Math.floor(hr / 24);
-                return `${day} day${day === 1 ? '' : 's'} ago`;
-              };
+          // Helper functions
+          const getUserInitials = email => {
+            if (!email) return '';
+            const [name] = email.split('@');
+            const parts = name.split(/[.\s_]/);
+            return parts
+              .map(p => p[0]?.toUpperCase())
+              .join('')
+              .slice(0, 2);
+          };
+          const getUserName = email => {
+            if (!email) return '';
+            const [name] = email.split('@');
+            return name
+              .split(/[.\s_]/)
+              .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+              .join(' ');
+          };
+          const getDateString = ts => {
+            if (!ts) return '';
+            return format(parseISO(ts), DATE_FORMAT);
+          };
+          const getRelativeTime = ts => {
+            if (!ts) return '';
+            const now = Date.now();
+            const diff = now - ts * 1000;
+            const min = Math.floor(diff / 60000);
+            if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
+            const day = Math.floor(hr / 24);
+            return `${day} day${day === 1 ? '' : 's'} ago`;
+          };
 
-              // Calculate week number from Period
-              let weekNumber = '';
-              if (Period) {
-                const d = parseISO(Period);
-                if (!isNaN(d)) {
-                  const temp = parseISO(new Date(d.getTime()).toISOString());
-                  temp.setHours(0, 0, 0, 0);
-                  temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-                  const yearStart = parseISO(
-                    new Date(temp.getFullYear(), 0, 1).toISOString()
-                  );
-                  weekNumber = Math.ceil(
-                    ((temp - yearStart) / 86400000 + 1) / 7
-                  );
-                }
+          const formattedHistory = response.map((item, idx) => {
+            const {
+              ResourceName,
+              ProjectName,
+              Period,
+              AllocationId,
+              Action,
+              AllocationEnteredFromValue,
+              AllocationEnteredToValue,
+              Timestamp,
+              UserId,
+            } = item;
+
+            // Calculate week number from Period
+            let weekNumber = '';
+            if (Period) {
+              const d = parseISO(Period);
+              if (!isNaN(d)) {
+                const temp = parseISO(new Date(d.getTime()).toISOString());
+                temp.setHours(0, 0, 0, 0);
+                temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
+                const yearStart = parseISO(
+                  new Date(temp.getFullYear(), 0, 1).toISOString()
+                );
+                weekNumber = Math.ceil(
+                  ((temp - yearStart) / 86400000 + 1) / 7
+                );
               }
+            }
 
-              // For each change log, create a history entry
-              ChangesLog.forEach((log, logIdx) => {
-                let action = '';
-                let fromVersion = '';
-                let toVersion = '';
-                const modifingUserDetails = getUserFromUid(log.User, allUsers);
+            const modifingUserDetails = getUserFromUid(UserId, allUsers);
 
-                // Find the next log entry if it exists
-                const nextLog = ChangesLog[logIdx + 1];
+            let action = '';
+            if (Action?.toLowerCase() === 'create') {
+              action = 'Created';
+            } else if (Action?.toLowerCase() === 'update') {
+              action = 'Updated';
+            } else if (Action?.toLowerCase() === 'delete') {
+              action = 'Deleted';
+            } else {
+              action = Action;
+            }
 
-                if (log.Action?.toLowerCase() === 'create') {
-                  action = 'Created';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = nextLog
-                    ? (nextLog.AllocationEnteredLast ?? '')
-                    : (AllocationEntered ?? '');
-                } else if (log.Action?.toLowerCase() === 'update') {
-                  action = 'Updated';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = nextLog
-                    ? (nextLog.AllocationEnteredLast ?? '')
-                    : (AllocationEntered ?? '');
-                } else if (log.Action?.toLowerCase() === 'delete') {
-                  action = 'Deleted';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = '';
-                } else {
-                  action = log.Action;
-                }
-
-                formattedHistory.push({
-                  id: `${AllocationId || idx + 1}-${logIdx + 1}`,
-                  userInitials: getUserInitials(ResourceName),
-                  userName: getUserName(ResourceName),
-                  projectName: ProjectName,
-                  weekNumber: weekNumber ? Number(weekNumber) : undefined,
-                  date: getDateString(Period),
-                  timestamp: getRelativeTime(
-                    Math.floor(new Date(log.Timestamp)?.getTime() / 1000)
-                  ),
-                  action,
-                  fromVersion:
-                    fromVersion !== undefined ? String(fromVersion) : '',
-                  toVersion: toVersion !== undefined ? String(toVersion) : '',
-                  byUser: `${modifingUserDetails?.firstName || ''} ${
-                    modifingUserDetails?.lastName || ''
-                  }`,
-                  _timestampRaw: Math.floor(
-                    new Date(log.Timestamp)?.getTime() / 1000
-                  ), // Add raw timestamp for sorting
-                });
-              });
-            });
+            return {
+              id: `${AllocationId || idx + 1}`,
+              userInitials: getUserInitials(ResourceName),
+              userName: getUserName(ResourceName),
+              projectName: ProjectName,
+              weekNumber: weekNumber ? Number(weekNumber) : undefined,
+              date: getDateString(Period),
+              timestamp: getRelativeTime(
+                Math.floor(new Date(Timestamp)?.getTime() / 1000)
+              ),
+              action,
+              fromVersion: AllocationEnteredFromValue !== undefined ? String(AllocationEnteredFromValue) : '',
+              toVersion: AllocationEnteredToValue !== undefined ? String(AllocationEnteredToValue) : '',
+              byUser: `${modifingUserDetails?.firstName || ''} ${
+                modifingUserDetails?.lastName || ''
+              }`,
+              _timestampRaw: Math.floor(
+                new Date(Timestamp)?.getTime() / 1000
+              ),
+            };
+          });
 
           // Sort by _timestampRaw descending (latest first)
           formattedHistory.sort(
