@@ -61,7 +61,6 @@ import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import {
   DATE_FORMAT,
-  DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
   FAR_FUTURE_DATE,
   FAR_PAST_DATE,
   HOURS,
@@ -74,7 +73,6 @@ import {
   format2,
   formatAllocationDataWithToHours,
   formatAllocationTableDataWithToFTE,
-  formatAllocationTableDataWithToHours,
   isPeriodWithinRange,
   normalizeAllocationValue,
   roundToNearestEven,
@@ -1010,7 +1008,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           : actualAllocations?.[startDate] || [];
       setFormattingActualAllocations(true);
       const formattedData: ActualAllocationTableRow[] =
-        actualAllocations?.[startDate]
+        formattedAllActualAllocation
           ?.filter(
             (alloc: ActualAllocations) =>
               (alloc.AllocationEntered && alloc.AllocationEntered > 0) ||
@@ -1025,38 +1023,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             actuals: allocation.ActualsEntered,
             comments: allocation.Notes,
             projectActualsStatus: allocation.ProjectActualsStatus ?? 'No Data',
-            __unit:
-              userPreferences?.Actuals_Allocation_Preference ||
-              DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
           })) || [];
       setFormattedActualAllocations(formattedData);
     }
   }, [loadingPermissions, dataProcessing, actualAllocations]);
-
-  useEffect(() => {
-    if (loadingPermissions || dataProcessing) return;
-    if (!apiRef) return;
-    const allRows = apiRef?.current
-      ?.getAllRowIds()
-      ?.map(id => apiRef.current.getRow(id))
-      ?.filter(Boolean);
-
-    if (!allRows.length) return;
-
-    const currentFormatting = allRows[0].__unit;
-    if (userPreferences?.Actuals_Allocation_Preference !== currentFormatting) {
-      // Re-format to the latest preference
-      const formatted =
-        userPreferences?.Actuals_Allocation_Preference === HOURS
-          ? formatAllocationTableDataWithToHours(allRows)
-          : formatAllocationTableDataWithToFTE(allRows);
-      setFormattedActualAllocations(formatted);
-    }
-  }, [
-    loadingPermissions,
-    dataProcessing,
-    userPreferences?.Actuals_Allocation_Preference,
-  ]);
 
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
