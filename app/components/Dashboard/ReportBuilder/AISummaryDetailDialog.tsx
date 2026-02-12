@@ -30,7 +30,8 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
     margin: 0,
     maxHeight: '100%',
     height: '100vh',
-    maxWidth: '56%',
+    maxWidth: '60%',
+    minWidth: '30%',
     borderRadius: 0,
     position: 'fixed',
     right: 0,
@@ -50,7 +51,6 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
     scoreBand,
     summaryHtml,
   } = data;
-
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -198,12 +198,13 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
             alignItems: 'center',
             justifyContent: 'space-between',
             px: 2.5,
+            height: '52px',
             bgcolor: '#1C2D5F',
             borderBottom: '1px solid #E5E7EB',
           }}
         >
           <Typography sx={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
-            AI Chatbot Development Summary
+            {projectName ? `${projectName} Summary` : 'AI Summary'}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
             <IconButton onClick={onClose} size="small" sx={{ color: '#FFFFFF' }}>
@@ -239,7 +240,7 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
           }}
         >
           <Typography sx={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
-            AI Chatbot Development Summary
+            {projectName ? `${projectName} Summary` : 'AI Summary'}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
             <IconButton onClick={onClose} size="small" sx={{ color: '#FFFFFF' }}>
