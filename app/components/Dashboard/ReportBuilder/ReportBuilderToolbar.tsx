@@ -60,7 +60,7 @@ const StyledIconButton = styled(IconButton)({
 
 // Saved reports data
 const savedReports = [
-  { id: 1, name: 'My Reports'},
+  { id: 1, name: 'My Reports' },
   { id: 2, name: 'Resource Productivity Report' },
   { id: 3, name: 'Team Productivity Analysis' },
   { id: 4, name: 'Monthly Revenue Breakdown' },
@@ -119,7 +119,8 @@ function ReportBuilderToolbar({
     // TODO: Show confirmation dialog
   };
 
-  const selectedReportName = savedReports.find(r => r.id === selectedSavedReport)?.name || 'My Reports';
+  const selectedReportName =
+    savedReports.find(r => r.id === selectedSavedReport)?.name || 'My Reports';
 
   return (
     <Box
@@ -135,142 +136,175 @@ function ReportBuilderToolbar({
       {/* Left side - Report Type Filter Dropdown */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {/* Report Builder text - horizontal */}
-        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 1,
+            alignItems: 'center',
+          }}
+        >
           <Typography
             sx={{
               fontSize: '12px',
               color: '#4A5565',
             }}
           >
-            {tab === 'reports' ?
-            'Choose a report type, period and to analyze your data based on your requirements.'
-            : 'Choose a summary type, period and to analyze your data based on your requirements.'}
+            {tab === 'reports'
+              ? 'Choose a report type, period and to analyze your data based on your requirements.'
+              : tab === 'aisummary'
+                ? 'Choose a summary type, period and to analyze your data based on your requirements.'
+                : 'Choose filters and period to analyze allocation data with custom visualizations.'}
           </Typography>
         </Box>
-        
+
         {/* Report Type and Select - horizontal */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Typography
-            sx={{
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#1C2D5F',
-            }}
-          >
-            {tab === 'reports' ? 'Report Type' : 'Summary Type'}
-          </Typography>
-          {tab === 'reports' ? (
-          <Select
-            disabled={permissions?.['Reports'].r === false}
-            value={selectedReport}
-            onChange={(e) => {setSelectedReport(e.target.value); onReportTypeChange?.(e.target.value as ReportType);}}
-            size="small"
-            displayEmpty
-            sx={{
-              minWidth: 200,
-              height: 36,
-              fontSize: '13px',
-              fontWeight: 500,
-              backgroundColor: '#ffffff',
-              borderRadius: '6px',
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#E5E7EB',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#D1D5DB',
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#152E75',
-                borderWidth: '1px',
-              },
-            }}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-                  borderRadius: '8px',
-                  mt: 0.1,
-                  '& .MuiMenuItem-root': {
+          {tab !== 'custom' && (
+            <>
+              <Typography
+                sx={{
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#1C2D5F',
+                }}
+              >
+                {tab === 'reports' ? 'Report Type' : 'Summary Type'}
+              </Typography>
+
+              {tab === 'reports' ? (
+                <Select
+                  disabled={permissions?.['Reports'].r === false}
+                  value={selectedReport}
+                  onChange={e => {
+                    setSelectedReport(e.target.value);
+                    onReportTypeChange?.(e.target.value as ReportType);
+                  }}
+                  size="small"
+                  displayEmpty
+                  sx={{
+                    minWidth: 200,
+                    height: 36,
                     fontSize: '13px',
                     fontWeight: 500,
-                    py: 1,
-                    px: 2,
-                    '&:hover': {
-                      backgroundColor: '#F3F4F6',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '6px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#E5E7EB',
                     },
-                    '&.Mui-selected': {
-                      backgroundColor: '#EEF2FF',
-                      color: '#152E75',
-                      '&:hover': {
-                        backgroundColor: '#E0E7FF',
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#D1D5DB',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#152E75',
+                      borderWidth: '1px',
+                    },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                        borderRadius: '8px',
+                        mt: 0.1,
+                        '& .MuiMenuItem-root': {
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          py: 1,
+                          px: 2,
+                          '&:hover': {
+                            backgroundColor: '#F3F4F6',
+                          },
+                          '&.Mui-selected': {
+                            backgroundColor: '#EEF2FF',
+                            color: '#152E75',
+                            '&:hover': {
+                              backgroundColor: '#E0E7FF',
+                            },
+                          },
+                        },
                       },
                     },
-                  },
-                },
-              },
-            }}
-          >
-            <MenuItem value="resourceProjectPeriod">Allocation & Actuals Analysis</MenuItem>
-            <MenuItem value="resourceProjectPeriodCost">Allocation & Actuals Cost Analysis</MenuItem>
-            <MenuItem value="resourcePeriod" sx={{ pl: 4 }}>Resource & Period</MenuItem>
-            <MenuItem value="projectPeriod" sx={{ pl: 4 }}>Project & Period</MenuItem>
-            <MenuItem value="resourceOnly" sx={{ pl: 4 }}>Resource Roster</MenuItem>
-            <MenuItem value="projectsOnly" sx={{ pl: 4 }}>Project Roster</MenuItem>
-          </Select>
-          )
-        : (
-          <Select
-            value={selectedSummary}
-            onChange={(e) => {setSelectedSummary(e.target.value); onSummaryTypeChange?.(e.target.value as SummaryType);}}
-            size="small"
-            displayEmpty
-            sx={{
-              minWidth: 200,
-              height: 36,
-              fontSize: '13px',
-              fontWeight: 500,
-              backgroundColor: '#ffffff',
-              borderRadius: '6px',
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#E5E7EB',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#D1D5DB',
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#152E75',
-                borderWidth: '1px',
-              },
-            }}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-                  borderRadius: '8px',
-                  mt: 0.1,
-                  '& .MuiMenuItem-root': {
+                  }}
+                >
+                  <MenuItem value="resourceProjectPeriod">
+                    Allocation & Actuals Analysis
+                  </MenuItem>
+                  <MenuItem value="resourceProjectPeriodCost">
+                    Allocation & Actuals Cost Analysis
+                  </MenuItem>
+                  <MenuItem value="resourcePeriod" sx={{ pl: 4 }}>
+                    Resource & Period
+                  </MenuItem>
+                  <MenuItem value="projectPeriod" sx={{ pl: 4 }}>
+                    Project & Period
+                  </MenuItem>
+                  <MenuItem value="resourceOnly" sx={{ pl: 4 }}>
+                    Resource Roster
+                  </MenuItem>
+                  <MenuItem value="projectsOnly" sx={{ pl: 4 }}>
+                    Project Roster
+                  </MenuItem>
+                </Select>
+              ) : (
+                <Select
+                  value={selectedSummary}
+                  onChange={e => {
+                    setSelectedSummary(e.target.value);
+                    onSummaryTypeChange?.(e.target.value as SummaryType);
+                  }}
+                  size="small"
+                  displayEmpty
+                  sx={{
+                    minWidth: 200,
+                    height: 36,
                     fontSize: '13px',
                     fontWeight: 500,
-                    py: 1,
-                    px: 2,
-                    '&:hover': {
-                      backgroundColor: '#F3F4F6',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '6px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#E5E7EB',
                     },
-                    '&.Mui-selected': {
-                      backgroundColor: '#EEF2FF',
-                      color: '#152E75',
-                      '&:hover': {
-                        backgroundColor: '#E0E7FF',
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#D1D5DB',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#152E75',
+                      borderWidth: '1px',
+                    },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                        borderRadius: '8px',
+                        mt: 0.1,
+                        '& .MuiMenuItem-root': {
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          py: 1,
+                          px: 2,
+                          '&:hover': {
+                            backgroundColor: '#F3F4F6',
+                          },
+                          '&.Mui-selected': {
+                            backgroundColor: '#EEF2FF',
+                            color: '#152E75',
+                            '&:hover': {
+                              backgroundColor: '#E0E7FF',
+                            },
+                          },
+                        },
                       },
                     },
-                  },
-                },
-              },
-            }}
-          >
-            <MenuItem value="project" sx={{ pl: 4 }}>Project</MenuItem>
-            {/* <MenuItem value="team" sx={{ pl: 4 }}>Team</MenuItem> */}
-          </Select>
+                  }}
+                >
+                  <MenuItem value="project" sx={{ pl: 4 }}>
+                    Project
+                  </MenuItem>
+                  {/* <MenuItem value="team" sx={{ pl: 4 }}>Team</MenuItem> */}
+                </Select>
+              )}
+            </>
           )}
         </Box>
       </Box>
@@ -334,7 +368,7 @@ function ReportBuilderToolbar({
             },
           }}
         >
-          {savedReports.map((report) => (
+          {savedReports.map(report => (
             <MenuItem
               key={report.id}
               onClick={() => handleReportSelect(report.id)}
@@ -345,7 +379,7 @@ function ReportBuilderToolbar({
                 px: 2,
                 minWidth: 150,
                 maxWidth: 200,
-                '&:hover': { 
+                '&:hover': {
                   backgroundColor: '#F3F4F6',
                   '& .action-buttons': {
                     display: 'flex',
@@ -362,7 +396,7 @@ function ReportBuilderToolbar({
             >
               <Typography
                 component="span"
-                sx={{ 
+                sx={{
                   fontSize: '13px',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -374,9 +408,9 @@ function ReportBuilderToolbar({
               >
                 {report.name}
               </Typography>
-              <Box 
+              <Box
                 className="action-buttons"
-                sx={{ 
+                sx={{
                   display: 'none',
                   position: 'absolute',
                   right: 8,
@@ -384,19 +418,27 @@ function ReportBuilderToolbar({
                   backgroundColor: 'inherit',
                 }}
               >
-                <IconButton 
-                  size="small" 
+                <IconButton
+                  size="small"
                   sx={{ p: 0.5 }}
-                  onClick={(e) => handleReportEdit(report.id, e)}
+                  onClick={e => handleReportEdit(report.id, e)}
                 >
-                  <img src="/images/icons/pencil_underline.svg" alt="edit" style={{ width: 16, height: 16 }} />
+                  <img
+                    src="/images/icons/pencil_underline.svg"
+                    alt="edit"
+                    style={{ width: 16, height: 16 }}
+                  />
                 </IconButton>
-                <IconButton 
-                  size="small" 
+                <IconButton
+                  size="small"
                   sx={{ p: 0.5 }}
-                  onClick={(e) => handleReportDelete(report.id, e)}
+                  onClick={e => handleReportDelete(report.id, e)}
                 >
-                  <img src="/images/icons/delete.svg" alt="delete" style={{ width: 16, height: 16 }} />
+                  <img
+                    src="/images/icons/delete.svg"
+                    alt="delete"
+                    style={{ width: 16, height: 16 }}
+                  />
                 </IconButton>
               </Box>
             </MenuItem>
@@ -407,7 +449,16 @@ function ReportBuilderToolbar({
         <Button
           variant="contained"
           onClick={onGenerateReport}
-          disabled={isLoading}
+          disabled={
+            (!(
+              permissions &&
+              (permissions['Reports'].r ||
+                permissions['AISummary'].r ||
+                permissions['CustomReports'].r)
+            ) &&
+              !(selectedFiltersCount > 0)) ||
+            isLoading
+          }
           sx={{
             height: 36,
             backgroundColor: '#152E75',
@@ -427,11 +478,21 @@ function ReportBuilderToolbar({
             },
           }}
         >
-          {isLoading ? 'Generating...' : tab === 'reports' ? 'Generate Report' : 'Generate Summary'}
+          {isLoading
+            ? 'Generating...'
+            : tab === 'reports'
+              ? 'Generate Report'
+              : tab === 'aisummary'
+                ? 'Generate Summary'
+                : 'Generate Report'}
         </Button>
       </Box>
     </Box>
   );
 }
 
-export default withRBAC(ReportBuilderToolbar, ['Reports']);
+export default withRBAC(ReportBuilderToolbar, [
+  'Reports',
+  'AISummary',
+  'CustomReports',
+]);

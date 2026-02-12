@@ -162,7 +162,10 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
       permissions['Team'].r ||
       permissions['Organization'].r ||
       permissions['EmployeeRate'].r,
-    Reports: permissions['Reports'].r,
+    Reports:
+      permissions['Reports'].r ||
+      permissions['AISummary'].r ||
+      permissions['CustomReports'].r,
   };
 
   const menuItems = [
@@ -719,4 +722,6 @@ export default withRBAC(Sidebar, [
   'ActualsStatus',
   'Allocation',
   'Reports',
+  'AISummary',
+  'CustomReports',
 ]);
