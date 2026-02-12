@@ -1,4 +1,4 @@
-import { getWeekNumber as getWeekNumberFromCommon, parseWeekKeyToMonday, isWeekKey } from './common';
+import { getWeekNumber as getWeekNumberFromCommon, parseWeekKeyToMonday, isWeekKey, getSundayOfISO } from './common';
 import { format} from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 
@@ -63,6 +63,7 @@ export interface WeekColumn {
   weekNumber: number;
   date: string;
   period: string;
+  dateTo: string;
 }
 
 /**
@@ -114,6 +115,7 @@ export const formatAISummaryResponse = (apiResponse: any[]): {
       weekNumber: parsed.week,
       date: displayDate,
       period: period,
+      dateTo: formatWeekDate(getSundayOfISO(period)),
     };
   }).filter((col): col is WeekColumn => col !== null);
 
