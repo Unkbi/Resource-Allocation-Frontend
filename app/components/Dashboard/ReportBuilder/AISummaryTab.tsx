@@ -105,9 +105,8 @@ export default function AISummaryTab() {
       return {
         field: weekCol.field,
         headerName: weekCol.headerName,
-        headerAlign: 'center',
-        align: 'center',
-        minWidth: 120,
+        minWidth: 151,
+        maxWidth:151,
         flex: 1,
         valueGetter: (value: any) => {
           // For export: return only the score value or empty string
@@ -116,16 +115,57 @@ export default function AISummaryTab() {
           }
           return value.score;
         },
-        renderHeader: () => (
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>
-              {weekCol.headerName}
-            </Typography>
-            <Typography sx={{ fontSize: '11px', color: '#6B7280' }}>
-              {weekCol.date}
-            </Typography>
-          </Box>
-        ),
+        renderHeader: () => {
+            const toolTipContent = (
+              <>
+                <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>
+                  {weekCol.headerName}
+                </Typography>
+                <Typography sx={{ fontSize: '11px' }}>
+                  {weekCol.date} - {weekCol.dateTo}
+                </Typography>
+              </>
+            );
+            return (
+              <Tooltip
+                title={
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {toolTipContent}
+                  </Box>
+                }
+              >
+                <Box
+                  sx={{
+                    ml: 4,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                  }}
+                >
+                  <>
+                    <Typography
+                      sx={{
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: '#374151',
+                      }}
+                    >
+                      {weekCol.headerName}
+                    </Typography>
+                    <Typography sx={{ fontSize: '11px', color: '#6B7280' }}>
+                      {weekCol.date} - {weekCol.dateTo}
+                    </Typography>
+                  </>
+                </Box>
+              </Tooltip>
+            );
+          },
         renderCell: (params: any) => {
           // Access the original week data from the row directly
           const weekData = params.row[weekCol.field];
