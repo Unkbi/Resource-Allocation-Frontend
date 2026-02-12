@@ -15,11 +15,13 @@ import ReportBuilderExport from './ReportBuilderExport';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import { ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 interface ReportBuilderDataGridToolbarExtraProps {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   GridRowCount?: number;
+  tab?: string;
 }
 
 type ReportBuilderDataGridToolbarProps = GridToolbarProps & ReportBuilderDataGridToolbarExtraProps;
@@ -56,6 +58,7 @@ export default function ReportBuilderDataGridToolbar({
   isFullscreen,
   onToggleFullscreen,
   GridRowCount,
+  tab,
 }: ReportBuilderDataGridToolbarProps) {
   const apiRef = useGridApiContext();
   const [columnsAnchorEl, setColumnsAnchorEl] = useState<null | HTMLElement>(null);
@@ -91,14 +94,16 @@ export default function ReportBuilderDataGridToolbar({
           }}
         >
   {/* ************* Part of save reports feature****************  */}
-          {/* <Box
+          {tab === 'aisummary' && (
+            <>
+          <Box
             sx={{
               fontSize: 14,
               fontWeight: 400,
               color: '#2B5BA6',
             }}
           >
-            Resource Productivity Analysis
+            Projects Summaries
           </Box>
           <Box
             sx={{
@@ -106,7 +111,9 @@ export default function ReportBuilderDataGridToolbar({
               height: 40,
               bgcolor: '#CEDCE9',
             }}
-          /> */}
+          />
+          </>
+            )}
           <Box
             sx={{
               fontSize: 14,
@@ -131,6 +138,27 @@ export default function ReportBuilderDataGridToolbar({
             />
           </SmallIconButton>
         </Tooltip> */}
+        {tab === 'aisummary' && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                paddingRight: 2,
+              }}
+            >
+              <InfoOutlinedIcon sx={{fontSize: 14, color: '#1C2D5F8F'}}/>
+              <Box
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 400,
+                  color: '#1C2D5F',
+                }}
+              >
+                Click the score to view the weekly AI summary.
+              </Box>
+            </Box>
+          )}
 
         <Tooltip title="Columns">
           <SmallIconButton onClick={handleOpenColumns} aria-label="columns">

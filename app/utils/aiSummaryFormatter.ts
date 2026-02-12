@@ -1,5 +1,6 @@
 import { getWeekNumber as getWeekNumberFromCommon, parseWeekKeyToMonday, isWeekKey } from './common';
-import { format } from 'date-fns';
+import { format} from 'date-fns';
+import { parseISO } from 'date-fns/parseISO';
 
 /**
  * Parse week key (W52-2026) to extract week number and year
@@ -21,7 +22,7 @@ const parseWeekKey = (weekKey: string): { week: number; year: number } | null =>
 export const getWeekKey = (dateString: string): string | null => {
   if (!dateString) return null;
   try {
-    const date = new Date(dateString);
+    const date = parseISO(dateString);
     return getWeekNumberFromCommon(date);
   } catch (error) {
     console.error('Error parsing date:', dateString, error);
@@ -34,7 +35,7 @@ export const getWeekKey = (dateString: string): string | null => {
  */
 export const formatWeekDate = (dateString: string): string => {
   try {
-    const date = new Date(dateString);
+    const date = parseISO(dateString);
     return format(date, 'MMM d');
   } catch (error) {
     console.error('Error formatting date:', dateString, error);
@@ -92,8 +93,8 @@ export const formatAISummaryResponse = (apiResponse: any[]): {
   });
 
   const sortedPeriods = Array.from(allPeriodsSet).sort((a, b) => {
-    const dateA = new Date(a);
-    const dateB = new Date(b);
+    const dateA = parseISO(a);
+    const dateB = parseISO(b);
     return dateB.getTime() - dateA.getTime(); // Most recent first
   });
 
