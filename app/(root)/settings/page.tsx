@@ -216,7 +216,7 @@ const SettingsPanel = ({
             icon: '',
             content: <ActualsSettingsAllocationPreference />,
             description:
-              'Users can choose how they want to enter their actuals: as percentages, hours, or fractions.',
+              'You can choose how you want to enter your actuals: as hours or fractions.',
           },
           {
             id: 'notification',
