@@ -472,8 +472,7 @@ function Project({ permissions, loadingPermissions }) {
           dispatch(
             showToast({
               open: true,
-              message:
-                'This Portfolio contains active projects. Please unassign these projects or update their statuses to inactive before proceeding.',
+              message: `This ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} contains active projects. Please unassign these projects or update their statuses to inactive before proceeding.`,
               type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -962,10 +961,14 @@ function Project({ permissions, loadingPermissions }) {
       renderCell: params => {
         const handleNameClick = () => {
           if (permissions['Portfolio']?.u) {
-            handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
+            handleOpenDialog(
+              `Edit ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`,
+              'edit_portfolio',
+              params.row
+            );
           } else {
             handleOpenDialog(
-              `Portfolio: ${params.value}`,
+              `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}: ${params.value}`,
               'edit_portfolio',
               params.row,
               {
@@ -1081,7 +1084,7 @@ function Project({ permissions, loadingPermissions }) {
                         onClick={() => {
                           handleMenuClose();
                           handleOpenDialog(
-                            'Edit Portfolio',
+                            `Edit ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`,
                             'edit_portfolio',
                             params.row
                           );
