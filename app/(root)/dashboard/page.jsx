@@ -134,6 +134,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'activeProjectsByType',
   'totalHeadcount',
   'allocation_by_project_type_group',
+  'custom_allocation_percentage',
   'unapprovedProjectAllocation',
   'projectScoreByPM',
   'actuals_confirmation_status',
@@ -229,6 +230,7 @@ export default function ExecutiveDashboardPage() {
     totalResourceCost = [],
     allocationPercentage = [],
     allocation_by_project_type_group = [],
+    custom_allocation_percentage = [],
     top_projects_by_variance = [],
     actuals_confirmation_status = [],
     actualsTrendWeekly = [],
@@ -718,6 +720,21 @@ export default function ExecutiveDashboardPage() {
    * Maps chart identifiers to appropriate report types and configurations
    */
   const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null) => {
+    // Special case: Navigate to custom tab for custom allocation chart
+    if (chartKey === 'custom_allocation_percentage') {
+      navigateToReport(
+        advancedFilters,
+        {
+          reportType: 'customProjectAllocation', // Dummy value for custom tab
+          period: 'custom',
+          customStartDate: currentWeekMonday.format('YYYY-MM-DD'),
+          customEndDate: currentWeekSunday.format('YYYY-MM-DD'),
+        },
+        false,
+        router
+      );
+      return ;
+    }
     // Map chart keys to report types
     const chartToReportMap = {
       // Overview charts
@@ -2627,6 +2644,98 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
+
+    custom_allocation_percentage: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !custom_allocation_percentage ||
+          custom_allocation_percentage.length === 0 ||
+          custom_allocation_percentage.every(item =>
+            (Number(item.AllocationPercentage || 0) === 0) &&
+            (Number(item.ActualsPercentage || 0) === 0)
+          )
+        }
+        noDataMessage="No percentage allocation data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Prepare chart data
+          const categories = custom_allocation_percentage.map(item => item.ProjectBucket || 'Unknown');
+          const allocationData = custom_allocation_percentage.map(item => Number(item.AllocationPercentage || 0));
+          const actualsData = custom_allocation_percentage.map(item => Number(item.ActualsPercentage || 0));
+
+          return (
+            <Box sx={{ pt: 1, px: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  color: '#000000DE',
+                  mb: 1,
+                }}
+              >
+                Percentage Allocation by Project Reporting Type
+              </Typography>
+
+              <BarChart
+                width={config.width}
+                height={config.height}
+                series={[
+                  {
+                    data: allocationData,
+                    label: 'Allocation',
+                    id: 'allocationId',
+                    color: '#116086',
+                  },
+                  {
+                    data: actualsData,
+                    label: 'Actuals',
+                    id: 'actualsId',
+                    color: '#3790BB',
+                  },
+                ]}
+                xAxis={[
+                  {
+                    data: categories,
+                    scaleType: 'band',
+                    categoryGapRatio: 0.3,
+                    tickLabelStyle: { color: '#475569' },
+                  },
+                ]}
+                yAxis={[
+                  {
+                    label: 'Percentage Allocation (%)',
+                    max: 100,
+                    tickLabelStyle: { color: '#475569' },
+                  },
+                ]}
+                slotProps={{
+                  legend: {
+                    position: {
+                      vertical: 'bottom',
+                      horizontal: config.width < 400 ? 'start' : 'center',
+                    },
+                  },
+                }}
+                margin={{
+                  left: config.isSmallScreen ? 40 : 20,
+                  right: config.isSmallScreen ? 10 : 20,
+                  top: 20,
+                  bottom: config.isSmallScreen ? 40 : 20,
+                }}
+                grid={{ vertical: true, horizontal: true }}
+                onAxisClick={(event, axisData)=> {
+                  navigateToReportWithFilters('custom_allocation_percentage');
+                }}
+              />
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
   };
 
   const costsCharts = {
@@ -2855,7 +2964,7 @@ export default function ExecutiveDashboardPage() {
                       position: { vertical: 'bottom', horizontal: 'middle' },
                     },
                   }}
-                  margin={{ left: 20, right: 20, top: 20, bottom: 80 }}
+                  margin={{ left: 20, right: 20, top: 20, bottom: 20 }}
                   grid={{ horizontal: true }}
                   sx={{
                     cursor: 'pointer',
