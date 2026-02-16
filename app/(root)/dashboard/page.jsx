@@ -3682,16 +3682,16 @@ export default function ExecutiveDashboardPage() {
             );
           })
         }
-        noDataMessage="No user status data available"
+        noDataMessage="No invite status data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
           // Define status types and their colors
           const statusTypes = [
-            { key: 'Active', label: 'Active', color: '#229E60' },
-            { key: 'Invited', label: 'Invited', color: '#2563EB' },
-            { key: 'Not Invited', label: 'Not Invited', color: '#FF6B6B' },
+            { key: 'Active', label: 'Active', color: '#00C49F' },
+            { key: 'Invited', label: 'Invited', color: '#FFD966' },
+            { key: 'Not Invited', label: 'Not Invited', color: '#FDAA5D' },
           ];
 
           // Sort teams by total users descending
@@ -3748,7 +3748,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                User Status Split by Team
+                Invite Status by Team
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
                 <BarChart
