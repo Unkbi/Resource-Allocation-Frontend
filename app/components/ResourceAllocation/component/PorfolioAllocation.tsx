@@ -130,8 +130,8 @@ function PortfolioAllocation({
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
       openDialog({
-        title: 'Update Allocation',
-        submitButtonText: 'Update',
+        title: 'Add Allocation',
+        submitButtonText: 'Add',
         cancelButtonText: 'Cancel',
         formType: 'add_allocation',
         initialData: {

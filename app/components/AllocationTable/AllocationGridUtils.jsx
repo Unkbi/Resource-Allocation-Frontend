@@ -529,8 +529,8 @@ export const getFinalColumns = (
     } else {
       dispatch(
         openDialog({
-          title: 'Update Allocation',
-          submitButtonText: 'Update',
+          title: 'Add Allocation',
+          submitButtonText: 'Add',
           cancelButtonText: 'Cancel',
           formType: 'add_allocation',
           initialData: {
