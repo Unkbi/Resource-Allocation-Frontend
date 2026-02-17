@@ -783,8 +783,6 @@ export default function ExecutiveDashboardPage() {
 
   const hasAccessToQueryKey = queryKey => {
     if (!dashboardQueryKeys) return false;
-    // Sahadev : Patch Only for Corsair, as no one has access to Total Resource Cost, or Budget vs Plan vs Actual
-    if (queryKey === 'totalResourceCost' || queryKey === 'budgetVsPlanVsActual' ) return false;
     if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
 
