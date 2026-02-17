@@ -91,3 +91,12 @@ export const normalizeAllocationValue = (value?: number | string) => {
   const num = typeof value === 'string' ? parseFloat(value) : (value ?? 0);
   return format2(roundToStep05(num));
 };
+
+export const formatMin1Max2 = (value: number): string => {
+  const fixed = value.toFixed(2); // force 2 decimals
+  return fixed.endsWith('00')
+    ? value.toFixed(1) // 2.00 -> 2.0
+    : fixed.endsWith('0')
+      ? fixed.slice(0, -1) // 2.50 -> 2.5
+      : fixed; // 2.45 -> 2.45
+};

@@ -78,6 +78,7 @@ import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 function AllocationGrid({
   groupBy,
@@ -1030,7 +1031,7 @@ function AllocationGrid({
         }
 
         // Verify Updated Values total allocation for resource is not greater than Max_Allocation_Error
-        let formattedCellValue = Math.round(newRow[key] * 10) / 10;
+        let formattedCellValue = normalizeAllocationValue(newRow[key]);
 
         const period = oldRow[key]?.period;
         const value = formattedCellValue;
@@ -1232,7 +1233,6 @@ function AllocationGrid({
           'success'
         )
       );
-
       if (allUpdatedRows?.length > 0) {
         if (viewId === 'topProject') {
           bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
