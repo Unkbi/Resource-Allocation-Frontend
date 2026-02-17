@@ -14,6 +14,7 @@ import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '../HOC/withRBAC';
+import { updateFormValues } from '@/app/redux/reducers/dialogReducer';
 
 const AddProjectForm = ({
   formikProps,
@@ -94,6 +95,10 @@ const AddProjectForm = ({
       });
     }
   }, []);
+
+  useEffect(() => {
+    dispatch(updateFormValues(values));
+  }, [values]);
 
   useEffect(() => {
     if (initialData) {

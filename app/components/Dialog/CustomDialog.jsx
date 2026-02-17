@@ -7,6 +7,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { Box, IconButton, styled } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
+import { PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
 import { closeDialog } from '@/app/redux/reducers/dialogReducer';
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
@@ -122,6 +123,12 @@ const CustomDialog = ({
     cancelButtonText,
   } = dialogState;
 
+
+  const dialogInitialStatus = dialogState?.formState?.formValues?.Status;
+  const showPrimarySecond =
+    Boolean(primarySecondButtonText) &&
+    PROJECT_ACTIVE_STATUS.includes(dialogInitialStatus);
+
   const handleClose = (event, reason) => {
     if (reason && reason === 'backdropClick') {
       return;
@@ -159,6 +166,7 @@ const CustomDialog = ({
                   <StyledSubmitButton
                     variant="contained"
                     onClick={onSecondarySubmit}
+                    disabled={!showPrimarySecond}
                   >
                     {primarySecondButtonText}
                   </StyledSubmitButton>
