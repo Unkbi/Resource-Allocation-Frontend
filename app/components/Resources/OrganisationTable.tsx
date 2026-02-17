@@ -8,11 +8,12 @@ import {
   GridColDef,
   GridColumnMenu,
   GridColumnMenuProps,
+  GridColumnVisibilityModel,
   GridToolbarProps,
 } from '@mui/x-data-grid-premium';
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { Box } from '@mui/material';
-import { useState, JSXElementConstructor, useEffect } from 'react';
+import { useState, JSXElementConstructor, useEffect, useMemo } from 'react';
 
 import { Organisation } from '@/app/types';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
@@ -56,6 +57,8 @@ const OrganisationsTable = ({
   const [filterModel, setFilterModel] = useState({
     items: [],
   });
+  const [search, setSearch] = useState('');
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState<GridColumnVisibilityModel>({});
   const globalFilters = useSelector((state: any) => state.filters.Organisations);
   
   useEffect(() => {
@@ -79,17 +82,40 @@ const OrganisationsTable = ({
     dispatch(updatePageFilters('Organisations', filterData));
   };
 
+    const filteredRows = useMemo(() => {
+      if (!rows) return [];
+  
+      if (!search.trim()) return rows;
+  
+      const lowerSearch = search.toLowerCase();
+  
+      const visibleFields = columns
+        .filter(col => columnVisibilityModel[col.field] !== false)
+        .map(col => col.field);
+  
+      return rows.filter(row =>
+        visibleFields.some(field => {
+          const value = (row as any)[field];
+          if (value === null || value === undefined) return false;
+          return String(value).toLowerCase().includes(lowerSearch);
+        })
+      );
+    }, [rows, search, columns, columnVisibilityModel]);
+
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={permissions['Organization'].r ? rows : []}
+        rows={permissions['Organization'].r ? filteredRows : []}
         loading={loading}
         hideFooter={true}
         hideFooterSelectedRowCount={true}
         filterModel={filterModel}
         onFilterModelChange={handleFilterModelChange}
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={setColumnVisibilityModel}
         initialState={{
           sorting: {
             sortModel: [{ field: 'Name', sort: 'asc' }],
@@ -137,6 +163,8 @@ const OrganisationsTable = ({
             setFilterButtonEl,
             value: value,
             onChange: onChange,
+            search: search,
+            setSearch,
           },
           columnsPanel: {
             className: 'styleColumnMenu',

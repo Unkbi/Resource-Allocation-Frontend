@@ -1,5 +1,5 @@
 import React, { SyntheticEvent } from 'react';
-import { Box, Tabs, Tab, styled, Button } from '@mui/material';
+import { Box, Tabs, Tab, styled, Button, TextField } from '@mui/material';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
@@ -19,6 +19,8 @@ interface ResourceToolbarProps {
     newValue: 'resource' | 'teams' | 'rates' | 'organizations'
   ) => void;
   permissions: Record<string, CrudPermissions>;
+  search?: string;
+  setSearch?: (val: string) => void;
 }
 
 const commonButtonStyles = {
@@ -129,6 +131,8 @@ const ResourceToolbar = ({
   value,
   onChange,
   permissions,
+  search,
+  setSearch
 }: ResourceToolbarProps) => {
   const dispatch = useDispatch();
 
@@ -208,6 +212,22 @@ const ResourceToolbar = ({
         <Box className="line" sx={{ marginRight: '10px', height: '64px' }}>
           <img src="/images/icons/LinePeople.svg" />
         </Box>
+                <Box sx={{ px: 2, py: 1 , mt:0.7 }}>
+                  <TextField
+                    size="small"
+                    placeholder="Search across columns..."
+                    value={search ?? ''}
+                    onChange={e => setSearch?.(e.target.value)}
+                    
+                    sx={{
+                      width: 280,
+                      backgroundColor: '#fff',
+                      '& .MuiOutlinedInput-root': {
+                        height: 37,
+                      },
+                    }}
+                  />
+        </Box>
         <Box
           className="filterColBlock"
           sx={{
@@ -229,8 +249,8 @@ const ResourceToolbar = ({
                       alt="columns"
                       style={{
                         marginLeft: '10px',
-                        height: '36px',
-                        width: '36px',
+                        height: '38px',
+                        width: '38px',
                       }}
                     />
                   ),

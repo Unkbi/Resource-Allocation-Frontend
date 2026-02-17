@@ -1,9 +1,7 @@
 'use client';
 
-import { Box, Button, Typography } from '@mui/material';
-import {
-  GridToolbarContainer,
-} from '@mui/x-data-grid-premium';
+import { Box, Button, Typography, TextField } from '@mui/material';
+import { GridToolbarContainer } from '@mui/x-data-grid-premium';
 import FilterButtonWithCount from './FilterButtonWithCount';
 
 const commonButtonStyles = {
@@ -26,6 +24,8 @@ interface SettingsToolbarProps {
   buttonLabel: string;
   onButtonClick: () => void;
   setFilterButtonEl?: (el: HTMLElement | null) => void;
+  search?: string;
+  setSearch?: (val: string) => void;
 }
 
 export default function SettingsToolbar({
@@ -33,6 +33,8 @@ export default function SettingsToolbar({
   buttonLabel,
   onButtonClick,
   setFilterButtonEl,
+  search,
+  setSearch,
 }: SettingsToolbarProps) {
   return (
     <GridToolbarContainer
@@ -41,12 +43,12 @@ export default function SettingsToolbar({
         justifyContent: 'space-between',
         alignItems: 'center',
         px: 2,
-        py: 3,
+        py: 2,
         borderBottom: '0.667px solid #E5E7EB',
       }}
       ref={setFilterButtonEl}
     >
-      {/* Title */}
+      {/* Left Side - Title */}
       <Typography
         variant="h6"
         sx={{
@@ -54,7 +56,6 @@ export default function SettingsToolbar({
           fontSize: '18px',
           color: '#1F2937',
           fontFamily: 'Open Sans',
-          fontStyle: 'normal',
           lineHeight: '28px',
         }}
       >
@@ -63,6 +64,22 @@ export default function SettingsToolbar({
 
       {/* Right Side: Filter + Button */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+
+        {setSearch && (
+          <TextField
+            size="small"
+            placeholder="Search..."
+            value={search ?? ''}
+            onChange={e => setSearch?.(e.target.value)}
+            sx={{
+              width: 250,
+              '& .MuiOutlinedInput-root': {
+                height: 36,
+              },
+            }}
+          />
+        )}
+
         <FilterButtonWithCount />
         {buttonLabel && (
           <Button
@@ -77,6 +94,9 @@ export default function SettingsToolbar({
               fontSize: 14,
               fontWeight: 600,
               px: 2,
+              '&:hover': {
+                background: '#132863',
+              },
             }}
           >
             {buttonLabel}
