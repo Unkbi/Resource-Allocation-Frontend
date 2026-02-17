@@ -24,12 +24,16 @@ import {
   parseISO,
   startOfWeek,
 } from 'date-fns';
+import {
+  formatMin1Max2,
+  normalizeAllocationValue,
+} from '@/app/utils/actualsUtils';
 
 const WEEK_CONFIG = {
   TOTAL_WEEKS: TOTAL_FUTURE_WEEKS + 1,
   COLUMN_WIDTH: 50,
   MAX_VALUE: 2,
-  DECIMAL_PRECISION: 1,
+  DECIMAL_PRECISION: 2,
 };
 
 export const getStartDate = () => getStartOfPreviousWeek(new Date());
@@ -63,12 +67,15 @@ const createValueHandlers = (dispatch, isFormatWithK) => ({
 
   valueFormatter: value => {
     if (value == null || value === '') return '';
-    const num = typeof value === 'number' ? value : parseFloat(value);
-    return isNaN(num)
-      ? ''
-      : isFormatWithK
-        ? `${num.toFixed(1)}k`
-        : num.toFixed(1);
+
+    const num =
+      typeof value === 'number'
+        ? normalizeAllocationValue(value)
+        : normalizeAllocationValue(parseFloat(value));
+
+    if (isNaN(num)) return '';
+
+    return isFormatWithK ? `${formatMin1Max2(num)}k` : formatMin1Max2(num);
   },
   valueGetter: params => {
     return params?.value ?? null;
@@ -76,11 +83,33 @@ const createValueHandlers = (dispatch, isFormatWithK) => ({
 
   preProcessEditCellProps: params => {
     const { props } = params;
-    let numericValue = parseFloat(props?.value) || 0;
-    const formattedValue = Math.round(numericValue * 10) / 10 || null;
-    const hasError = formattedValue > 2;
+    const rawValue = props?.value;
 
     let className = props?.className || '';
+
+    // Preserve empty values
+    if (rawValue === '' || rawValue === null || rawValue === undefined) {
+      return {
+        ...props,
+        value: null,
+        className: className.replace('errorCell', '').trim(),
+      };
+    }
+
+    const numericValue = parseFloat(rawValue);
+
+    // If invalid number, keep it empty
+    if (isNaN(numericValue)) {
+      return {
+        ...props,
+        value: null,
+        className: className.replace('errorCell', '').trim(),
+      };
+    }
+
+    const formattedValue = normalizeAllocationValue(numericValue);
+    const hasError = formattedValue > 2;
+
     if (hasError) {
       dispatch(
         showToastAction(
@@ -89,19 +118,16 @@ const createValueHandlers = (dispatch, isFormatWithK) => ({
           'error'
         )
       );
-      if (!className) {
-        className = clsx(className, 'errorCell');
-      }
-    } else if (formattedValue < 2) {
-      className = className.replace('errorCell', '').trim();
+
+      className = clsx(className, 'errorCell');
     } else {
-      className = '';
+      className = className.replace('errorCell', '').trim();
     }
 
     return {
       ...props,
       value: formattedValue,
-      className: className,
+      className,
     };
   },
 });
