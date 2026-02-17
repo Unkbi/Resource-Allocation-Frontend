@@ -285,7 +285,7 @@ export const ACCESS_MANAGEMENT_VALID_TABS = [
 
 export const PROJECT_ACTIVE_STATUS = ['Active', 'Approved'];
 
-export const PROJECT_INACTIVE_STATUS = ['Proposed', 'Paused', 'Completed'];
+export const PROJECT_INACTIVE_STATUS = ['Proposed', 'Paused'];
 
 export const PROJECT_ALLOCATION_STATUS = ['Active', 'Approved', 'Completed'];
 
