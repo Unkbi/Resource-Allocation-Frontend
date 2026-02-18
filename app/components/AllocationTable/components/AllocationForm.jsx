@@ -1571,7 +1571,7 @@ const AllocationForm = () => {
             dispatch(
               showToastAction(
                 true,
-                `Update cancelled: You are editing non-editable week(s): ${[
+                `Addition cancelled: You are editing non-editable week(s): ${[
                   ...new Set(nonEditableWeeks),
                 ].join(', ')}`,
                 'error',
@@ -1613,7 +1613,7 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              `Updating allocation for ${
+              `Adding allocation for ${
                 Array.isArray(values.Resource)
                   ? values.Resource.reduce((acc, resourceId) => {
                       const resource = resources?.find(
@@ -1843,7 +1843,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Successfully updated allocation for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
+                    `Successfully added allocation for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
                     'success'
                   )
                 );

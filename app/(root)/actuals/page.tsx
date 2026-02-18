@@ -468,7 +468,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             dispatch(
               showToastAction(
                 true,
-                `Successfully updated allocations.`,
+                `Successfully added allocations.`,
                 'success'
               )
             );

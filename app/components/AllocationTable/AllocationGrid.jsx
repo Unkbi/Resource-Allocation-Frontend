@@ -1069,7 +1069,7 @@ function AllocationGrid({
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds ${max_allocation_error} (${totalForWeek.toFixed(2)}). Update cancelled.`,
+              `Allocation for ${key} exceeds ${max_allocation_error} (${totalForWeek.toFixed(2)}). Addition cancelled.`,
               'error',
               4000
             )
@@ -1159,7 +1159,7 @@ function AllocationGrid({
       dispatch(
         showToastAction(
           true,
-          `Updating allocation for ${newRow.resource}...`,
+          `Adding allocation for ${newRow.resource}...`,
           'info'
         )
       );
@@ -1212,13 +1212,13 @@ function AllocationGrid({
           allUpdatedRows = Object.values(formateUpdate);
         }
       } catch (error) {
-        console.error('Error updating allocations:', error);
+        console.error('Error adding allocations:', error);
         dispatch(
           showToastAction(
             true,
             error?.response?.data
               ? error?.response?.data
-              : `Error updating allocation for ${newRow.resource}.`,
+              : `Error adding allocation for ${newRow.resource}.`,
             'error'
           )
         );
@@ -1228,7 +1228,7 @@ function AllocationGrid({
       dispatch(
         showToastAction(
           true,
-          `Successfully updated allocation for ${newRow.resource}...`,
+          `Successfully added allocation for ${newRow.resource}...`,
           'success'
         )
       );
