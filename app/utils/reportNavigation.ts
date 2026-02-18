@@ -61,6 +61,10 @@ export const buildReportUrl = (
     }
   }
 
+  if(config.show_actuals) {
+    params.set('show_actuals', config.show_actuals);
+  }
+
   // Add additional filters from chart clicks
   if (config.additionalFilters) {
     Object.entries(config.additionalFilters).forEach(([key, value]) => {
