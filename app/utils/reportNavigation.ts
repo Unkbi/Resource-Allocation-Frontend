@@ -10,6 +10,7 @@ export interface ChartReportConfig {
   customStartDate?: string;
   customEndDate?: string;
   additionalFilters?: Record<string, string | string[]>;
+  show_actuals?: string;
 }
 
 /**
