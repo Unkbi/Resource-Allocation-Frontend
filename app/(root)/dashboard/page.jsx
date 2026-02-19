@@ -791,7 +791,7 @@ export default function ExecutiveDashboardPage() {
 
     // Navigate with advanced filters and chart config
     navigateToReport(advancedFilters, config, false, router);
-  }, [advancedFilters, router]);
+  }, [advancedFilters, router, currentWeekMonday, currentWeekSunday, lastWeekMonday, lastWeekSunday, threeWeeksBeforeMonday, twoWeeksAfterSunday]);
 
   const handleChartClick = chartName => {
     setSelectedChart(chartName);

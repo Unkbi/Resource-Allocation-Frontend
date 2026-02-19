@@ -15,9 +15,10 @@ import { format } from 'date-fns';
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
 import { StatusPill } from '../Settings/styled';
 
-interface FollowProjectFormProps {
+interface FollowFormProps {
   formikProps: any;
   setFormValue: (value: any) => void;
+  objectType?: 'project' | 'team'; // 'project' or 'team'
 }
 
 const AntSwitch = styled(Switch)(({ theme }) => ({
@@ -67,9 +68,10 @@ const AntSwitch = styled(Switch)(({ theme }) => ({
   },
 }));
 
-const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
+const FollowForm: React.FC<FollowFormProps> = ({
   formikProps,
   setFormValue,
+  objectType = 'project', // Default to 'project' for backward compatibility
 }) => {
   const { values, setFieldValue } = formikProps;
   const { initialData } = useSelector((state: any) => state.globalDialog.formState);
@@ -81,12 +83,13 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
         isFollowing: initialData.isFollowing ?? true,
         weeklyAISummary: initialData.weeklyAISummary ?? true,
         dailySummary: initialData.dailySummary ?? true,
-        planChanges: initialData.planChanges ?? true,
+        planChanges: initialData.planChanges ?? (objectType === 'team' ? false : true), // False for teams, true for projects
         actualsUpdates: initialData.actualsUpdates ?? true,
+        existingFollowId: initialData.existingFollowId || null,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData]);
+  }, [initialData, objectType]);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -117,7 +120,7 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {/* Following Toggle */}
+      {/* Following/Unfollow Toggle */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <AntSwitch
           checked={values.isFollowing ?? true}
@@ -130,22 +133,13 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
             color: '#313F68',
           }}
         >
-          Following
+          {values.isFollowing ? 'Following' : 'Unfollow'}
         </Typography>
       </Box>
 
       {/* Notification Preferences Section */}
       <Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-          <Box
-            component="img"
-            src="/images/icons/notification.svg"
-            alt="notification"
-            sx={{ width: 18, height: 18, alignItems: 'center', display: 'flex' }}
-            onError={(e: any) => {
-              e.target.style.display = 'none';
-            }}
-          />
           <NotificationsActiveOutlinedIcon sx={{ color: '#313F68', fontSize: 20 }} />
           <Typography
             sx={{
@@ -169,12 +163,13 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
         </Typography>
 
         {/* Weekly AI Summary */}
-        <Box sx={{ mb: 2, ml: 0.5, border: '1px solid #E5E7EB', borderRadius: '10px', p: 1.5 }}>
+        <Box sx={{ mb: 2, ml: 0.5, border: '1px solid #E5E7EB', borderRadius: '10px', p: 1.5, opacity: values.isFollowing ? 1 : 0.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <AntSwitch
               checked={values.weeklyAISummary ?? true}
               onChange={(e) => setFieldValue('weeklyAISummary', e.target.checked)}
               size="small"
+              disabled={!values.isFollowing}
             />
             <Typography
               sx={{
@@ -198,12 +193,13 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
         </Box>
 
         {/* Daily Summary */}
-        <Box sx={{ mb: 2, ml: 0.5, border: '1px solid #E5E7EB', borderRadius: '10px', p: 1.5 }}>
+        <Box sx={{ mb: 2, ml: 0.5, border: '1px solid #E5E7EB', borderRadius: '10px', p: 1.5, opacity: values.isFollowing ? 1 : 0.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <AntSwitch
               checked={values.dailySummary ?? true}
               onChange={(e) => setFieldValue('dailySummary', e.target.checked)}
-              size="small"          
+              size="small"
+              disabled={!values.isFollowing}
             />
             <Typography
               sx={{
@@ -221,12 +217,12 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
             <FormControlLabel
               control={
                 <Checkbox
-                size='small'
+                  size='small'
                   checked={values.planChanges ?? true}
                   onChange={(e) => setFieldValue('planChanges', e.target.checked)}
+                  disabled={!values.isFollowing}
                   sx={{
                     color: '#313F68',
-                    // fontSize: '12px',
                     '&.Mui-checked': {
                       color: '#313F68',
                     },
@@ -264,6 +260,7 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
                   checked={values.actualsUpdates ?? true}
                   size='small'
                   onChange={(e) => setFieldValue('actualsUpdates', e.target.checked)}
+                  disabled={!values.isFollowing}
                   sx={{
                     color: '#313F68',
                     '&.Mui-checked': {
@@ -302,7 +299,7 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
 
       <Divider sx={{ my: 0.5 }} />
 
-      {/* Project Details Section */}
+      {/* Details Section */}
       <Box>
         <Typography
           sx={{
@@ -312,11 +309,11 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
             mb: 2,
           }}
         >
-          Project Details
+          {objectType === 'team' ? 'Team Details' : 'Project Details'}
         </Typography>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {/* Project Name */}
+          {/* Name */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography
               sx={{
@@ -325,7 +322,7 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
                 color: '#4A5565',
               }}
             >
-              Project Name:
+              {objectType === 'team' ? 'Team Name:' : 'Project Name:'}
             </Typography>
             <Typography
               sx={{
@@ -334,7 +331,7 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
                 color: '#212121',
               }}
             >
-              {initialData?.Name || ''}
+              {(objectType === 'team' ? initialData?.Team : initialData?.Name) || ''}
             </Typography>
           </Box>
 
@@ -352,6 +349,8 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
           </Box>
 
           {/* Location */}
+           {objectType === 'project' && (
+            <>
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography
               sx={{
@@ -372,30 +371,28 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
               {initialData?.Location || 'N/A'}
             </Typography>
           </Box>
+         
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography
+                sx={{
+                  fontSize: '14px',
+                  fontWeight: 400,
+                  color: '#4A5565',
+                }}
+              >
+                Type:
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#212121',
+                }}
+              >
+                {getProjectTypeName(initialData?.Type) || 'N/A'}
+              </Typography>
+            </Box>
 
-          {/* Type */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography
-              sx={{
-                fontSize: '14px',
-                fontWeight: 400,
-                color: '#4A5565',
-              }}
-            >
-              Type:
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: '14px',
-                fontWeight: 600,
-                color: '#212121',
-              }}
-            >
-              {getProjectTypeName(initialData?.Type) || 'N/A'}
-            </Typography>
-          </Box>
-
-          {/* Duration */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography
               sx={{
@@ -420,10 +417,13 @@ const FollowProjectForm: React.FC<FollowProjectFormProps> = ({
                   : 'N/A'}
             </Typography>
           </Box>
+            </>
+           )}
         </Box>
       </Box>
     </Box>
   );
 };
 
-export default FollowProjectForm;
+export default FollowForm;
+

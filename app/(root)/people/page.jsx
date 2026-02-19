@@ -11,6 +11,7 @@ import {
   Tab,
   Tabs,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -37,6 +38,9 @@ import {
 } from '@/app/services/teamServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { deleteResource } from '@/app/services/resourceServices';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
@@ -153,6 +157,8 @@ function Resources({ permissions, loadingPermissions }) {
     state => state.employeeRates
   );
   const { location } = useSelector(state => state.allSettings);
+  const { followsByObjectId } = useSelector(state => state.follows);
+  const { user } = useSelector(state => state.user);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(allResourcesDetail || null);
@@ -755,6 +761,92 @@ function Resources({ permissions, loadingPermissions }) {
                         horizontal: 'right',
                       }}
                     >
+                      <MenuItem
+                        sx={{
+                          ...menuItemStyle,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: 0,
+                          '&:hover': {
+                            backgroundColor: 'transparent',
+                          },
+                        }}
+                      >
+                        <Box
+                          onClick={() => handleFollowTeam(params)}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            flex: 1,
+                            padding: '6px 16px',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                            },
+                          }}
+                        >
+                          {followsByObjectId?.[params.row.Id] ? (
+                            <>
+                              <VisibilityOffIcon sx={{ fontSize: 18, color: '#1C2D5F' }} />
+                              <Typography
+                                sx={{
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  color: '#1C2D5F',
+                                  paddingLeft: '10px',
+                                }}
+                              >
+                                Unfollow
+                              </Typography>
+                            </>
+                          ) : (
+                            <>
+                              <VisibilityIcon sx={{ fontSize: 18, color: '#1C2D5F' }} />
+                              <Typography
+                                sx={{
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  color: '#1C2D5F',
+                                  paddingLeft: '10px',
+                                }}
+                              >
+                                Follow
+                              </Typography>
+                            </>
+                          )}
+                        </Box>
+                       
+                          <Box
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFollowTeamSettings(params);
+                            }}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '6px 12px',
+                              cursor: 'pointer',
+                              borderLeft: '1px solid rgba(0, 0, 0, 0.12)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                              },
+                            }}
+                          >
+                            <SettingsIcon sx={{ fontSize: 18, color: '#1C2D5F' }} />
+                            <Typography
+                              sx={{
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#1C2D5F',
+                                paddingLeft: '10px',
+                              }}
+                            >
+                              Settings
+                            </Typography>
+                          </Box>
+                      
+                      </MenuItem>
                       {permissions['Team']?.u && (
                         <MenuItem
                           onClick={() => {
@@ -1554,6 +1646,37 @@ function Resources({ permissions, loadingPermissions }) {
     setAnchorEl(null);
     setSelectedRow(null);
   };
+
+  const handleFollowTeam = params => {
+    const teamId = params.row.Id;
+    const existingFollow = followsByObjectId?.[teamId];
+
+    const dialogData = {
+      ...params.row,
+      isFollowing: existingFollow ? false : true,
+      weeklyAISummary: existingFollow?.WeeklySummaryEnabled ?? true,
+      dailySummary: existingFollow?.DailySummaryEnabled ?? true,
+      planChanges: existingFollow?.PlanChangesDailySummary ?? false, // Default false for teams
+      actualsUpdates: existingFollow?.ActualsStatusDailySummary ?? true,
+      existingFollowId: existingFollow?.FollowId || null,
+      objectType: 'team', // Add objectType to pass to form
+    };
+
+    handleOpenDialog(
+      'Team Follow Preferences',
+      'follow_team',
+      dialogData,
+      {
+        submitButtonText: 'Save Preferences',
+        cancelButtonText: 'Cancel',
+      }
+    );
+    handleMenuClose();
+  };
+
+  const handleFollowTeamSettings = params => {
+    //console.log('Opening settings for team:', params.row);
+  }
 
   const onChange = (event, newValue) => {
     setValue(newValue);
