@@ -91,6 +91,42 @@ const FollowForm: React.FC<FollowFormProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, objectType]);
 
+  // Handle Daily Summary toggle
+  const handleDailySummaryChange = (checked: boolean) => {
+    setFieldValue('dailySummary', checked);
+    if (!checked) {
+      // When Daily Summary is turned off, disable and uncheck both children
+      setFieldValue('planChanges', false);
+      setFieldValue('actualsUpdates', false);
+    }
+  };
+
+  // Handle Plan Changes toggle
+  const handlePlanChangesChange = (checked: boolean) => {
+    setFieldValue('planChanges', checked);
+    // If both are unchecked, turn off Daily Summary
+    if (!checked && !values.actualsUpdates) {
+      setFieldValue('dailySummary', false);
+    }
+    // If this is being checked and Daily Summary is off, turn it on
+    if (checked && !values.dailySummary) {
+      setFieldValue('dailySummary', true);
+    }
+  };
+
+  // Handle Actuals Updates toggle
+  const handleActualsUpdatesChange = (checked: boolean) => {
+    setFieldValue('actualsUpdates', checked);
+    // If both are unchecked, turn off Daily Summary
+    if (!checked && !values.planChanges) {
+      setFieldValue('dailySummary', false);
+    }
+    // If this is being checked and Daily Summary is off, turn it on
+    if (checked && !values.dailySummary) {
+      setFieldValue('dailySummary', true);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     try {
@@ -197,7 +233,7 @@ const FollowForm: React.FC<FollowFormProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <AntSwitch
               checked={values.dailySummary ?? true}
-              onChange={(e) => setFieldValue('dailySummary', e.target.checked)}
+              onChange={(e) => handleDailySummaryChange(e.target.checked)}
               size="small"
               disabled={!values.isFollowing}
             />
@@ -219,8 +255,8 @@ const FollowForm: React.FC<FollowFormProps> = ({
                 <Checkbox
                   size='small'
                   checked={values.planChanges ?? true}
-                  onChange={(e) => setFieldValue('planChanges', e.target.checked)}
-                  disabled={!values.isFollowing}
+                  onChange={(e) => handlePlanChangesChange(e.target.checked)}
+                  disabled={!values.isFollowing || !values.dailySummary}
                   sx={{
                     color: '#313F68',
                     '&.Mui-checked': {
@@ -259,8 +295,8 @@ const FollowForm: React.FC<FollowFormProps> = ({
                 <Checkbox
                   checked={values.actualsUpdates ?? true}
                   size='small'
-                  onChange={(e) => setFieldValue('actualsUpdates', e.target.checked)}
-                  disabled={!values.isFollowing}
+                  onChange={(e) => handleActualsUpdatesChange(e.target.checked)}
+                  disabled={!values.isFollowing || !values.dailySummary}
                   sx={{
                     color: '#313F68',
                     '&.Mui-checked': {
