@@ -8,6 +8,7 @@ import {
   loginUser,
   logoutUser,
   resendConfirmationCode,
+  setPasswordInvite,
   signupUser,
 } from '../../services/authServices.js';
 
@@ -16,7 +17,7 @@ export const performLogin = credentials => async dispatch => {
   try {
     await dispatch(loginUser(credentials)).unwrap();
   } catch (error) {
-    console.log('Login failed:', error);
+    console.error('Login failed:', error);
   }
 };
 
@@ -24,7 +25,7 @@ export const callbackExchangeCode = code => async dispatch => {
   try {
     await dispatch(callback(code)).unwrap();
   } catch (error) {
-    console.log('SSO Login failed:', error);
+    console.error('SSO Login failed:', error);
   }
 };
 
@@ -59,11 +60,23 @@ export const confirmSignUpUser = data => async dispatch => {
   }
 };
 
-export const getUserData = userId => async dispatch => {
+export const getUserData =
+  (userId, withRbac = false) =>
+  async dispatch => {
+    try {
+      await dispatch(getUser(userId, withRbac));
+    } catch (error) {
+      console.error('get user failed:', error);
+    }
+  };
+
+// Invite Set Password Action
+export const performInviteSetPassword = data => async dispatch => {
   try {
-    await dispatch(getUser(userId));
+    const res = await dispatch(setPasswordInvite(data)).unwrap();
+    return res;
   } catch (error) {
-    console.error('get user failed:', error);
+    console.error('Set Password failed:', error);
   }
 };
 
@@ -97,3 +110,5 @@ export const resendOtp = signupData => async dispatch => {
     throw error;
   }
 };
+
+export const INIT_BOOTSTRAP = 'INIT_BOOTSTRAP';

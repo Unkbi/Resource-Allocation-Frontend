@@ -7,9 +7,17 @@ import {
   LoginUserPrivilege,
   Privilege,
   PrivilegeAssignment,
+  Project,
+  Resource,
   RoleAssignment,
+  Team,
   UserRbac,
 } from '../types';
+import { AdvancedFilters } from '../types/dashboardTypes';
+import {
+  getProjectsIamProjectManager,
+  getTeamsIamAllocationManager,
+} from './common';
 
 // Save access token to localStorage
 export const saveToken = (token: string): null => {
@@ -246,4 +254,81 @@ export function buildLoginUserPrivileges(
   });
 
   return loginUserPrivileges;
+}
+
+export function formatLoginUserPermissions(privileges: Privilege[]) {
+  const loginUserPrivileges: LoginUserPrivilege = {};
+  privileges.forEach(privilege => {
+    const resourceName = privilege?.resourceFqName
+      ?.replace(/^Resource\//, '')
+      ?.replace(/^agentlang.auth\//, '');
+    if (!resourceName) return;
+    if (!loginUserPrivileges[resourceName]) {
+      loginUserPrivileges[resourceName] = {
+        c: privilege.c,
+        r: privilege.r,
+        u: privilege.u,
+        d: privilege.d,
+      };
+    } else {
+      // merge with existing permissions if already present
+      loginUserPrivileges[resourceName] = {
+        c: loginUserPrivileges[resourceName].c || privilege.c,
+        r: loginUserPrivileges[resourceName].r || privilege.r,
+        u: loginUserPrivileges[resourceName].u || privilege.u,
+        d: loginUserPrivileges[resourceName].d || privilege.d,
+      };
+    }
+  });
+  return loginUserPrivileges;
+}
+
+export function getResourceFromUserEmail(
+  email: string | null,
+  resources: Resource[] | null
+) {
+  if (!email || !resources) return null;
+  return resources.find(res => res?.Email === email);
+}
+
+export function buildDefaultDashboardFilter(
+  initialDashboardFilters: AdvancedFilters,
+  loginUserPrivileges: LoginUserPrivilege,
+  user: LoginUser,
+  resources: Resource[],
+  projects: Project[],
+  teams: Team[]
+) {
+  const currentResource = getResourceFromUserEmail(user?.username, resources);
+  const isProjectManager =
+    getProjectsIamProjectManager(currentResource?.Id, projects).length > 0;
+  const isAllocationManager =
+    getTeamsIamAllocationManager(user?.username, resources, teams).length > 0;
+
+  if (loginUserPrivileges) {
+    const dafaultRBACFilters = {
+      ...initialDashboardFilters,
+      ...(!loginUserPrivileges?.Resource?.r && currentResource
+        ? isProjectManager
+          ? { ProjectManager: [currentResource.Id] }
+          : isAllocationManager
+            ? { AllocationManager: [currentResource.Id] }
+            : { Resource: [currentResource.Id] }
+        : {}),
+    };
+
+    // If they are ProjectManagers or AllocationMangers by default set that.
+    const defaultFilters = {
+      ...initialDashboardFilters,
+      ...(currentResource
+        ? isProjectManager
+          ? { ProjectManager: [currentResource.Id] }
+          : isAllocationManager
+            ? { AllocationManager: [currentResource.Id] }
+            : {}
+        : {}),
+    };
+    return [dafaultRBACFilters, defaultFilters];
+  }
+  return [null, null];
 }

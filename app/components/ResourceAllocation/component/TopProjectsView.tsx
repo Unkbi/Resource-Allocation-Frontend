@@ -45,7 +45,7 @@ function TopProjectsView({
         ) || []
       );
     }
-  }, [ready, allAllocations, loadingPermissions]);
+  }, [ready, allAllocations, loadingPermissions, splitViewCurrentProject]);
 
   const projectColumnConfig = [
     {
@@ -128,6 +128,17 @@ function TopProjectsView({
       field: 'projectType',
       headerName: 'Project Type',
       width: 116,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+    },
+    {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 150,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -237,8 +248,8 @@ function TopProjectsView({
       <Box
         sx={{
           flexGrow: 1,
-          minHeight: 0, 
-          overflow: 'hidden', 
+          minHeight: 0,
+          overflow: 'hidden',
         }}
       >
         <AllocationGrid
@@ -264,6 +275,7 @@ function TopProjectsView({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
                 totalEffort: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
@@ -282,6 +294,7 @@ function TopProjectsView({
           NoRowsOverlay={NoRowsOverlay}
           toolbarComponent={''}
           viewId="topProject"
+          defaultGroupingExpansionDepth={1}
         />
       </Box>
     </Box>

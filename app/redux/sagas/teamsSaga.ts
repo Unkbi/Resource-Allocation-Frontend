@@ -10,7 +10,13 @@ import {
   postTeamResource,
 } from '@/app/services/teamServices';
 import { setAllocations } from '../reducers/dataGridReducer';
-import { Allocation, AllocationGridCell, Resource, Team } from '@/app/types';
+import {
+  Allocation,
+  AllocationGridCell,
+  AllResourceDetail,
+  Resource,
+  Team,
+} from '@/app/types';
 import {
   getMonday,
   getMondayOfISO,
@@ -41,44 +47,53 @@ const formatAllocations = (
   if (Array.isArray(allocationsData) && allocationsData.length === 0) {
     let obj: AllocationGridCell[] = [];
     if (resources?.length === 0) {
-      obj = [
-        {
-          id: teamId,
-          resourceId: '',
-          project: '',
-          projectId: '',
-          resource: '',
-          totalEffort: null,
-          role: '',
-          teamStatus: teamStatus ?? '',
-          teamAllocationManager: teamAllocationManager ?? '',
-          teams: teamName,
-          teamsId: teamId,
-          resourceType: '',
-          W1: null,
-        },
-      ];
+      const weeksList = getMondaysInRange(startDate, endDate);
+      const emptyRow: any = {
+        id: teamId,
+        resourceId: '',
+        project: '',
+        projectId: '',
+        resource: '',
+        totalEffort: null,
+        role: '',
+        teamStatus: teamStatus ?? '',
+        teamAllocationManager: teamAllocationManager ?? '',
+        teams: teamName,
+        teamsId: teamId,
+        resourceType: '',
+      };
+      weeksList.forEach(week => {
+        emptyRow[getWeekNumber(new Date(week))] = null;
+      });
+
+      obj = [emptyRow];
     } else {
       if (Array.isArray(resources) && resources?.length !== 0) {
         const uniqueRecords = removeDuplicateResources(resources);
 
         if (uniqueRecords.length > 0) {
-          obj = uniqueRecords.map(resource => ({
-            id: resource.Id + teamId,
-            resourceId: resource.Id,
-            project: '',
-            projectId: '',
-            resource: resource.FullName,
-            totalEffort: null,
-            role: resource.Role,
-            teams: teamName,
-            teamsId: teamId,
-            teamStatus: teamStatus ?? '',
-            teamAllocationManager: teamAllocationManager ?? '',
-            resourceType: resource.Type,
-            hasProject: true,
-            W1: null,
-          }));
+          const weeksList = getMondaysInRange(startDate, endDate);
+          obj = uniqueRecords.map(resource => {
+            const entry: any = {
+              id: resource.Id + teamId,
+              resourceId: resource.Id,
+              project: '',
+              projectId: '',
+              resource: resource.FullName,
+              totalEffort: null,
+              role: resource.Role,
+              teams: teamName,
+              teamsId: teamId,
+              teamStatus: teamStatus ?? '',
+              teamAllocationManager: teamAllocationManager ?? '',
+              resourceType: resource.Type,
+              hasProject: true,
+            };
+            weeksList.forEach(week => {
+              entry[getWeekNumber(new Date(week))] = null;
+            });
+            return entry;
+          });
         }
       }
     }
@@ -323,7 +338,7 @@ function* fetchResourcesAgainstTeamsSaga(
 }
 
 function* fetchTeamsResourcesSaga(action: any): Generator<any, void, any> {
-  const { teams } = action.payload;
+  const { teams, allResourcesDetail } = action.payload;
   try {
     yield put(setTeamsDataProcessing(true));
 
@@ -334,36 +349,25 @@ function* fetchTeamsResourcesSaga(action: any): Generator<any, void, any> {
     }
 
     const teamResults = yield all(
-      allTeams.map((team: any) =>
+      teams.map((team: any) =>
         call(function* () {
-          const resourcesPostData = {
-            'ResourceAllocation.Core/GetTeamResources': { TeamId: team.Id },
+          const resourcesResult = {
+            result: allResourcesDetail
+              ?.filter((r: AllResourceDetail) => r.Team?.Id === team?.Id)
+              ?.map((r: AllResourceDetail) => r.Resource),
           };
-          //@ts-ignore
-          const resourcesResult = yield call(
-            fetchResourcesAgainstTeamsForSaga,
-            resourcesPostData
-          );
 
           return { resourcesResult, team };
         })
       )
     );
 
-    let teamResourceObject: Record<string, Resource[]> = {};
     const formatedTeamResults = teamResults
       // @ts-ignore
       ?.map(teamResult => ({
         id: teamResult?.team?.Id,
         resource: teamResult?.resourcesResult?.result,
       }));
-
-    formatedTeamResults.forEach(
-      (payload: { id: string; resource: Resource[] }) => {
-        teamResourceObject = teamResourceObject || {};
-        teamResourceObject[payload.id] = payload.resource;
-      }
-    );
 
     if (teamResults) {
       yield put(setAllTeamsResources(formatedTeamResults));

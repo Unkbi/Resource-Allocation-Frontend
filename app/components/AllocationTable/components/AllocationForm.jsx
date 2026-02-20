@@ -35,6 +35,9 @@ import {
   addProjectTypeGroupValidationSchema,
   addLocationValidationSchema,
   addLocationGroupValidationSchema,
+  addUserValidationSchema,
+  addResourceToUserValidationSchema,
+  addBusinessImpactValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -87,10 +90,19 @@ import {
   createResourceWithTeamAndOrg,
   updateResource,
 } from '@/app/services/resourceServices';
-import { postTeamResource } from '@/app/services/teamServices';
+import {
+  fetchTeamAllocationsForSaga,
+  postTeamResource,
+} from '@/app/services/teamServices';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
-import { DATE_FORMAT, PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
+import {
+  DATE_FORMAT,
+  PORTFOLIO_DISPLAY_NAME,
+  PROJECT_ACTIVE_STATUS,
+  projectViewsGrouping,
+  teamsViewsGrouping,
+} from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import {
   createTeam,
@@ -114,7 +126,6 @@ import {
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { fetchHistory } from '@/app/services/allocationServices';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
-import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
 import AddOrganizationForm from '../../Forms/addOrganizationForm';
@@ -144,7 +155,18 @@ import AddProjectTypesForm from '../../Forms/AddProjectTypesForm';
 import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
-import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
+import AddResourceToUserForm from '../../Forms/AddResourceToUserForm';
+import AddUserForm from '../../Forms/AddUserForm';
+import {
+  formatAPIResponse,
+  getUserAttributes,
+  getLoginUserDetails,
+} from '@/app/utils/authUtils';
+import AdvancedFiltersForm from '../../Forms/AdvancedFiltersForm';
+import {
+  setAdvancedFilters,
+  clearAdvancedFilters,
+} from '@/app/redux/reducers/dashboardReducer';
 import {
   ADD_PROJECT_TYPE,
   UPDATE_PROJECT_TYPE,
@@ -157,8 +179,17 @@ import {
   UPDATE_LOCATION,
   UPDATE_LOCATION_GROUPS,
   ADD_LOCATION_GROUPS,
+  CREATE_USER,
+  UPDATE_USER,
+  SEND_INVITATION,
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+import AddBusinessImpactForm from '../../Forms/AddBusinessImpactForm';
+import FollowForm from '../../Forms/FollowForm';
+import {
+  CREATE_BUSINESS_IMPACT,
+  UPDATE_BUSINESS_IMPACT,
+} from '@/app/redux/actions/businessImpactActions';
 
 const initialValuesMap = {
   add_project: {
@@ -166,7 +197,7 @@ const initialValuesMap = {
     EndDate: '',
     Name: '',
     ProjectSponsor: '',
-    AllowOvertime: '',
+    AllowOvertime: 'Yes',
     Location: '',
     ProjectManager: '',
     Status: 'Active',
@@ -386,6 +417,71 @@ const initialValuesMap = {
   edit_location_group: {
     Name: '',
   },
+  add_user: {
+    FirstName: '',
+    LastName: '',
+    Email: '',
+    Role: '',
+    sendInviteEmail: true,
+  },
+  edit_user: {
+    FirstName: '',
+    LastName: '',
+    Email: '',
+    Role: '',
+    sendInviteEmail: true,
+  },
+  add_resource_to_user: {
+    Resources: [],
+    Role: '',
+    sendInviteEmail: true,
+  },
+  edit_resource_to_user: {
+    Resources: [],
+    Role: '',
+    sendInviteEmail: true,
+  },
+  advanced_filters: {
+    ProjectTypeGroup: [],
+    ProjectType: [],
+    Team: [],
+    Portfolio: [],
+    Organization: [],
+    Resource: [],
+    Project: [],
+    ProjectManager: [],
+    AllocationManager: [],
+  },
+  add_business_impact: {
+    Project: '',
+    BusinessImpactType: '',
+    Amount: '',
+    Description: '',
+    Status: '',
+    Currency: 'USD',
+  },
+  edit_business_impact: {
+    Project: '',
+    BusinessImpactType: '',
+    Amount: '',
+    Description: '',
+    Status: '',
+    Currency: 'USD',
+  },
+  follow_project: {
+    isFollowing: true,
+    weeklyAISummary: true,
+    dailySummary: true,
+    planChanges: true,
+    actualsUpdates: true,
+  },
+  follow_team: {
+    isFollowing: true,
+    weeklyAISummary: true,
+    dailySummary: true,
+    planChanges: false,
+    actualsUpdates: true,
+  },
 };
 
 const AllocationForm = () => {
@@ -409,6 +505,7 @@ const AllocationForm = () => {
   const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
+  const { followsByObjectId } = useSelector(state => state.follows);
   const { startDate, endDate } = calendarDate || {};
   const { allocations } = useSelector(state => state.dataGrid);
   const { rowState } = useSelector(state => state.dataGrid);
@@ -427,8 +524,13 @@ const AllocationForm = () => {
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
-  const { projectTypeGroups, projectTypes, location, locationGroups } =
-    useSelector(state => state.allSettings);
+  const {
+    projectTypeGroups,
+    projectTypes,
+    location,
+    locationGroups,
+    userResources,
+  } = useSelector(state => state.allSettings);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -502,9 +604,13 @@ const AllocationForm = () => {
       case 'open_history':
         return openHistoryValidationSchema;
       case 'add_portfolio':
-        return addPortfolioValidationSchema(portfolios);
+        return addPortfolioValidationSchema(portfolios, scalarSettings);
       case 'edit_portfolio':
-        return addPortfolioValidationSchema(portfolios, initialData.Name || '');
+        return addPortfolioValidationSchema(
+          portfolios,
+          scalarSettings,
+          initialData.Name || ''
+        );
       case 'add_role':
         return addRoleValidationSchema(roles);
       case 'edit_role':
@@ -553,6 +659,18 @@ const AllocationForm = () => {
           locationGroups,
           initialData?.Name || ''
         );
+      case 'add_user':
+        return addUserValidationSchema(allUsers, initialData?.email || '');
+      case 'edit_user':
+        return addUserValidationSchema(allUsers, initialData?.email || '');
+      case 'add_resource_to_user':
+        return addResourceToUserValidationSchema;
+      case 'edit_resource_to_user':
+        return addResourceToUserValidationSchema;
+      case 'add_business_impact':
+        return addBusinessImpactValidationSchema;
+      case 'edit_business_impact':
+        return addBusinessImpactValidationSchema;
       default:
         return null;
     }
@@ -618,22 +736,41 @@ const AllocationForm = () => {
       const organisation = allResourcesDetail.find(
         r => r.Resource.Id === resource.Id
       )?.Organization;
+      const teamChildId = `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`;
+      const orgChildId = `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`;
+      const resourceChildId = `auto-generated-row-resource/${resource.FullName}`;
+      const teamParentId = `auto-generated-row-teams/${resource.team?.Name}`;
+      const orgParentId = `auto-generated-row-organisationName/${organisation?.Name}`;
       return [
         ...acc,
-        `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`,
-        `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`,
+        // Add parent IDs first so they expand before children
+        teamParentId,
+        orgParentId,
+        // Then add child IDs
+        teamChildId,
+        orgChildId,
+        resourceChildId,
       ];
     }, []);
     rowIds = projects.reduce((acc, project) => {
       const portfolio = portfolios.find(p => p.Id === project.PortfolioId) ?? {
         Name: 'zzzzz',
       };
+      const portfolioChildId = `auto-generated-row-portfolioName/${portfolio?.Name}-project/${project.Name}`;
+      const projectChildId = `auto-generated-row-project/${project.Name}`;
+      const portfolioParentId = `auto-generated-row-portfolioName/${portfolio?.Name}`;
       return [
         ...acc,
-        `auto-generated-row-portfolioName/${portfolio?.Name}-project/${project.Name}`,
+        // Add parent ID first
+        portfolioParentId,
+        // Then add child ID
+        portfolioChildId,
+        projectChildId,
       ];
     }, rowIds);
-    dispatch(setExpandRowId(rowIds));
+    // Remove duplicates while preserving order (parents before children)
+    const uniqueRowIds = Array.from(new Set(rowIds));
+    dispatch(setExpandRowId(uniqueRowIds));
   };
 
   const getTeamByResourceId = resourceId => {
@@ -903,6 +1040,10 @@ const AllocationForm = () => {
               const newTeamId = response.payload?.Team?.Id;
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
+                dispatch({
+                  type: FETCH_ALL_RESOURCES_DETAIL,
+                  payload: {},
+                });
                 dispatch(setHighlightedRowId(newTeamId));
                 dispatch(
                   showToast({
@@ -953,6 +1094,32 @@ const AllocationForm = () => {
           Status: cleanedValues.Status,
         };
 
+        // Check if any allocations present for a team if Team is made inactive.
+        if (
+          initialData.Status !== cleanedValues.Status &&
+          cleanedValues.Status === 'Inactive'
+        ) {
+          const teamAllocation = await fetchTeamAllocationsForSaga({
+            TeamId: initialData.Id,
+            StartDate: format(parseISO(new Date().toISOString()), DATE_FORMAT),
+            EndDate: '2099-01-01',
+          });
+
+          if (teamAllocation && teamAllocation.length > 0) {
+            dispatch(
+              showToast({
+                open: true,
+                message:
+                  'Failed to update team. Cannot make a team Inactive with Planned Allocations in the Current and Future Weeks.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 5000,
+              })
+            );
+            break;
+          }
+        }
+
         try {
           const response = await dispatch(
             updateTeam({
@@ -974,6 +1141,10 @@ const AllocationForm = () => {
           }
 
           await dispatch(fetchAllTeams());
+          dispatch({
+            type: FETCH_ALL_RESOURCES_DETAIL,
+            payload: {},
+          });
           dispatch(setHighlightedRowId(initialData.Id));
           dispatch(
             showToast({
@@ -1006,6 +1177,30 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
+
+        // Check if calculated Name has duplicates
+        const calculatedFullName = cleanedValues.PreferredFirstName
+          ? `${cleanedValues.PreferredFirstName} ${cleanedValues.LastName}`
+          : `${cleanedValues.FirstName} ${cleanedValues.LastName}`;
+        if (
+          resources.find(
+            resource =>
+              resource.FullName.toLowerCase() ===
+              calculatedFullName.toLowerCase()
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to add resource. Resource cannot have the same Name. Please change First Name, Last Name, Or Preferred First Name.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          break;
+        }
+
         postData = {
           FirstName: cleanedValues.FirstName,
           StartDate: cleanedValues.StartDate,
@@ -1037,7 +1232,7 @@ const AllocationForm = () => {
           const result = await dispatch(
             createResourceWithTeamAndOrg({
               resourceData: postData,
-              teamId: values.Team,
+              teamId: values.Team ? values.Team : null,
               organizationId: values.Organisation,
             })
           );
@@ -1090,6 +1285,31 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
+
+        // Check if calculated Name has duplicates
+        const newCalculatedFullName = cleanedValues.PreferredFirstName
+          ? `${cleanedValues.PreferredFirstName} ${cleanedValues.LastName}`
+          : `${cleanedValues.FirstName} ${cleanedValues.LastName}`;
+        if (
+          resources.find(
+            resource =>
+              resource.Id !== initialData.Id &&
+              resource.FullName.toLowerCase() ===
+                newCalculatedFullName.toLowerCase()
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to update resource. Resource cannot have the same Name. Please change First Name, Last Name, Or Preferred First Name.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          break;
+        }
+
         postData = {
           ...cleanedValues,
           EndDate:
@@ -1175,12 +1395,12 @@ const AllocationForm = () => {
           }
 
           // Check if team changed and update if needed
-          if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
+          if (teamOrgData.teamName !== initialData.Team) {
             await dispatch({
               type: 'UPDATE_RESOURCE_TEAM',
               payload: {
                 Resource: initialData.Id,
-                Team: teamOrgData.teamId,
+                Team: teamOrgData.teamId === '' ? null : teamOrgData.teamId,
               },
             });
           }
@@ -1517,9 +1737,12 @@ const AllocationForm = () => {
                   portfolios,
                   projects,
                   resources,
+                  location,
                   splitView,
-                  bottomTeamAllocationGrid,
-                  teamAllocationGrid,
+                  bottomTeamAllocationGrid, // Update these rows when in spitView
+                  teamAllocationGrid, // Update these rows when in teams, organisation, or resources views
+                  projectAllocationGrid, // Update these rows when in portfolio or projects views
+                  currentView?.GroupBy, // Sahadev, Note : When New Views are added revisit this.
                   currentView?.isDynamicRange
                     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
                     : currentView?.isFixedRange
@@ -1615,10 +1838,24 @@ const AllocationForm = () => {
                   updateRowsForView('bottomTeam', allUpdatedRows);
                   updateRowsForView('projectAllocation', allUpdatedRows);
                   updateRowsForView('teamAllocation', allUpdatedRows);
-                } else {
-                  updateRowsForView('projectAllocation', allUpdatedRows);
+                } else if (teamsViewsGrouping.includes(currentView?.GroupBy)) {
                   updateRowsForView('teamAllocation', allUpdatedRows);
+                } else if (
+                  projectViewsGrouping.includes(currentView?.GroupBy)
+                ) {
+                  updateRowsForView('projectAllocation', allUpdatedRows);
+                } else {
+                  dispatch(
+                    showToastAction(
+                      true,
+                      'Unable to update allocation grid for the current view. View grouping not recognized.',
+                      'error',
+                      4000
+                    )
+                  );
+                  return;
                 }
+
                 dispatch(
                   showToastAction(
                     true,
@@ -1636,28 +1873,32 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              `Failed to create allocation for ${
-                Array.isArray(values.Resource)
-                  ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.find(
-                        r => r.Id === resourceId
-                      );
-                      if (!resource) return acc;
-                      return (
-                        acc +
-                        resources?.find(resource => resource.Id === resourceId)
-                          ?.FullName +
-                        ', '
-                      );
-                    }, '').slice(0, -2)
-                  : resources?.find(r => r.Id === values.Resource)?.FullName
-              }`,
+              e?.response?.data
+                ? e?.response?.data
+                : `Failed to create allocation for ${
+                    Array.isArray(values.Resource)
+                      ? values.Resource.reduce((acc, resourceId) => {
+                          const resource = resources?.find(
+                            r => r.Id === resourceId
+                          );
+                          if (!resource) return acc;
+                          return (
+                            acc +
+                            resources?.find(
+                              resource => resource.Id === resourceId
+                            )?.FullName +
+                            ', '
+                          );
+                        }, '').slice(0, -2)
+                      : resources?.find(r => r.Id === values.Resource)?.FullName
+                  }`,
               'error',
               4000
             )
           );
         } finally {
           dispatch(closeDialog());
+          setFormValue({});
         }
         break;
 
@@ -2162,14 +2403,14 @@ const AllocationForm = () => {
             dispatch(
               showToast({
                 open: true,
-                message: 'Portfolio added successfully.',
+                message: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} added successfully.`,
                 type: 'success',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
               })
             );
             dispatch(closeDialog());
-            dispatch(setHighlightedRowId(response.Id));
+            dispatch(setHighlightedRowId(response.Portfolio.Id));
           })
           .catch(error => {
             console.error('Failed to add portfolio:', error);
@@ -2315,7 +2556,7 @@ const AllocationForm = () => {
           dispatch(
             showToast({
               open: true,
-              message: 'Portfolio updated successfully.',
+              message: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} updated successfully.`,
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -2324,16 +2565,15 @@ const AllocationForm = () => {
           dispatch(setHighlightedRowId(response?.Id));
           dispatch(closeDialog());
         } catch (error) {
-          console.error('Failed to update portfolio:', error);
           const message =
-            error?.response?.data?.exception || 'Failed to update portfolio.';
+            error?.response?.data || 'Failed to update portfolio.';
           dispatch(
             showToast({
               open: true,
               message: message,
               type: 'error',
               position: 'bottom-left',
-              autoHideTimer: 4000,
+              autoHideTimer: 6000,
             })
           );
         }
@@ -2569,7 +2809,7 @@ const AllocationForm = () => {
             dispatch({
               type: UPDATE_PRIVILEGE,
               payload: {
-                id: cleanedValues.Name,
+                id: cleanedValues.Name.replace('/', '__'),
                 updatedFields,
                 resolve,
                 reject,
@@ -3163,6 +3403,580 @@ const AllocationForm = () => {
         }
         break;
       }
+      case 'add_user': {
+        try {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+
+          const userItem = {
+            email: cleanedValues.Email || null,
+            firstName: cleanedValues.FirstName || null,
+            lastName: cleanedValues.LastName || null,
+            role: cleanedValues.Role || '*',
+          };
+
+          const postData = {
+            users: [userItem],
+          };
+          
+          dispatch(
+            showToast({
+              open: true,
+              message: `Sending invite to ${cleanedValues.FirstName} `,
+              type: 'info',
+              position: 'bottom-left',
+              autoHideTimer: 5000,
+            })
+          );
+          
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: SEND_INVITATION,
+              payload: {
+                userData: postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'User invited successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+
+          dispatch(closeDialog());
+          setFormValue({});
+          const highlightId = response?.[0].User?.id || response?.User?.id;
+
+          if (highlightId) {
+            dispatch(setHighlightedRowId(highlightId));
+          }
+        } catch (error) {
+          console.error('Failed to add user:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to add user.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      case 'add_resource_to_user': {
+        try {
+          const finalData = cleanedValues.Resources.map(resourceEmail => {
+            const resourceData = userResources?.find(
+              res => res.email === resourceEmail
+            );
+
+            if (!resourceData) {
+              console.warn(`Resource not found for email: ${resourceEmail}`);
+              return null;
+            }
+
+            const nameParts = resourceData.Name?.split(' ') || [];
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            return {
+              email: resourceEmail || null,
+              firstName: firstName || null,
+              lastName: lastName || null,
+              role: cleanedValues.Role || '*',
+              resourceId: resourceData.id, // Store ID for highlighting
+            };
+          }).filter(Boolean); // Remove any null entries
+
+          if (finalData.length === 0) {
+            throw new Error('No valid resources found to invite');
+          }
+
+          const postData = {
+            users: [...finalData],
+          };
+          
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Sending invitation....',
+              type: 'info',
+              position: 'bottom-left',
+              autoHideTimer: 8000,
+            })
+          );
+          
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: SEND_INVITATION,
+              payload: {
+                userData: postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Users invited successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+
+          // Compare initialData emails with finalData emails
+          // Only highlight resources that were NOT in the initial checkbox selection
+          const initialEmails = new Set(
+            (initialData || []).map(item => item.email?.toLowerCase())
+          );
+
+          const newlyInvitedResources = finalData.filter(
+            item => !initialEmails.has(item.email?.toLowerCase())
+          );
+
+          // If there are newly invited resources (dropdown selections that differ from checkbox), highlight the first one
+          if (newlyInvitedResources.length > 0) {
+            const highlightId = newlyInvitedResources[0].resourceId;
+            if (highlightId) {
+              dispatch(setHighlightedRowId(highlightId));
+            }
+          } else if (initialData?.[0]?.id) {
+            // Otherwise, highlight the first resource from initialData
+            dispatch(setHighlightedRowId(initialData[0].id));
+          }
+
+          setFormValue({});
+        } catch (error) {
+          console.error('Failed to add user:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to add user.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+
+      case 'edit_user': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const postData = {
+          email: cleanedValues.Email || null,
+          firstName: cleanedValues.FirstName || null,
+          lastName: cleanedValues.LastName || null,
+        };
+
+        dispatch(
+            showToast({
+              open: true,
+              message: `Updating the changes for ${initialData.Name} `,
+              type: 'info',
+              position: 'bottom-left',
+              autoHideTimer: 5000,
+            })
+        );
+        
+        try {
+          const result = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_USER,
+              payload: {
+                postData,
+                userId: initialData.id,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'User updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+          setFormValue({});
+          dispatch(setHighlightedRowId(result?.User?.id));
+        } catch (e) {
+          console.error('Failed to update user:', e);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update user.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+
+      case 'advanced_filters': {
+        // For advanced filters, use the full values object (don't exclude any fields)
+        // All values are arrays from the multi-select autocomplete components
+        const filterValues = {
+          ProjectTypeGroup: values.ProjectTypeGroup || [],
+          ProjectType: values.ProjectType || [],
+          Team: values.Team || [],
+          Resource: values.Resource || [],
+          AllocationManager: values.AllocationManager || [],
+          ProjectManager: values.ProjectManager || [],
+          Project: values.Project || [],
+          Portfolio: values.Portfolio || [],
+          Organization: values.Organization || [],
+        };
+        dispatch(setAdvancedFilters(filterValues));
+        dispatch(closeDialog());
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Advanced filters applied successfully',
+            type: 'success',
+            position: 'bottom-left',
+            autoHideTimer: 3000,
+          })
+        );
+        break;
+      }
+      case 'add_business_impact': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        let postData = {
+          ...cleanedValues,
+          Description: cleanedValues.Description || '',
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_BUSINESS_IMPACT,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: ` Business Impact added successfully.`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(closeDialog());
+            dispatch(setHighlightedRowId(response?.BusinessImpact?.Id));
+          })
+          .catch(error => {
+            console.error('Failed to add Business Impact:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add Business Impact.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          });
+        break;
+      }
+      case 'edit_business_impact': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const updatedFields = { ...cleanedValues };
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: 'UPDATE_BUSINESS_IMPACT',
+              payload: {
+                id: initialData?.Id,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(
+            showToast({
+              open: true,
+              message: `Business Impact updated successfully.`,
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response?.ProjectUUID));
+          dispatch(closeDialog());
+        } catch (error) {
+          const message =
+            error?.response?.data || 'Failed to update portfolio.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 6000,
+            })
+          );
+        }
+
+        return;
+      }
+
+      case 'follow_project':
+        // Determine object type from initialData (can be 'project' or 'team')
+        const objectType = initialData?.objectType || 'PROJECT';
+        const followpostData = {
+          ObjectType: objectType.toUpperCase(),
+          ObjectId: initialData.Id,
+          User: user?.id,
+          WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+          PlanChangesDailySummary: cleanedValues.planChanges,
+          ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+        };
+
+        try {
+          // Check if already following
+          const existingFollow = followsByObjectId?.[initialData.Id];
+
+          // If toggle is OFF (unfollow), trigger unfollow action
+          if (!cleanedValues.isFollowing && existingFollow?.FollowId) {
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UNFOLLOW',
+                payload: {
+                  payload: { FollowId: existingFollow.FollowId },
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `Unfollowed ${objectType.toLowerCase()} successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else if (existingFollow && existingFollow.FollowId) {
+            // Update existing follow preferences
+            const updatePayload = {
+              FollowId: existingFollow.FollowId,
+              WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+              PlanChangesDailySummary: cleanedValues.planChanges,
+              ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+            };
+
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UPDATE_FOLLOW_PREFERENCES',
+                payload: {
+                  payload: updatePayload,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `${objectType === 'PROJECT' ? 'Project' : 'Team'} follow preferences updated successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            // Create new follow
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'CREATE_FOLLOW',
+                payload: {
+                  payload: followpostData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `Now following this ${objectType.toLowerCase()}`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+
+          dispatch(closeDialog());
+          setFormValue({});
+        } catch (error) {
+          console.error('Failed to save follow preferences:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.message || 'Failed to save follow preferences',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+
+      case 'follow_team':
+        const followTeamData = {
+          ObjectType: 'TEAM',
+          ObjectId: initialData.Id,
+          User: user?.id,
+          WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+          PlanChangesDailySummary: cleanedValues.planChanges,
+          ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+        };
+
+        try {
+          // Check if already following
+          const existingTeamFollow = followsByObjectId?.[initialData.Id];
+
+          // If toggle is OFF (unfollow), trigger unfollow action
+          if (!cleanedValues.isFollowing && existingTeamFollow?.FollowId) {
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UNFOLLOW',
+                payload: {
+                  payload: { FollowId: existingTeamFollow.FollowId },
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Unfollowed team successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else if (existingTeamFollow && existingTeamFollow.FollowId) {
+            // Update existing follow preferences
+            const updatePayload = {
+              FollowId: existingTeamFollow.FollowId,
+              WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+              PlanChangesDailySummary: cleanedValues.planChanges,
+              ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+            };
+
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UPDATE_FOLLOW_PREFERENCES',
+                payload: {
+                  payload: updatePayload,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Team follow preferences updated successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            // Create new follow
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'CREATE_FOLLOW',
+                payload: {
+                  payload: followTeamData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Now following this team',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+
+          dispatch(closeDialog());
+          setFormValue({});
+        } catch (error) {
+          console.error('Failed to save team follow preferences:', error);
+          dispatch(closeDialog());
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.message || 'Failed to save team follow preferences',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
 
       default:
         return;
@@ -3373,143 +4187,111 @@ const AllocationForm = () => {
           }
 
           // If result is empty, return immediately
-          if (response === null) {
+          if (response === null || !Array.isArray(response) || response.length === 0) {
             setHistoryStatus('no-data');
             setHistoryData([]);
             return;
           }
 
-          response = formatAPIResponse('AllocationHistoryOut', response).map(
-            item => ({
-              ...item,
-              ChangesLog: formatAPIResponse('ChangesLog', item.ChangesLog),
-            })
-          );
-          const formattedHistory = [];
-          (response ? response : [])
-            .filter(
-              item =>
-                Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
-            )
-            .forEach((item, idx) => {
-              const {
-                ResourceName,
-                ProjectName,
-                Period,
-                AllocationEntered,
-                ChangesLog = [],
-                AllocationId,
-              } = item;
 
-              // Helper functions
-              const getUserInitials = email => {
-                if (!email) return '';
-                const [name] = email.split('@');
-                const parts = name.split(/[.\s_]/);
-                return parts
-                  .map(p => p[0]?.toUpperCase())
-                  .join('')
-                  .slice(0, 2);
-              };
-              const getUserName = email => {
-                if (!email) return '';
-                const [name] = email.split('@');
-                return name
-                  .split(/[.\s_]/)
-                  .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-                  .join(' ');
-              };
-              const getDateString = ts => {
-                if (!ts) return '';
-                const date = new Date(ts);
-                return date
-                  .toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: '2-digit',
-                    year: 'numeric',
-                  })
-                  .replace(/ /g, ' ');
-              };
-              const getRelativeTime = ts => {
-                if (!ts) return '';
-                const now = Date.now();
-                const diff = now - ts * 1000;
-                const min = Math.floor(diff / 60000);
-                if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
-                const hr = Math.floor(min / 60);
-                if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
-                const day = Math.floor(hr / 24);
-                return `${day} day${day === 1 ? '' : 's'} ago`;
-              };
+          // Helper functions
+          const getUserInitials = email => {
+            if (!email) return '';
+            const [name] = email.split('@');
+            const parts = name.split(/[.\s_]/);
+            return parts
+              .map(p => p[0]?.toUpperCase())
+              .join('')
+              .slice(0, 2);
+          };
+          const getUserName = email => {
+            if (!email) return '';
+            const [name] = email.split('@');
+            return name
+              .split(/[.\s_]/)
+              .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+              .join(' ');
+          };
+          const getDateString = ts => {
+            if (!ts) return '';
+            return format(parseISO(ts), DATE_FORMAT);
+          };
+          const getRelativeTime = ts => {
+            if (!ts) return '';
+            const now = Date.now();
+            const diff = now - ts * 1000;
+            const min = Math.floor(diff / 60000);
+            if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
+            const day = Math.floor(hr / 24);
+            return `${day} day${day === 1 ? '' : 's'} ago`;
+          };
 
-              // Calculate week number from Period
-              let weekNumber = '';
-              if (Period) {
-                const d = new Date(Period);
-                if (!isNaN(d)) {
-                  const temp = new Date(d.getTime());
-                  temp.setHours(0, 0, 0, 0);
-                  temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-                  const yearStart = new Date(temp.getFullYear(), 0, 1);
-                  weekNumber = Math.ceil(
-                    ((temp - yearStart) / 86400000 + 1) / 7
-                  );
-                }
+          const formattedHistory = response.map((item, idx) => {
+            const {
+              ResourceName,
+              ProjectName,
+              Period,
+              AllocationId,
+              Action,
+              AllocationEnteredFromValue,
+              AllocationEnteredToValue,
+              Timestamp,
+              UserId,
+            } = item;
+
+            // Calculate week number from Period
+            let weekNumber = '';
+            if (Period) {
+              const d = parseISO(Period);
+              if (!isNaN(d)) {
+                const temp = parseISO(new Date(d.getTime()).toISOString());
+                temp.setHours(0, 0, 0, 0);
+                temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
+                const yearStart = parseISO(
+                  new Date(temp.getFullYear(), 0, 1).toISOString()
+                );
+                weekNumber = Math.ceil(
+                  ((temp - yearStart) / 86400000 + 1) / 7
+                );
               }
+            }
 
-              // For each change log, create a history entry
-              ChangesLog.forEach((log, logIdx) => {
-                let action = '';
-                let fromVersion = '';
-                let toVersion = '';
-                const modifingUserDetails = getUserFromUid(log.User, allUsers);
+            const modifingUserDetails = getUserFromUid(UserId, allUsers);
 
-                // Find the next log entry if it exists
-                const nextLog = ChangesLog[logIdx + 1];
+            let action = '';
+            if (Action?.toLowerCase() === 'create') {
+              action = 'Created';
+            } else if (Action?.toLowerCase() === 'update') {
+              action = 'Updated';
+            } else if (Action?.toLowerCase() === 'delete') {
+              action = 'Deleted';
+            } else {
+              action = Action;
+            }
 
-                if (log.Action?.toLowerCase() === 'create') {
-                  action = 'Created';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = nextLog
-                    ? (nextLog.AllocationEnteredLast ?? '')
-                    : (AllocationEntered ?? '');
-                } else if (log.Action?.toLowerCase() === 'update') {
-                  action = 'Updated';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = nextLog
-                    ? (nextLog.AllocationEnteredLast ?? '')
-                    : (AllocationEntered ?? '');
-                } else if (log.Action?.toLowerCase() === 'delete') {
-                  action = 'Deleted';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = '';
-                } else {
-                  action = log.Action;
-                }
-
-                formattedHistory.push({
-                  id: `${AllocationId || idx + 1}-${logIdx + 1}`,
-                  userInitials: getUserInitials(ResourceName),
-                  userName: getUserName(ResourceName),
-                  projectName: ProjectName,
-                  weekNumber: weekNumber ? Number(weekNumber) : undefined,
-                  date: getDateString(Period),
-                  timestamp: getRelativeTime(
-                    Math.floor(new Date(log.Timestamp)?.getTime() / 1000)
-                  ),
-                  action,
-                  fromVersion:
-                    fromVersion !== undefined ? String(fromVersion) : '',
-                  toVersion: toVersion !== undefined ? String(toVersion) : '',
-                  byUser: `${modifingUserDetails?.firstName || ''} ${
-                    modifingUserDetails?.lastName || ''
-                  }`,
-                  _timestampRaw: Math.floor(
-                    new Date(log.Timestamp)?.getTime() / 1000
-                  ), // Add raw timestamp for sorting
-                });
-              });
-            });
+            return {
+              id: `${AllocationId || idx + 1}`,
+              userInitials: getUserInitials(ResourceName),
+              userName: getUserName(ResourceName),
+              projectName: ProjectName,
+              weekNumber: weekNumber ? Number(weekNumber) : undefined,
+              date: getDateString(Period),
+              timestamp: getRelativeTime(
+                Math.floor(new Date(Timestamp)?.getTime() / 1000)
+              ),
+              action,
+              fromVersion: AllocationEnteredFromValue !== undefined ? String(AllocationEnteredFromValue) : '',
+              toVersion: AllocationEnteredToValue !== undefined ? String(AllocationEnteredToValue) : '',
+              byUser: `${modifingUserDetails?.firstName || ''} ${
+                modifingUserDetails?.lastName || ''
+              }`,
+              _timestampRaw: Math.floor(
+                new Date(Timestamp)?.getTime() / 1000
+              ),
+            };
+          });
 
           // Sort by _timestampRaw descending (latest first)
           formattedHistory.sort(
@@ -3764,6 +4546,65 @@ const AllocationForm = () => {
           <AddLocationGroupForm
             formikProps={formikProps}
             setFormValue={setFormValue}
+          />
+        );
+      case 'add_user':
+        return (
+          <AddUserForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'edit_user':
+        return (
+          <AddUserForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'add_resource_to_user':
+        return (
+          <AddResourceToUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_resource_to_user':
+        return (
+          <AddResourceToUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'advanced_filters':
+        return (
+          <AdvancedFiltersForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_business_impact':
+        return (
+          <AddBusinessImpactForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_business_impact':
+        return (
+          <AddBusinessImpactForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'follow_project':
+        return (
+          <FollowForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+            objectType='project'
+          />
+        );
+      case 'follow_team':
+        return (
+          <FollowForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+            objectType='team'
           />
         );
       default:

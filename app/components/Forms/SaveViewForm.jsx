@@ -47,79 +47,6 @@ import {
 } from '@/app/redux/reducers/allocationViewReducer';
 import { getLoginUserDetails } from '@/app/utils/authUtils';
 
-const getColumnLabel = (column, groupBy = '') => {
-  const columnLabels = {
-    __row_group_by_columns_group_teams__: 'Team Name',
-    __row_group_by_columns_group_organisationName__: 'Organization Name',
-    __row_group_by_columns_group_resource__: 'Resource',
-    __row_group_by_columns_group__:
-      groupBy === 'Resources' ? 'Resource Name' : 'Project Name',
-    __row_group_by_columns_group_project__:
-      groupBy === 'Project' ? 'Project Name' : 'Project',
-    __row_group_by_columns_group_portfolioName__: `${PORTFOLIO_DISPLAY_NAME} Name`,
-    portfolioName: PORTFOLIO_DISPLAY_NAME,
-    totalEffort: 'Total Effort',
-    organisationName: 'Organization Name',
-    resource: 'Resource',
-    project: 'Project',
-    teams: 'Team',
-    teamStatus: 'Team Status',
-    teamAllocationManager: 'Allocation Manager',
-    organisationStatus: 'Organization Status',
-    resourceType: 'Resource Type',
-    projectSponsor: 'Project Sponsor',
-    projectManager: 'Project Manager',
-    projectStatus: 'Project Status',
-    projectLocation: 'Project Location',
-    projectType: 'Project Type',
-    projectOvertimeAllowed: 'Overtime',
-    projectCost: 'Project Budget',
-    projectCurrency: 'Project Currency',
-    projectStartDate: 'Project Start Date',
-    projectEndDate: 'Project End Date',
-    Email: 'Email',
-    PhoneNumber: 'Phone Number',
-    Department: 'Department',
-    WorkLocation: 'Resource Work Location',
-    LocationCategory: 'Resource Location Category',
-    Type: 'Resource Type',
-    Status: 'Resource Status',
-    HRLevel: 'HR Level',
-    Role: 'Resource Role',
-    StartDate: 'Resource Start Date',
-    EndDate: 'Resource End Date',
-    AverageWeeklyHours: 'Average Weekly Hours',
-    ContractorHourlyRate: 'Contractor Hourly Rate',
-    ContractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
-    email: 'Email',
-    phoneNumber: 'Phone Number',
-    department: 'department',
-    hrLevel: 'HR Level',
-    role: 'Resource Role',
-    workLocation: 'Resource Work Location',
-    resourceStartDate: 'Resource Start Date',
-    resourceEndDate: 'Resource End Date',
-    resourceLocationCategory: 'Resource Location Category',
-    averageWeeklyHours: 'Average Weekly Hours',
-    contractorHourlyRate: 'Contractor Hourly Rate',
-    contractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
-    projectOvertimeAllowed: 'Allow Overtime',
-    projectCost: 'Project Budget',
-    projectCurrency: 'Project Currency',
-    Description: 'Project Description',
-    projectDescription: 'Project Description',
-    projectLocation: 'Project Location',
-    ProjectManager: 'Project Manager',
-    ProjectSponsor: 'Project Sponsor',
-    ProjectEndDate: 'Project End Date',
-    ProjectStartDate: 'Project Start Date',
-    Status: 'Project Status',
-    Type: 'Project Type',
-  };
-
-  return columnLabels[column];
-};
-
 const getDateFromWeekMath = (date, operation, weeks) => {
   let newDate = date || new Date();
 
@@ -148,6 +75,86 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   const { user } = useSelector(state => state.user);
   const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
+  const { scalarSettings } = useSelector(state => state.allSettings);
+
+  const getColumnLabel = (column, groupBy = '') => {
+    const columnLabels = {
+      __row_group_by_columns_group_teams__: 'Team Name',
+      __row_group_by_columns_group_organisationName__: 'Organization Name',
+      __row_group_by_columns_group_resource__: 'Resource',
+      __row_group_by_columns_group__:
+        groupBy === 'Resources' ? 'Resource Name' : 'Project Name',
+      __row_group_by_columns_group_project__:
+        groupBy === 'Project' ? 'Project Name' : 'Project',
+      __row_group_by_columns_group_portfolioName__: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} Name`,
+      portfolioName: scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME,
+      totalEffort: 'Total Effort',
+      organisationName: 'Organization Name',
+      resource: 'Resource',
+      project: 'Project',
+      teams: 'Team',
+      teamStatus: 'Team Status',
+      teamAllocationManager: 'Allocation Manager',
+      organisationStatus: 'Organization Status',
+      resourceType: 'Resource Type',
+      projectSponsor: 'Project Sponsor',
+      projectManager: 'Project Manager',
+      projectStatus: 'Project Status',
+      projectLocation: 'Project Location',
+      projectType: 'Project Type',
+      projectTypeGroup: 'Project Type Group',
+      projectOvertimeAllowed: 'Overtime',
+      projectCost: 'Project Budget',
+      projectCurrency: 'Project Currency',
+      projectStartDate: 'Project Start Date',
+      projectEndDate: 'Project End Date',
+      Email: 'Email',
+      PhoneNumber: 'Phone Number',
+      Department: 'Department',
+      WorkLocation: 'Resource Work Location',
+      LocationCategory: 'Resource Location Category',
+      Type: 'Resource Type',
+      Status: 'Resource Status',
+      HRLevel: 'HR Level',
+      Role: 'Resource Role',
+      StartDate: 'Resource Start Date',
+      EndDate: 'Resource End Date',
+      AverageWeeklyHours: 'Average Weekly Hours',
+      ContractorHourlyRate: 'Contractor Hourly Rate',
+      ContractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
+      email: 'Email',
+      phoneNumber: 'Phone Number',
+      department: 'department',
+      hrLevel: 'HR Level',
+      role: 'Resource Role',
+      workLocation: 'Resource Work Location',
+      resourceStartDate: 'Resource Start Date',
+      resourceEndDate: 'Resource End Date',
+      resourceLocationCategory: 'Resource Location Category',
+      averageWeeklyHours: 'Average Weekly Hours',
+      contractorHourlyRate: 'Contractor Hourly Rate',
+      contractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
+      projectOvertimeAllowed: 'Allow Overtime',
+      projectCost: 'Project Budget',
+      projectCurrency: 'Project Currency',
+      Description: 'Project Description',
+      projectDescription: 'Project Description',
+      projectLocation: 'Project Location',
+      ProjectManager: 'Project Manager',
+      ProjectSponsor: 'Project Sponsor',
+      ProjectEndDate: 'Project End Date',
+      ProjectStartDate: 'Project Start Date',
+      Status: 'Project Status',
+      Type: 'Project Type',
+      manager: 'Manager',
+      resourceStatus: 'Resource Status',
+      organisationStatus: 'Organisation Status',
+      portfolioStatus: 'Portfolio Status',
+      portfolioDescription: 'Portfolio Description',
+    };
+
+    return columnLabels[column];
+  };
 
   const commonAutocompleteStyles = {
     '& .MuiInputBase-root': { fontSize: '12px' },
@@ -236,8 +243,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     },
     {
       value: 'Portfolio',
-      label: 'Portfolios*',
-      extraInfo: 'Group by Projects, then by Portfolios',
+      label: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}s*`,
+      extraInfo: `Group by Projects, then by ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}s`,
     },
     {
       value: 'Flat',
@@ -526,7 +533,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   }));
 
   const StyledExtraInfoText = styled(Typography)(({ theme }) => ({
-    color: '#D24546',
+    color: theme.palette.info.main,
     fontFamily: 'Open Sans',
     fontSize: '10px',
     fontStyle: 'italic',

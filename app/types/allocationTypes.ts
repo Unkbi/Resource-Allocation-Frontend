@@ -39,7 +39,7 @@ export interface AllocationGridCell {
   projectEndDate?: string | null; // Only for Projects View
   projectLocation?: string | null; // Only for Projects View
   projectManager?: string | null; // Only for Projects View
-  projectOvertimeAllowed?: boolean | null; // Only for Projects View
+  projectOvertimeAllowed?: string | boolean | null; // Only for Projects View
   projectSponsor?: string | null; // Only for Projects View
   projectStatus?: string | null; // Only for Projects View
   projectType?: string | null; // Only for Projects View
@@ -183,6 +183,28 @@ export interface ActualAllocationsForPeriodPayload {
   EndDate: string;
 }
 
+export interface ActualStatusForPeriodPayload {
+  Resource: string;
+  Status: string | null;
+  StartDate: string;
+  EndDate: string;
+}
+
+export interface UpdateActualStatusForPeriodPayload {
+  Resource: string;
+  Status: string | null;
+  Period: string;
+}
+
+export interface UpdateActualStatusForPeriodResponse {
+  id: string;
+  message: string;
+  period: string;
+  resource: string;
+  status: string;
+  success: boolean;
+}
+
 export interface ConfirmActuals {
   Project: string;
   ActualsEntered: number;
@@ -205,6 +227,7 @@ export interface ActualAllocations {
   Project: string | null;
   ProjectName: string | null;
   Resource: string | null;
+  ProjectActualsStatus: string | null;
 }
 
 export interface ActualAllocationsForPeriodResponse {
@@ -212,10 +235,20 @@ export interface ActualAllocationsForPeriodResponse {
   Status: string | null;
 }
 
+export interface ActualStatus {
+  Resource: string;
+  Status: string;
+  Period: string;
+}
+
 export interface ActualAllocationsState {
-  actualAllocations: ActualAllocations[] | null;
+  actualAllocations: Record<string, ActualAllocations[]> | null;
+  actualAllocationsStatuses: Record<string, string> | null;
+  actualsStatus: ActualStatus[] | null;
   status: string | null;
   dataProcessing: boolean | null;
+  actualAllocationsStatusesLoading: boolean;
+  actualsStatusLoading: boolean | null;
   loading: boolean | null;
   calendarDate: {
     startDate: string | null;

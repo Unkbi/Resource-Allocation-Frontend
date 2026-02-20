@@ -171,7 +171,8 @@ const Header = ({ sidebarExpanded }) => {
               {loadingName ? (
                 <Skeleton width={100} height={20} />
               ) : (
-                `${displayName} : Actuals`
+                  // `${displayName} : Actuals`  Commeting this , if needed later can be used
+                  `Actuals`
               )}
             </>
           ) : (

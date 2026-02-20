@@ -219,6 +219,7 @@ export const TOTAL_FUTURE_WEEKS = 20; //Configurable weeks count (Previous + Cur
 export const TOTAL_FUTURE_WEEKS_ARROW = 4;
 export const DATE_FORMAT = 'yyyy-MM-dd';
 export const DISPLAY_DATE_FORMAT = 'MMM yyyy';
+export const USA_DATE_FORMAT = 'MM/dd/yyyy';
 
 export const API_PROJECT_PORTFOLIO = '/Resource';
 export const API_AGENTLANG_KERNEL_RBAC = '/agentlang.auth';
@@ -230,6 +231,7 @@ export const PUBLIC_ROUTES = [
   '/signup-otp',
   '/reset-password',
   '/callback',
+  '/invite',
 ];
 
 export const DEFAULT_LOCALE = 'en-gb';
@@ -283,4 +285,77 @@ export const ACCESS_MANAGEMENT_VALID_TABS = [
 
 export const PROJECT_ACTIVE_STATUS = ['Active', 'Approved'];
 
-export const PROJECT_INACTIVE_STATUS = [ 'Proposed','Paused','Completed'];
+export const PROJECT_INACTIVE_STATUS = ['Proposed', 'Paused', 'Completed'];
+
+export const PROJECT_ALLOCATION_STATUS = ['Active', 'Approved', 'Completed'];
+
+export const Resource_All_Status = [
+  'Active',
+  'Inactive',
+  'Unassigned',
+  'Not-Planned',
+  'Pending',
+];
+
+export const AllocationForm_Status_Filter = ['Active', 'Pending'];
+
+export const Resource_Team_Project_Status_Filter = ['Active', 'Not-Planned'];
+
+export const Project_Sponsor_Manager_Status_Filter = [
+  'Active',
+  'Not-Planned',
+  'Unassigned',
+];
+
+export const DASHBOARD_ALL_ACCESS = [
+  'activeProjects',
+  'allocationPercentage',
+  'systemActiveProjects',
+  'actualsConfirmed',
+  'plan_vs_actual_variance',
+  'engagementScoreOverview',
+  'activeProjectsByType',
+  'projects_by_type_distribution',
+  'top_projects_by_variance',
+  'allocation_by_project_type_group',
+  'actuals_confirmation_status',
+  'unapprovedProjectAllocation',
+  'projectHealthOverview',
+  'projectFTE',
+  'custom_allocation_percentage',
+];
+
+export const TOTAL_ACTUALS_LESS_THAN_ONE = 'TOTAL_ACTUALS_LESS_THAN_ONE';
+export const MISSING_PROJECT_ACTUALS_STATUS = 'MISSING_PROJECT_ACTUALS_STATUS';
+
+export const teamsViewsGrouping = [
+  'Teams',
+  'Organisations',
+  'Resources',
+  'Flat',
+];
+export const projectViewsGrouping = ['Portfolio', 'Project'];
+
+export const past = 'past';
+export const future = 'future';
+export const current = 'current';
+
+export const UNPLANNED_PROJECT = 'UNPLANNED_PROJECT';
+export const OTHER_WORK = 'OTHER_WORK';
+export const PERSONAL_TIME = 'PERSONAL_TIME';
+
+export const FAR_PAST_DATE = '1900-01-01';
+export const FAR_FUTURE_DATE = '2100-01-01';
+
+export const TOTAL_HOURS_IN_WEEK = 40;
+
+export const HOURS = 'Hours';
+export const PERCENTAGES = 'Percentages';
+export const FRACTIONS = 'Fractions';
+export const ACTUALS_ALLOCATION_PREFERENCE_OPTIONS = [
+  // PERCENTAGES, // Sahadev : Uncomment when support is added.
+  HOURS,
+  FRACTIONS,
+];
+export const DEFAULT_ACTUALS_ALLOCATION_PREFERENCE = FRACTIONS;
+export const STEP = 0.05;

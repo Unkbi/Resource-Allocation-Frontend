@@ -10,6 +10,8 @@ import {
   Stack,
   Tab,
   Tabs,
+  Tooltip,
+  Typography,
 } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -36,6 +38,9 @@ import {
 } from '@/app/services/teamServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { deleteResource } from '@/app/services/resourceServices';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
@@ -53,12 +58,16 @@ import { useRouter } from 'next/navigation';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
 import { StatusPill } from '@/app/components/Settings/styled';
-import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
+import {
+  FETCH_LOCATION,
+  FETCH_USER,
+} from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import RatesTable from '@/app/components/Resources/RatesTable';
 import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
+import { parseISO } from 'date-fns';
 
 const demoResources = {
   result: [
@@ -142,11 +151,14 @@ function Resources({ permissions, loadingPermissions }) {
 
   const { allResourcesDetail, loading: allResourcesDetailLoading } =
     useSelector(state => state.allResourcesDetail);
+  const { users } = useSelector(state => state.allSettings);
   const { teams, dataProcessing } = useSelector(state => state.teams);
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
     state => state.employeeRates
   );
   const { location } = useSelector(state => state.allSettings);
+  const { followsByObjectId } = useSelector(state => state.follows);
+  const { user } = useSelector(state => state.user);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(allResourcesDetail || null);
@@ -203,6 +215,37 @@ function Resources({ permissions, loadingPermissions }) {
       setValue(newTab);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!users.length) {
+      dispatch({ type: FETCH_USER, payload: {} });
+    }
+  }, []);
+
+  const getTooltipForStatus = (status, params) => {
+    switch (status) {
+      case 'Active':
+        return 'The Resource is available for Allocation.';
+      case 'Inactive':
+        return 'The Resource is unavailable for Allocation.';
+      case 'Pending':
+        const date = parseISO(params.row.StartDate);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `The Resource will be available for Allocation from ${month}/${day}/${year}.`;
+      case 'Not-Planned':
+        return `Team, ${params.row.Team} is Inactive.`;
+      case 'Unassigned':
+        if (!params.row.StartDate && !params.row.Team) {
+          return 'The Resource has no Start Date and is not part of any Team.';
+        } else if (!params.row.StartDate) {
+          return `The Resource has no Start Date`;
+        } else if (!params.row.Team) {
+          return `The Resource is not part of any Team.`;
+        }
+    }
+  };
 
   const columns = [
     {
@@ -301,17 +344,6 @@ function Resources({ permissions, loadingPermissions }) {
       },
     },
     {
-      field: 'WorkLocation',
-      headerName: 'Work Location',
-      flex: 1,
-      minWidth: 150,
-      renderCell: params => {
-        params.value && (
-          <EllipsisNameCell value={params.value} showAvatar={false} />
-        );
-      },
-    },
-    {
       field: 'PhoneNumber',
       headerName: 'Phone Number',
       flex: 1,
@@ -324,13 +356,24 @@ function Resources({ permissions, loadingPermissions }) {
     },
     {
       field: 'Role',
-      headerName: 'Role',
+      headerName: 'Title',
       flex: 1,
       minWidth: 150,
       renderCell: params =>
         params.value && (
           <EllipsisNameCell value={params.value} showAvatar={false} />
         ),
+    },
+    {
+      field: 'WorkLocation',
+      headerName: 'Work Location',
+      flex: 1,
+      minWidth: 150,
+      renderCell: params => {
+        params.value && (
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+        );
+      },
     },
     {
       field: 'HRLevel',
@@ -393,7 +436,7 @@ function Resources({ permissions, loadingPermissions }) {
       minWidth: 120,
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -409,13 +452,99 @@ function Resources({ permissions, loadingPermissions }) {
       minWidth: 120,
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
           return `${month}/${day}/${year}`;
         }
         return '';
+      },
+    },
+    {
+      field: '__created',
+      headerName: 'Created On',
+      flex: 1,
+      minWidth: 160,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          const hours = date.getHours();
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const AM__PM = hours >= 12 ? 'PM' : 'AM';
+          let hour12 = hours % 12;
+          if (hour12 === 0) hour12 = 12;
+          const hourStr = String(hour12).padStart(2, '0');
+          return `${month}/${day}/${year}  ${hourStr}:${minutes} ${AM__PM}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__created_by',
+      headerName: 'Created By',
+      flex: 1,
+      minWidth: 200,
+      renderCell: params => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
+      },
+    },
+    {
+      field: '__last_modified',
+      headerName: 'Last Modified On',
+      flex: 1,
+      minWidth: 160,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          const hours = date.getHours();
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const AM__PM = hours >= 12 ? 'PM' : 'AM';
+          let hour12 = hours % 12;
+          if (hour12 === 0) hour12 = 12;
+          const hourStr = String(hour12).padStart(2, '0');
+          return `${month}/${day}/${year}  ${hourStr}:${minutes} ${AM__PM}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__last_modified_by',
+      headerName: 'Last Modified By',
+      flex: 1,
+      minWidth: 200,
+      renderCell: params => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
       },
     },
     {
@@ -438,7 +567,12 @@ function Resources({ permissions, loadingPermissions }) {
                 width: '100%',
               }}
             >
-              <StatusPill status={status}>{status}</StatusPill>
+              <Tooltip
+                title={getTooltipForStatus(status, params)}
+                sx={{ cursor: 'default' }}
+              >
+                <StatusPill status={status}>{status}</StatusPill>
+              </Tooltip>
               {(permissions['Resource']?.u || permissions['Resource']?.d) && (
                 <Box>
                   <IconButton
@@ -627,6 +761,92 @@ function Resources({ permissions, loadingPermissions }) {
                         horizontal: 'right',
                       }}
                     >
+                      <MenuItem
+                        sx={{
+                          ...menuItemStyle,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: 0,
+                          '&:hover': {
+                            backgroundColor: 'transparent',
+                          },
+                        }}
+                      >
+                        <Box
+                          onClick={() => handleFollowTeam(params)}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            flex: 1,
+                            padding: '6px 16px',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                            },
+                          }}
+                        >
+                          {followsByObjectId?.[params.row.Id] ? (
+                            <>
+                              <VisibilityOffIcon sx={{ fontSize: 18, color: '#1C2D5F' }} />
+                              <Typography
+                                sx={{
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  color: '#1C2D5F',
+                                  paddingLeft: '10px',
+                                }}
+                              >
+                                Unfollow
+                              </Typography>
+                            </>
+                          ) : (
+                            <>
+                              <VisibilityIcon sx={{ fontSize: 18, color: '#1C2D5F' }} />
+                              <Typography
+                                sx={{
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  color: '#1C2D5F',
+                                  paddingLeft: '10px',
+                                }}
+                              >
+                                Follow
+                              </Typography>
+                            </>
+                          )}
+                        </Box>
+                       
+                          <Box
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFollowTeamSettings(params);
+                            }}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '6px 12px',
+                              cursor: 'pointer',
+                              borderLeft: '1px solid rgba(0, 0, 0, 0.12)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                              },
+                            }}
+                          >
+                            <SettingsIcon sx={{ fontSize: 18, color: '#1C2D5F' }} />
+                            <Typography
+                              sx={{
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#1C2D5F',
+                                paddingLeft: '10px',
+                              }}
+                            >
+                              Settings
+                            </Typography>
+                          </Box>
+                      
+                      </MenuItem>
                       {permissions['Team']?.u && (
                         <MenuItem
                           onClick={() => {
@@ -757,7 +977,7 @@ function Resources({ permissions, loadingPermissions }) {
       headerAlign: 'left',
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -777,7 +997,7 @@ function Resources({ permissions, loadingPermissions }) {
       headerAlign: 'left',
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -1061,6 +1281,12 @@ function Resources({ permissions, loadingPermissions }) {
           WorkLocation:
             location?.find(loc => loc.Id === item?.Resource?.WorkLocation)
               ?.Name || '',
+          __created_by: users?.find(
+            user => user.id === item?.Resource?.__created_by
+          )?.Name,
+          __last_modified_by: users?.find(
+            user => user.id === item?.Resource?.__last_modified_by
+          )?.Name,
         };
       });
     }
@@ -1102,8 +1328,7 @@ function Resources({ permissions, loadingPermissions }) {
       loading ||
       dataProcessing ||
       employeeRatesLoading ||
-      allResourcesDetailLoading ||
-      !(value === 'teams' || value === 'resource')
+      allResourcesDetailLoading 
     )
       return;
 
@@ -1127,7 +1352,9 @@ function Resources({ permissions, loadingPermissions }) {
             focusColumn = 'WorkLocation';
           } else if (value === 'teams') {
             focusColumn = 'Team';
-          } else {
+          } else if (value === 'organizations') {
+            focusColumn = 'Name';
+          } else{
             focusColumn = 'FullName';
           }
 
@@ -1419,6 +1646,37 @@ function Resources({ permissions, loadingPermissions }) {
     setAnchorEl(null);
     setSelectedRow(null);
   };
+
+  const handleFollowTeam = params => {
+    const teamId = params.row.Id;
+    const existingFollow = followsByObjectId?.[teamId];
+
+    const dialogData = {
+      ...params.row,
+      isFollowing: existingFollow ? false : true,
+      weeklyAISummary: existingFollow?.WeeklySummaryEnabled ?? true,
+      dailySummary: existingFollow?.DailySummaryEnabled ?? true,
+      planChanges: existingFollow?.PlanChangesDailySummary ?? false, // Default false for teams
+      actualsUpdates: existingFollow?.ActualsStatusDailySummary ?? true,
+      existingFollowId: existingFollow?.FollowId || null,
+      objectType: 'team', // Add objectType to pass to form
+    };
+
+    handleOpenDialog(
+      'Team Follow Preferences',
+      'follow_team',
+      dialogData,
+      {
+        submitButtonText: 'Save Preferences',
+        cancelButtonText: 'Cancel',
+      }
+    );
+    handleMenuClose();
+  };
+
+  const handleFollowTeamSettings = params => {
+    //console.log('Opening settings for team:', params.row);
+  }
 
   const onChange = (event, newValue) => {
     setValue(newValue);

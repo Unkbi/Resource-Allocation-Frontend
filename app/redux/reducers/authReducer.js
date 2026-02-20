@@ -9,6 +9,7 @@ import {
   getUser,
   resendConfirmationCode,
   callback,
+  setPasswordInvite,
 } from '../../services/authServices.js';
 
 const initialState = {
@@ -21,6 +22,7 @@ const initialState = {
   forgotPasswordMessage: null,
   resetPasswordMessage: null,
   otpVerified: false,
+  initLoading: false,
 };
 
 const authSlice = createSlice({
@@ -31,6 +33,9 @@ const authSlice = createSlice({
       state.signupData = action.payload;
     },
     logout: () => initialState,
+    setInitLoading: (state, action) => {
+      state.initLoading = action.payload;
+    },
   },
   extraReducers: builder => {
     builder
@@ -93,6 +98,22 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // Invite Actions
+      .addCase(setPasswordInvite.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setPasswordInvite.fulfilled, (state, action) => {
+        state.loading = false;
+        state.loginUser = action.payload;
+        state.token = action.payload['id-token'];
+      })
+      .addCase(setPasswordInvite.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       // forgot
       .addCase(forgotPassword.pending, state => {
         state.loading = true;
@@ -164,5 +185,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { updateSignup } = authSlice.actions;
+export const { updateSignup, setInitLoading } = authSlice.actions;
 export default authSlice.reducer;

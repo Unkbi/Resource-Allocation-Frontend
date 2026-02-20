@@ -64,16 +64,20 @@ export const callback = createAsyncThunk(
 );
 
 // Get User
-export const getUser = createAsyncThunk('auth/getUser', async userId => {
-  try {
-    const response = await axiosInstance.post('/agentlang.auth/getUser', {
-      userId,
-    });
-    return response.data;
-  } catch (error) {
-    return 'User not found';
+export const getUser = createAsyncThunk(
+  'auth/getUser',
+  async (userId, withRbac) => {
+    try {
+      const response = await axiosInstance.post('/agentlang.auth/getUser', {
+        userId,
+        withRbac,
+      });
+      return response.data;
+    } catch (error) {
+      return 'User not found';
+    }
   }
-});
+);
 
 export const signupUser = createAsyncThunk(
   'auth/signupUser',
@@ -107,6 +111,22 @@ export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
   clearAuth();
   return;
 });
+
+// Invite Password Reset
+export const setPasswordInvite = createAsyncThunk(
+  'auth/setPasswordInvite',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        '/agentlang.auth/acceptInvitation',
+        data
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Failed to Set Password');
+    }
+  }
+);
 
 export const forgotPassword = createAsyncThunk(
   'auth/forgotPassword',

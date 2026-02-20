@@ -18,6 +18,7 @@ import {
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import Image from 'next/image';
 import { confirmSignUpUser, performForgotPassword, resendOtp } from '@/app/redux/actions/authActions';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -234,6 +235,13 @@ export default function SignUpOtpPage(){
    const handleResendOtp = (e: React.MouseEvent<HTMLParagraphElement>) => {
      e.preventDefault();
      dispatch(resendOtp(signupData));
+     dispatch(showToast({
+      open: true,
+      message: `OTP has been resent successfully`,
+      type: 'success',
+      position: 'bottom-left',
+       autoHideTimer: 4000,
+     }));
    };
    
    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {

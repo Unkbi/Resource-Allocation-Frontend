@@ -8,22 +8,13 @@ import SideBar from './components/Shared/Sidebar/Sidebar';
 import Header from './components/Shared/Header/Header';
 import { getToken, getUserId } from './utils/authUtils';
 import { PUBLIC_ROUTES } from './constants/constants';
-import { getUserData } from './redux/actions/authActions';
 import { useDispatch, useSelector } from 'react-redux';
 import MuiXLicense from './components/MuiLicence/MuiLicenceKey';
 import { CustomSnackbar } from './components/Snackbar/CustomSnackbar';
-import { fetchAllTeams } from './redux/actions/fetchTeamsAction';
-import { fetchAllProjects } from './redux/actions/fetchProjectsAction';
-import { fetchPortfolios } from './services/prorfolioServices';
-import { FETCH_PORTFOLIOS } from './redux/actions/portfolioActions';
-import { FETCH_ALL_RESOURCES_DETAIL } from './redux/actions/allResourcesDetailAction';
-import {
-  FETCH_PRIVILEGEASSIGNMENTS,
-  FETCH_PRIVILEGES,
-  FETCH_ROLES,
-  FETCH_ROLESASSIGNMENTS,
-  GET_USER_AND_PRIVILEGES,
-} from './redux/actions/rbacActions';
+import { FETCH_ALL_SETTINGS } from './redux/actions/allSettingsActions';
+import { INIT_BOOTSTRAP } from './redux/actions/authActions';
+import { SETUP_ADVANCED_FILTERS } from './redux/actions/rbacActions';
+import { setLoadingAdvancedFilters } from './redux/reducers/dashboardReducer';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
@@ -59,6 +50,8 @@ export default function LayoutClient({ children }) {
   const { projects } = useSelector(state => state.projects);
   const { teams } = useSelector(state => state.teams);
   const { portfolios } = useSelector(state => state.portfolios);
+  const { scalarSettings } = useSelector(state => state.allSettings);
+  const initLoading = useSelector(state => state.user.initLoading);
 
   const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
 
@@ -94,6 +87,8 @@ export default function LayoutClient({ children }) {
           return 'Forgot Password';
         case '/reset-password':
           return 'Reset Password';
+        case '/invite':
+          return 'Set Password';
         default:
           return 'CIOptimize';
       }
@@ -121,35 +116,9 @@ export default function LayoutClient({ children }) {
     if (!isClient) return;
     if (isLoggedIn && userId) {
       setIsUserLoginIn(isLoggedIn);
-      // Fetch user data and,
-      dispatch(getUserData(userId));
-      // Fetch essential login user privileges data
-      if (
-        !loginUserPrivileges ||
-        Object.keys(loginUserPrivileges).length === 0
-      ) {
-        dispatch({ type: GET_USER_AND_PRIVILEGES, payload: { userId } });
-      }
-
-      // Fetch essential data for the app
-      if (!teams?.length) {
-        dispatch(fetchAllTeams());
-      }
-      if (!projects?.length) {
-        dispatch(fetchAllProjects());
-      }
-      if (!resources?.length) {
-        dispatch({
-          type: FETCH_ALL_RESOURCES_DETAIL,
-          payload: {},
-        });
-      }
-      if (!portfolios?.length) {
-        dispatch({
-          type: FETCH_PORTFOLIOS,
-          payload: {},
-        });
-      }
+      // Dispatch the bootstrap saga which handles all initial data fetching
+      // and sets initLoading to false when all data is fetched
+      dispatch({ type: INIT_BOOTSTRAP, payload: { userId } });
     }
   }, [dispatch, isLoggedIn, isClient]);
 

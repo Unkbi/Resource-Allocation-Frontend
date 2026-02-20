@@ -5,9 +5,12 @@ import {
 } from '../../AllocationTable/styles/StyledDataGrid';
 import { GridColumnMenu, useGridApiRef } from '@mui/x-data-grid-premium';
 import ProjectToolbar from '../../Toolbar/ProjectToolbar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import { withRBAC } from '../../HOC/withRBAC';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { updatePageFilters } from '@/app/redux/actions/filterAction';
 
 function CustomColumnMenu(props) {
   return (
@@ -28,9 +31,38 @@ const ProjectTable = ({
   apiRef,
   value,
   onChange = () => {},
-  permissions ,
+  permissions,
 }) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
+  const dispatch = useDispatch();
+  const [filterModel, setFilterModel] = useState({
+      items: [],
+    });
+  const globalFilters = useSelector((state) => state.filters.Project);
+  
+   useEffect(() => {
+      if (globalFilters) {
+        setFilterModel({
+          items: globalFilters.map((filter) => ({
+            ...filter,
+            operatorValue: filter.operatorValue || filter.operator,
+            operator: filter.operator || filter.operatorValue,
+          })) ?? [],
+        });
+      }
+    }, [globalFilters]);
+  
+    const handleFilterModelChange = (newModel) => {
+      const filterData = (newModel.items || []).map((item) => ({
+        field: item.field,
+        operator: item.operator || item.operatorValue,
+        operatorValue: item.operatorValue || item.operator,
+        value: item.value,
+        id: item.id,
+      }));
+      dispatch(updatePageFilters('Project', filterData));
+  };
+  
   return (
     <Box
       sx={{
@@ -45,6 +77,8 @@ const ProjectTable = ({
         rows={permissions['Project']?.r ? rows : []}
         hideFooter={true}
         loading={loading}
+        filterModel={filterModel}
+        onFilterModelChange={handleFilterModelChange}
         initialState={{
           sorting: {
             sortModel: [{ field: 'Name', sort: 'asc' }],
@@ -56,6 +90,10 @@ const ProjectTable = ({
               Location: false,
               Budget: false,
               BudgetCurrency: false,
+              __created: false,
+              __created_by: false,
+              __last_modified: false,
+              __last_modified_by: false,
             },
           },
         }}
@@ -124,4 +162,4 @@ const ProjectTable = ({
   );
 };
 
-export default withRBAC(ProjectTable,['Project']);
+export default withRBAC(ProjectTable, ['Project']);

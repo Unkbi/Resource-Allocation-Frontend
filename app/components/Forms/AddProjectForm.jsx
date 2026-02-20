@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import Project from '@/app/(root)/project/page';
 import { useDispatch } from 'react-redux';
-import { DATE_FORMAT, PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { DATE_FORMAT, PORTFOLIO_DISPLAY_NAME, Project_Sponsor_Manager_Status_Filter } from '@/app/constants/constants';
 import StyledAutocomplete from '../Select/Autocomplete';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
@@ -34,17 +34,20 @@ const AddProjectForm = ({
   const { portfolios } = useSelector(state => state.portfolios);
   const { projectTypes } = useSelector(state => state.allSettings);
   const { formType } = useSelector(state => state.globalDialog.formState);
+  const { scalarSettings } = useSelector(state => state.allSettings);
   const [readOnly, setReadOnly] = useState(true);
   const dispatch = useDispatch();
 
   const resourceTypeOptions =
     resources
-      ?.filter(resource => resource.Status === 'Active')
+      ?.filter(resource =>
+        Project_Sponsor_Manager_Status_Filter.includes(resource.Status)
+      )
       ?.sort((a, b) => a.FullName.localeCompare(b.FullName))
       ?.map(resource => ({
-      value: resource.Id,
-      label: resource.FullName,
-    })) || [];
+        value: resource.Id,
+        label: resource.FullName,
+      })) || [];
 
   const portfolioOptions =
     portfolios
@@ -60,9 +63,9 @@ const AddProjectForm = ({
       ?.filter(pt => pt.Status === 'Active')
       ?.sort((a, b) => a.Name.localeCompare(b.Name))
       ?.map(pt => ({
-      value: pt.Id,
-      label: pt.Name,
-    })) || [];
+        value: pt.Id,
+        label: pt.Name,
+      })) || [];
 
   useEffect(() => {
     setReadOnly(
@@ -174,12 +177,14 @@ const AddProjectForm = ({
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>{PORTFOLIO_DISPLAY_NAME}</StyledLabel>
+        <StyledLabel>
+          {scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}
+        </StyledLabel>
         <StyledAutocomplete
           name="PortfolioId"
           disabled={readOnly}
           readOnly={readOnly}
-          label={`Select ${PORTFOLIO_DISPLAY_NAME} Name`}
+          label={`Select ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} Name`}
           options={portfolioOptions}
           value={values.PortfolioId}
           formikProps={formikProps}

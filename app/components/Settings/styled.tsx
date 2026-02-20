@@ -271,7 +271,7 @@ const AddButton = styled(Button)({
 
 export const StyledRangeField = styled(TextField)<{ error?: boolean }>(
   ({ error }) => ({
-    width: '48px',
+    width: '55px',
     height: '27px',
 
     '& .MuiInputBase-root': {
@@ -302,7 +302,7 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }: ThemeProps) => ({
   borderRight: 'none',
   borderLeft: 'none',
   '& .MuiDataGrid-main': {
-    borderRight: '1px solid #DDE1E4'
+    borderRight: '1px solid #DDE1E4',
   },
   '& .MuiDataGrid-columnHeaders': {
     '& .MuiDataGrid-columnHeader': {
@@ -374,37 +374,98 @@ const StatusPill = styled('div')<{ status?: string }>(({ theme, status }) => {
     case 'Invited':
       textColor = '#2563EB';
       break;
+    case 'Not-Planned':
+      textColor = '#737373';
+      break;
+    case 'Unassigned':
+      textColor = '#E72323';
+      break;
+    case 'Pending':
+      textColor = '#5041AB';
+      break;
     case 'Created':
       textColor = '#EC9E17';
+      break;
+    case 'Planning':
+      textColor = '#4A5565';
+      break;
+    case 'On Track':
+      textColor = '#229E60';
+      break;
+    case 'At Risk':
+      textColor = '#F54900';
+      break;
+    case 'Off Track':
+      textColor = '#C73732';
+      break;
+    case 'Confirmed':
+      textColor = '#3CC55F';
+      break;
+    case 'Not-Started':
+      textColor = '#F39A4C';
+      break;
+    case 'In-Progress':
+      textColor = '#FCCE00';
+      break;
     default:
       textColor = '#6c757d';
   }
 
   return {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '4px',
-  borderRadius: '4px',
-  fontFamily: theme.typography.fontFamily,
-  fontSize: '12px',
-  fontWeight: 400,
-  lineHeight: '18px',
-  padding: '2px 6px',
-  backgroundColor: '#FFFFFF',
-  border: '1px solid #D0D5DD',
-  color: textColor,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '4px',
+    borderRadius: '4px',
+    fontFamily: theme.typography.fontFamily,
+    fontSize: '12px',
+    fontWeight: 400,
+    lineHeight: '18px',
+    padding: '2px 6px',
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #D0D5DD',
+    color: textColor,
 
-  '&::before': {
-    content: '""',
-    display: 'inline-block',
-    width: '6px',
-    height: '6px',
-    borderRadius: '50%',
-    backgroundColor: textColor,
-    flexShrink: 0
-  },
-}
+    '&::before': {
+      content: '""',
+      display: 'inline-block',
+      width: '6px',
+      height: '6px',
+      borderRadius: '50%',
+      backgroundColor: textColor,
+      flexShrink: 0,
+    },
+  };
+});
+
+const ScorePill = styled('div')<{ score?: number }>(({ score }) => {
+  const value = typeof score === 'number' && !Number.isNaN(score) ? score : 0;
+
+  let backgroundColor = '#FFE5E5';
+  let textColor = '#C73732';
+
+  if (value > 80) {
+    backgroundColor = '#E6FAF0';
+    textColor = '#137A3A';
+  } else if (value > 60) {
+    backgroundColor = '#FFF7D6';
+    textColor = '#8A6A00';
+  }
+
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '4px',
+    padding: '4px 10px',
+    minWidth: '40px',
+    fontSize: '12px',
+    fontWeight: 600,
+    lineHeight: '16px',
+    textAlign: 'center',
+    backgroundColor,
+    color: textColor,
+  };
 });
 
 const commonTabSx = {
@@ -463,5 +524,6 @@ export {
   DeleteButton,
   StyledTableHeader,
   StatusPill,
-  commonTabSx
+  ScorePill,
+  commonTabSx,
 };

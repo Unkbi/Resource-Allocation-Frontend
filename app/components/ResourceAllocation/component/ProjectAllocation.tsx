@@ -6,11 +6,11 @@ import { Box } from '@mui/material';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { AppDispatch, RootState } from '@/app/redux/store';
-import { GridCellParams } from '@mui/x-data-grid';
+import { GridCellParams, GridSortCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Location } from '@/app/types';
 import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
@@ -18,6 +18,7 @@ import {
   getTotalWeeks,
   generateDateWeekMath,
   calculateWeekRanges,
+  formatDateMMDDYYYY,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getFirstChild, normalizeRow } from '@/app/utils/allocationUtils';
@@ -114,9 +115,13 @@ function ProjectAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuProjectName, setMenuProjectName] = useState<string>('');
   const allResources = _resources || [];
@@ -131,13 +136,16 @@ function ProjectAllocation({
     (state: RootState) => state.allocationView
   );
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
 
   useEffect(() => {
     if (projectTypes.length === 0) {
       dispatch({ type: FETCH_PROJECT_TYPES });
     }
   }, []);
-
+  
   useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['Allocation'].r && ready) {
@@ -147,9 +155,10 @@ function ProjectAllocation({
         setRows(allTempRows || []);
         setRowsForView('projectAllocationtemp', []);
       } else {
-        if (!loading && getAllTeamViewRows().length > 0) {
+        const teamsViewRows = getAllTeamViewRows();
+        if (!loading && teamsViewRows.length > 0) {
           filteredResources = removeResourcesWithNoProjects(
-            (getAllTeamViewRows() as AllAllocations[]) || []
+            (teamsViewRows as AllAllocations[]) || []
           );
           setRows(
             removeResourcesWithNoProjects(
@@ -175,6 +184,8 @@ function ProjectAllocation({
 
         setRows(formattedResources || []);
       }
+      // Sahadev : Reset temp View for Teams Related Views, Currently Team, Organisation, Resource and Flat Views.
+      setRowsForView('teamAllocationtemp', []);
     }
   }, [ready && allAllocations, loadingPermissions]);
 
@@ -374,14 +385,29 @@ function ProjectAllocation({
     },
     {
       field: 'portfolioName',
-      headerName: PORTFOLIO_DISPLAY_NAME,
+      headerName: scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME,
       width: 148,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const raw1 = getFirstChild(p1)?.portfolioName;
+        const raw2 = getFirstChild(p2)?.portfolioName;
+        const s1 = raw1 && raw1 !== 'zzzzz' ? raw1.toLowerCase().trim() : '';
+        const s2 = raw2 && raw2 !== 'zzzzz' ? raw2.toLowerCase().trim() : '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -403,8 +429,23 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectSponsor?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectSponsor?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -417,7 +458,7 @@ function ProjectAllocation({
       headerName: 'Email',
       width: 190,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -433,7 +474,7 @@ function ProjectAllocation({
       headerName: 'Phone Number',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -445,19 +486,24 @@ function ProjectAllocation({
       },
     },
     {
-      field: 'department',
-      headerName: 'Organization',
+      field: 'organisationName',
+      headerName: 'Organization Name',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        const Department = resource?.Department || '';
-        return <EllipsisNameCell value={Department} />;
+        const resourceDetails = allResourcesDetail?.find(
+          (item: any) =>
+            item.Resource?.Id === resource?.Id
+        );
+        const organizationName = resourceDetails?.Organization?.Name || '';
+      
+        return <EllipsisNameCell value={organizationName || ''} />;
       },
     },
     {
@@ -465,15 +511,17 @@ function ProjectAllocation({
       headerName: 'Resource Work Location',
       width: 200,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        const WorkLocation = resource?.WorkLocation || '';
-        return <EllipsisNameCell value={WorkLocation} />;
+        const locationDetails = location?.find(
+          (l: Location) => l.Id === resource?.WorkLocation
+        );
+        return <EllipsisNameCell value={locationDetails?.Name || ''} />;
       },
     },
     {
@@ -481,7 +529,7 @@ function ProjectAllocation({
       headerName: 'Resource Location Category',
       width: 230,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -497,7 +545,7 @@ function ProjectAllocation({
       headerName: 'Resource Type',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -513,7 +561,7 @@ function ProjectAllocation({
       headerName: 'Resource Status',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -529,7 +577,7 @@ function ProjectAllocation({
       headerName: 'HRLevel',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -542,10 +590,10 @@ function ProjectAllocation({
     },
     {
       field: 'role',
-      headerName: 'Resource Role',
+      headerName: 'Title',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -561,7 +609,7 @@ function ProjectAllocation({
       headerName: 'Resource Start Date',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -569,7 +617,7 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const StartDate = resource?.StartDate || '';
-        return <EllipsisNameCell value={StartDate} />;
+        return <EllipsisNameCell value={formatDateMMDDYYYY(StartDate)} />;
       },
     },
     {
@@ -577,7 +625,7 @@ function ProjectAllocation({
       headerName: 'Resource End Date',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -585,7 +633,7 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const EndDate = resource?.EndDate || '';
-        return <EllipsisNameCell value={EndDate} />;
+        return <EllipsisNameCell value={formatDateMMDDYYYY(EndDate)} />;
       },
     },
     {
@@ -593,7 +641,7 @@ function ProjectAllocation({
       headerName: 'Average Weekly Hours',
       width: 190,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -609,7 +657,7 @@ function ProjectAllocation({
       headerName: 'Contractor Hourly Rate',
       width: 200,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -625,7 +673,7 @@ function ProjectAllocation({
       headerName: 'Contractor Hourly Rate Currency',
       width: 260,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -645,8 +693,23 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectManager?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectManager?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -662,8 +725,21 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 = getFirstChild(p1)?.projectStatus?.toLowerCase().trim() || '';
+        const s2 = getFirstChild(p2)?.projectStatus?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -678,9 +754,24 @@ function ProjectAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
-      sortable: false,
+      sortable: true,
       isEditable: false,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectLocation?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectLocation?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -696,12 +787,57 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 = getFirstChild(p1)?.projectType?.toLowerCase().trim() || '';
+        const s2 = getFirstChild(p2)?.projectType?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
           <EllipsisNameCell value={firstChild.projectType || ''} />
+        ) : null;
+      },
+    },
+    {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 150,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      isEditable: false,
+      sortable: true,
+      primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectTypeGroup?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectTypeGroup?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (
+          <EllipsisNameCell value={firstChild.projectTypeGroup || ''} />
         ) : null;
       },
     },
@@ -712,9 +848,22 @@ function ProjectAllocation({
       type: 'boolean',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
-      sortable: false,
+      sortable: true,
       isEditable: false,
       primaryColumn: true,
+      sortComparator: (
+        _v1: boolean | null,
+        _v2: boolean | null,
+        p1: any,
+        p2: any
+      ) => {
+        const v1 = getFirstChild(p1)?.projectOvertimeAllowed;
+        const v2 = getFirstChild(p2)?.projectOvertimeAllowed;
+        if (v1 == null && v2 == null) return 0;
+        if (v1 == null) return 1;
+        if (v2 == null) return -1;
+        return Number(v1) - Number(v2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -731,9 +880,24 @@ function ProjectAllocation({
       type: 'string ',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
-      sortable: false,
+      sortable: true,
       isEditable: false,
       primaryColumn: true,
+      sortComparator: (
+        _v1: number | null,
+        _v2: number | null,
+        p1: any,
+        p2: any
+      ) => {
+        const n1 = Number(getFirstChild(p1)?.projectCost);
+        const n2 = Number(getFirstChild(p2)?.projectCost);
+        const isEmpty1 = Number.isNaN(n1);
+        const isEmpty2 = Number.isNaN(n2);
+        if (isEmpty1 && isEmpty2) return 0;
+        if (isEmpty1) return 1;
+        if (isEmpty2) return -1;
+        return n1 - n2;
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         const cost = firstChild?.projectCost;
@@ -750,8 +914,23 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectCurrency?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectCurrency?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -767,12 +946,29 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const d1 = getFirstChild(p1)?.projectStartDate;
+        const d2 = getFirstChild(p2)?.projectStartDate;
+        const t1 = d1 ? new Date(d1).getTime() : NaN;
+        const t2 = d2 ? new Date(d2).getTime() : NaN;
+        if (Number.isNaN(t1) && Number.isNaN(t2)) return 0;
+        if (Number.isNaN(t1)) return 1;
+        if (Number.isNaN(t2)) return -1;
+        return t1 - t2;
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStartDate || ''} />
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(firstChild.projectStartDate) || ''}
+          />
         ) : null;
       },
     },
@@ -784,21 +980,39 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const d1 = getFirstChild(p1)?.projectEndDate;
+        const d2 = getFirstChild(p2)?.projectEndDate;
+        const t1 = d1 ? new Date(d1).getTime() : NaN;
+        const t2 = d2 ? new Date(d2).getTime() : NaN;
+        if (Number.isNaN(t1) && Number.isNaN(t2)) return 0;
+        if (Number.isNaN(t1)) return 1;
+        if (Number.isNaN(t2)) return -1;
+        return t1 - t2;
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectEndDate || ''} />
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(firstChild.projectEndDate) || ''}
+          />
         ) : null;
       },
     },
     {
       field: 'totalEffort',
       headerName: 'Total Effort',
-      width: 106,
+      width: 115,
+      minWidth: 115,
       type: 'number',
-      sortable: false,
+      sortable: true,
       cellClassName: getCellClassName,
       headerClassName: 'secondary-header',
       // cellClassName: 'secondary-cell',
@@ -811,6 +1025,114 @@ function ProjectAllocation({
             ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
             : null;
         return <EllipsisNameCell value={formattedValue} />;
+      },
+    }, 
+    {
+      field: 'department',
+      headerName: 'Department',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.Department || ''} />;
+      },
+    },
+    {
+      field: 'manager',
+      headerName: 'Manager',  // Resource page manager detail
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const resourceDetails = allResourcesDetail?.find(
+          (item: any) =>
+            item.Resource?.Id === resource?.Manager
+        );
+        const Manager = resourceDetails?.Resource?.FullName || '';
+        return resource ? <EllipsisNameCell value={Manager || ''} /> : null;
+      },
+    },
+    {
+      field: 'organisationStatus',
+      headerName: 'Organisation Status',
+      width: 160,
+      type: 'string',
+      isEditable: false,
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const resourceDetails = allResourcesDetail?.find(
+          (item: any) =>
+            item.Resource?.Id === resource?.Id
+        );
+        const organizationStatus = resourceDetails?.Organization?.Status || '';
+        return resource ? <EllipsisNameCell value={organizationStatus || ''} /> : null;
+      },
+    },
+    {
+      field: 'portfolioDescription',
+      headerName: 'Portfolio Description',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getFirstChild(params);
+        return <EllipsisNameCell value={firstChild?.portfolioDescription|| ''}/>;
+      },
+    },
+    {
+      field: 'portfolioStatus',
+      headerName: 'Portfolio Status',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getFirstChild(params);
+        return <EllipsisNameCell value={firstChild?.portfolioStatus|| ''}/>;
+      },
+    },
+    {
+      field: 'teamAllocationManager',
+      headerName: 'Allocation Manager',
+      width: 170,
+      type: 'string',
+      isEditable: false,
+      sortable: true,
+      primaryColumn: true,
+    },
+     {
+      field: 'teamStatus',
+      headerName: 'Team Status',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: true,
+      primaryColumn: true,
+    },
+    {
+      field: 'teams',
+      headerName: 'Team Name',
+      width: 201,
+      headerClassName: 'prime-header',
+      cellClassName: 'prime-cell',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+      const { rowNode, api, value = '' } = params;
+        return (
+          <EllipsisNameCell
+            value={value as string}
+          />
+        );
       },
     },
   ];
@@ -846,6 +1168,7 @@ function ProjectAllocation({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
                 totalEffort: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
@@ -863,6 +1186,14 @@ function ProjectAllocation({
                 averageWeeklyHours: false,
                 contractorHourlyRate: false,
                 contractorHourlyRateCurrency: false,
+                organisationName: false,
+                manager: false,
+                organisationStatus: false,
+                portfolioDescription:false,
+                portfolioStatus: false,
+                teamAllocationManager:false,
+                teamStatus: false,
+                teams: false,
               },
             },
           }}

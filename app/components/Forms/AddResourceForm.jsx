@@ -32,7 +32,7 @@ import {
 import dayjs from 'dayjs';
 import { getMondayOfISO, getOnlyFilterSettings } from '@/app/utils/common';
 import { compressToEncodedURIComponent } from 'lz-string';
-import { DATE_FORMAT } from '@/app/constants/constants';
+import { DATE_FORMAT, Project_Sponsor_Manager_Status_Filter } from '@/app/constants/constants';
 import {
   fetchResourceAllocations,
   getMaxAllocationDate,
@@ -94,14 +94,18 @@ const AddResourceForm = ({
   const [locationOptions, setLocationOptions] = useState([]);
   const [readOnly, setReadOnly] = useState(true);
 
+
   const resourceListOptions =
-   resources
-     ?.filter(resource => resource.Status === 'Active') 
-     .sort((a, b) => a.FullName.localeCompare(b.FullName)) 
-     .map(resource => ({
-       value: resource.Id,
-       label: resource.FullName,
-     })) || [];
+    resources
+       ?.filter(resource =>
+       Project_Sponsor_Manager_Status_Filter.includes(resource.Status)
+      )
+      .sort((a, b) => a.FullName.localeCompare(b.FullName))
+      .map(resource => ({
+        value: resource.Id,
+        label: resource.FullName,
+      })) || [];
+
   const organisationListOptions =
     organisations
       ?.filter(org => org.Status === 'Active')
@@ -111,14 +115,12 @@ const AddResourceForm = ({
         label: org.Name,
       })) || [];
 
-  const teamListOptions =
-    teams
-      ?.filter(team => team.Status === 'Active')
-      .sort((a, b) => a.Name.localeCompare(b.Name))
-      ?.map(team => ({
+  const teamListOptions = (
+    teams?.map(team => ({
       value: team.Id,
       label: team.Name,
-    })) || [];
+    })) || []
+  ).sort((a, b) => a.label.localeCompare(b.label));
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -235,18 +237,18 @@ const AddResourceForm = ({
           ?.filter(loc => loc.Status === 'Active')
           .sort((a, b) => a.Name.localeCompare(b.Name))
           .map(loc => ({
-          value: loc.Id,
-          label: loc.Name,
-        })) || [];
+            value: loc.Id,
+            label: loc.Name,
+          })) || [];
       setLocationOptions(locationNames);
     }
   }, [location]);
 
   // Add effect to watch Team and Organisation changes
   useEffect(() => {
-    if (onValuesChange && values.Team && values.Organisation) {
+    if (onValuesChange && values.Organisation) {
       onValuesChange({
-        teamId: values.Team,
+        teamId: values.Team ?? '',
         organisationId: values.Organisation,
         teamName: teamListOptions.find(t => t.value === values.Team)?.label,
         organisationName: organisationListOptions.find(
@@ -517,13 +519,13 @@ const AddResourceForm = ({
         </Box>
         <Box sx={{ flex: 1 }}>
           <StyledLabel>
-            Role <span style={{ color: 'red' }}>*</span>
+            Title <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
             disabled={readOnly}
             readOnly={readOnly}
             name="Role"
-            placeholder="Enter Role"
+            placeholder="Enter Title"
             value={values.Role || ''}
             onChange={handleChange}
             onBlur={e => {
@@ -556,9 +558,10 @@ const AddResourceForm = ({
             value={values.HRLevel || ''}
             onChange={e => {
               const input = e.target.value;
-              if (/^\d*$/.test(input)) {
-                formikProps.setFieldValue('HRLevel', input);
-              }
+              //Commenting code to remove any non-digit characters from input
+              // if (/^\d*$/.test(input)) {
+              // }
+              formikProps.setFieldValue('HRLevel', input);
             }}
             onBlur={handleBlur}
             error={touched.HRLevel && Boolean(errors.HRLevel)}
@@ -665,7 +668,7 @@ const AddResourceForm = ({
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel sx={{ flex: 1 }}>
-          Team <span style={{ color: 'red' }}>*</span>
+          Team <span style={{ color: 'red' }}></span>
         </StyledLabel>
         <StyledAutocomplete
           disabled={readOnly}

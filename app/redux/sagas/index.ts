@@ -12,6 +12,13 @@ import { rbacSaga } from './rbacSaga';
 import { projectTypesSaga } from './projectTypesSaga';
 import { allSettingsSaga } from './allSettingsSaga';
 import { locationSaga } from './locationSaga';
+import { userManagementSaga } from './userManagementSaga';
+import { businessImpactSaga } from './businessImpactSaga';
+import { bootstrapSaga } from './initBootstrapSaga';
+import { aiSummarySaga } from './aiSummarySaga';
+import { customReportSaga } from './customReportSaga';
+import { userPreferencesSaga } from './userPreferencesSaga';
+import { followSaga } from './followSaga';
 
 // listening for all sagas based on actions
 export default function* rootSaga() {
@@ -29,6 +36,13 @@ export default function* rootSaga() {
     projectTypesSaga(),
     allSettingsSaga(),
     locationSaga(),
+    userManagementSaga(),
+    businessImpactSaga(),
+    bootstrapSaga(),
+    aiSummarySaga(),
+    customReportSaga(),
+    userPreferencesSaga(),
+    followSaga(),
     // ...add more watchers here
   ]);
 }

@@ -36,10 +36,12 @@ import ProjectSetting from '@/app/components/Settings/ProjectSettings';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Location from '@/app/components/Settings/Location';
+import UserManagement from '@/app/components/Settings/UserManagement';
 import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
+import ActualsSettingsAllocationPreference from '@/app/components/Settings/ActualsSettingsAllocationPreference';
 
 interface MenuItem {
   id: string;
@@ -73,16 +75,17 @@ interface SettingsPanelProps {
 export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
   const errors: ValidationErrors = {};
 
-  // Convert string values to numbers for comparison
+  const STEP = 0.05;
+  const EPS = 0.0001;
+
+  // Normalize values to step grid
   const numericRanges = ranges.map(range => ({
     Id: Number(range.id),
-    From: Number.parseFloat(range.From),
-    To: Number.parseFloat(range.To),
+    From: Math.round(parseFloat(range.From) / STEP) * STEP,
+    To: Math.round(parseFloat(range.To) / STEP) * STEP,
   }));
 
-  // Check each range against all others
   numericRanges.forEach((range, index) => {
-    // Skip invalid numbers
     if (isNaN(range.From) || isNaN(range.To)) {
       errors[range.Id] = {
         From: isNaN(range.From),
@@ -92,8 +95,8 @@ export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
       return;
     }
 
-    // Check if from is greater than to
-    if (range.From > range.To) {
+    // From must be <= To
+    if (range.From - range.To > EPS) {
       errors[range.Id] = {
         From: true,
         To: true,
@@ -102,34 +105,21 @@ export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
       return;
     }
 
-    // Check for overlaps with other ranges
+    // Overlap check (STEP aware)
     for (let i = 0; i < numericRanges.length; i++) {
-      if (i === index) continue; // Skip comparing with self
+      if (i === index) continue;
 
-      const otherRange = numericRanges[i];
+      const other = numericRanges[i];
 
-      // Check for overlap
-      const hasOverlap = !(
-        range.To < otherRange.From || range.From > otherRange.To
-      );
+      const noOverlap =
+        range.To <= other.From - STEP + EPS ||
+        range.From >= other.To + STEP - EPS;
 
-      // Check for subset (this range is inside another range)
-      const isSubset =
-        range.From >= otherRange.From && range.To <= otherRange.To;
-
-      // Check for superset (another range is inside this range)
-      const isSuperset =
-        range.From <= otherRange.From && range.To >= otherRange.To;
-
-      if (hasOverlap || isSubset || isSuperset) {
+      if (!noOverlap) {
         errors[range.Id] = {
           From: true,
           To: true,
-          message: hasOverlap
-            ? 'Range overlaps with another range'
-            : isSubset
-              ? 'Range is a subset of another range'
-              : 'Range is a superset of another range',
+          message: 'Range overlaps with another range',
         };
         break;
       }
@@ -163,10 +153,14 @@ const SettingsPanel = ({
 
   const hasAnyAccess = {
     'user-profile': true,
+    'actuals-settings': true,
     notification: false,
+    'user-management': permissions['User'].r,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
-      permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
+      permissions['Portfolio'].r ||
+      permissions['ProjectType'].r ||
+      permissions['ProjectTypeGroup'].r,
     'allocation-setting':
       permissions['AllocationRangeSetting'].r || permissions['ScalarSetting'].r,
     'location-setting':
@@ -189,7 +183,6 @@ const SettingsPanel = ({
 
   useEffect(() => {
     if (scalarSettings === null) {
-      // Sahadev : This is temporary, we will pobably need to call AllSettings API here.
       dispatch({
         type: FETCH_ALL_SETTINGS,
         payload: {},
@@ -217,6 +210,15 @@ const SettingsPanel = ({
             description: 'Manage your user profile',
           },
           {
+            id: 'actuals-settings',
+            title: 'Actuals',
+            headerText: 'Actuals',
+            icon: '',
+            content: <ActualsSettingsAllocationPreference />,
+            description:
+              'You can choose how you want to enter your actuals: as hours or fractions.',
+          },
+          {
             id: 'notification',
             title: 'Notification',
             headerText: 'Notification',
@@ -229,6 +231,15 @@ const SettingsPanel = ({
       {
         name: 'Admin Settings',
         items: [
+          {
+            id: 'user-management',
+            title: 'User Management',
+            headerText: 'User Management',
+            icon: '',
+            content: <UserManagement />,
+            description:
+              'Easily add and manage your users and resources in one place.',
+          },
           {
             id: 'access-management',
             title: 'Access Management',
@@ -335,7 +346,7 @@ const SettingsPanel = ({
     } else {
       setActiveItem(updatedMenuItems[0].items[0]);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const menu = searchParams.get('menu');
@@ -436,8 +447,10 @@ const SettingsPanel = ({
 };
 
 export default withRBAC(SettingsPanel, [
+  'User',
   'Role',
   'Permission',
+  'Portfolio',
   'ProjectType',
   'ProjectTypeGroup',
   'AllocationRangeSetting',

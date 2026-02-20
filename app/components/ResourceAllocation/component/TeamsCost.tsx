@@ -13,11 +13,14 @@ import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { normalizeRow } from '@/app/utils/allocationUtils';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
-import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import {
+  FETCH_PROJECT_TYPE_GROUPS,
+  FETCH_PROJECT_TYPES,
+} from '@/app/redux/actions/allSettingsActions';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -43,7 +46,9 @@ const TeamsCost = ({
   const dispatch = useDispatch<AppDispatch>();
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
-  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
+  const { projectTypes, projectTypeGroups } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   // @ts-ignore
   const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
@@ -54,9 +59,7 @@ const TeamsCost = ({
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
-  const { currentView } = useSelector(
-    (state: RootState) => state.allocationView
-  );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const { costs: teamsCost, dataProcessing } = useSelector(
     (state: RootState) => state.allocationsCost
   );
@@ -65,6 +68,12 @@ const TeamsCost = ({
   useEffect(() => {
     if (projectTypes.length === 0) {
       dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (projectTypeGroups.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPE_GROUPS });
     }
   }, []);
 
@@ -95,7 +104,9 @@ const TeamsCost = ({
           projects: projects,
           resources: resources,
           allResourcesDetail: allResourcesDetail,
+          location: location,
           projectTypes: projectTypes,
+          projectTypeGroups: projectTypeGroups,
           startDate: startDate,
           endDate: endDate,
         },
@@ -228,7 +239,7 @@ const TeamsCost = ({
     },
     {
       field: 'role',
-      headerName: 'Role',
+      headerName: 'Title',
       width: 180,
       type: 'string',
       isEditable: 'false',
@@ -249,7 +260,10 @@ const TeamsCost = ({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.WorkLocation || ''} />;
+        const locationDetails = location?.find(
+          (l: Location) => l.Id === resource?.WorkLocation
+        );
+        return <EllipsisNameCell value={locationDetails?.Name || ''} />;
       },
     },
     {
@@ -517,6 +531,19 @@ const TeamsCost = ({
       },
     },
     {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 150,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectTypeGroup || ''} />;
+      },
+    },
+    {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
       width: 170,
@@ -591,6 +618,7 @@ const TeamsCost = ({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
               },
             },
           }}

@@ -11,10 +11,12 @@ import {
   GridToolbarProps,
 } from '@mui/x-data-grid-premium';
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
-import { JSXElementConstructor, useState } from 'react';
+import { JSXElementConstructor, useEffect, useState } from 'react';
 import { Resource } from '@/app/types';
 import { Box } from '@mui/material';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import { useDispatch, useSelector } from 'react-redux';
+import { updatePageFilters } from '@/app/redux/actions/filterAction';
 
 interface ResourceTableProps {
   columns: GridColDef[];
@@ -48,6 +50,33 @@ const ResourceTable = ({
   permissions,
 }: ResourceTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
+  const dispatch = useDispatch();
+  const [filterModel, setFilterModel] = useState({
+    items: [],
+  });
+  const globalFilters = useSelector((state: any) => state.filters.Resource);
+  
+  useEffect(() => {
+    if (globalFilters) {
+      setFilterModel({
+        items: globalFilters?.map((filter: any, index:any) => ({
+          ...filter,
+        })) ?? [],
+      });
+    }
+  }, [globalFilters]);
+
+  const handleFilterModelChange = (newModel: any) => {
+    const filterData = (newModel.items || []).map((item: any) => ({
+      field: item.field,
+      operator: item.operator || item.operatorValue,
+      operatorValue: item.operatorValue || item.operator,
+      value: item.value,
+      id: item.id,
+    }));
+    dispatch(updatePageFilters('Resource', filterData));
+  };
+
   return (
     <Box
       sx={{
@@ -63,6 +92,8 @@ const ResourceTable = ({
         hideFooter={true}
         hideFooterSelectedRowCount={true}
         loading={loading}
+        filterModel = {filterModel}
+        onFilterModelChange = {handleFilterModelChange}
         initialState={{
           sorting: {
             sortModel: [{ field: 'FullName', sort: 'asc' }],
@@ -71,10 +102,14 @@ const ResourceTable = ({
             columnVisibilityModel: {
               team: false,
               organization: false,
-              WorkLocation: false,
+              Manager: false,
               AverageWeeklyHours: false,
               ContractorHourlyRate: false,
               PhoneNumber: false,
+              __created: false,
+              __created_by: false,
+              __last_modified: false,
+              __last_modified_by: false,
             },
           },
         }}
