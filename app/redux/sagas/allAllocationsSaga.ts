@@ -57,6 +57,8 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     endDate,
     resolve,
     reject,
+    totalAllocations,            
+    totalAllocationsTillDate,
   } = action.payload;
   try {
     yield put(setDataProcessing(true));
@@ -113,7 +115,9 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       allResourcesDetail || [],
       location || [],
       startDate,
-      endDate
+      endDate,
+      totalAllocations || [],
+      totalAllocationsTillDate || []
     );
 
     const fullAllocations = injectBlankRows(
@@ -306,7 +310,9 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       allResourcesDetail || [],
       location || [],
       startDate,
-      endDate
+      endDate,
+      [],
+      []
     );
 
     const fullAllocations = injectBlankRows(
@@ -387,7 +393,9 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
       allResourcesDetail || [],
       location || [],
       startDate,
-      endDate
+      endDate,
+      [],
+      []
     );
 
     yield put(updateAllAllocations(projectsAllocations));
@@ -491,7 +499,9 @@ function* updateResourceAllocationsSaga(
       allResourcesDetail || [],
       location || [],
       startDate,
-      endDate
+      endDate,
+      [],
+      []
     );
 
     const fullAllocations = injectBlankRows(

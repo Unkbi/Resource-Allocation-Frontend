@@ -18,6 +18,7 @@ import { bootstrapSaga } from './initBootstrapSaga';
 import { aiSummarySaga } from './aiSummarySaga';
 import { customReportSaga } from './customReportSaga';
 import { userPreferencesSaga } from './userPreferencesSaga';
+import { AllocationTotalsSaga } from './allocationTotalsSaga';
 
 // listening for all sagas based on actions
 export default function* rootSaga() {
@@ -41,6 +42,7 @@ export default function* rootSaga() {
     aiSummarySaga(),
     customReportSaga(),
     userPreferencesSaga(),
+    AllocationTotalsSaga(),
     // ...add more watchers here
   ]);
 }

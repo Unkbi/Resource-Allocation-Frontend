@@ -185,7 +185,9 @@ export function formatAllAllocations(
   allResourcesDetail: AllResourceDetail[],
   location: Location[],
   startDate: string,
-  endDate: string
+  endDate: string,
+  totalAllocations: any[],      
+  totalAllocationsTillDate: any[]
 ) {
   if (!allocations || allocations.length === 0) {
     return [];
@@ -205,6 +207,16 @@ export function formatAllAllocations(
       r => r?.Resource?.Id === alloc.Resource
     );
     const resource = resourceDetails?.Resource;
+    const allTimeTotal = totalAllocations?.find(
+      (t: any) =>
+        t.ResourceTotals.length && t.ResourceTotals?.[0].Resource === alloc.Resource &&
+        t.Project === alloc.Project
+    );
+    const tillDateTotal = totalAllocationsTillDate?.find(
+     (t: any) =>
+        t.ResourceTotals.length && t.ResourceTotals?.[0].Resource === alloc.Resource &&
+        t.Project === alloc.Project
+    );
     // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
     // Filter out Allocations that belong to projects without an PROJECT_ACTIVE_STATUS Status.
     if (
@@ -245,7 +257,7 @@ export function formatAllAllocations(
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
         projectTypeGroup: projectTypeGroup?.Name || null,
-        projectOvertimeAllowed:project?.AllowOvertime === true ? 'Yes': project?.AllowOvertime === false ? 'No': null,
+        projectOvertimeAllowed: project?.AllowOvertime === true ? 'Yes' : project?.AllowOvertime === false ? 'No' : null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
@@ -264,7 +276,7 @@ export function formatAllAllocations(
         workLocation: locationDetails?.Name || null,
         department: resource?.Department || null,
         hrLevel: resource?.HRLevel || null,
-        manager: getResourceFromUid(resource?.Manager , resources)?.FullName ||null,
+        manager: getResourceFromUid(resource?.Manager, resources)?.FullName || null,
         contractorHourlyRate: resource?.ContractorHourlyRate || null,
         contractorHourlyRateCurrency:
           resource?.ContractorHourlyRateCurrency || null,
@@ -273,7 +285,11 @@ export function formatAllAllocations(
         organisationId: organisation?.Id,
         organisationName: organisation?.Name,
         organisationStatus: organisation?.Status,
-        totalEffort: 0,
+        totalEffort: allTimeTotal?.TotalAllocationsEntered ?? 0,
+        totalAllocationsTillDate: {
+          value :tillDateTotal?.TotalAllocationsEntered ?? 0,
+          actuals: tillDateTotal?.TotalActualsEntered ?? 0,
+      }
       };
 
       for (const w of weeks) {
@@ -298,8 +314,6 @@ export function formatAllAllocations(
       actuals: alloc.ActualsEntered || null,
       notes: alloc.Notes || null,
     };
-
-    entry.totalEffort += alloc.AllocationEntered;
   }
 
   return sortAllAllocations(Array.from(grouped.values()));

@@ -478,6 +478,7 @@ function AllocationGrid({
     if (startDate && endDate) {
       setAggregation({
         totalEffort: 'sum',
+        totalAllocationsTillDate: 'sum',
         ...aggregationModel(startDate, endDate, type === 'cost'),
       });
     }
@@ -792,6 +793,53 @@ function AllocationGrid({
     };
   };
 
+  const buildTotalsCellData = (params, apiRef) => {
+    const baseData = params.row[params.field] || {};
+    
+    if (params.rowNode?.type !== 'group') {
+      return {
+        value: baseData.value ?? 0,
+        actuals: baseData.actuals ?? 0,
+      };
+    }
+
+    const filterModel = apiRef.current.state.filter.filterModel;
+    const { filteredRowsLookup } = apiRef.current.getFilterState(filterModel);
+
+    const collectVisibleLeafRows = nodeId => {
+      if (filteredRowsLookup?.[nodeId] === false) return [];
+
+      const node = apiRef.current.getRowNode(nodeId);
+      if (!node || node.type !== 'group') {
+        const row = apiRef.current.getRow(nodeId);
+        return row ? [row] : [];
+      }
+
+      let rows = [];
+      (node.children || []).forEach(childId => {
+        rows = rows.concat(collectVisibleLeafRows(childId));
+      });
+      return rows;
+    };
+
+    const visibleLeafRows = (params.rowNode.children || []).flatMap(childId =>
+      collectVisibleLeafRows(childId)
+    );
+
+    const totalValue = visibleLeafRows
+      .map(row => row?.[params.field]?.value || 0)
+      .reduce((sum, x) => sum + x, 0);
+
+    const totalActuals = visibleLeafRows
+      .map(row => row?.[params.field]?.actuals || 0)
+      .reduce((sum, x) => sum + x, 0);
+
+    return {
+      value: totalValue,
+      actuals: totalActuals,
+    };
+  };
+
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
@@ -808,6 +856,46 @@ function AllocationGrid({
       : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
     type === 'cost'
   ).map(column => {
+    
+    if (column.field === 'totalAllocationsTillDate') {
+      return {
+        ...column,
+        sortable: false,
+        valueGetter: params => params.value?.value ?? 0,
+
+        renderCell: params => {
+           const cellData = buildTotalsCellData(params, apiRef);
+          const value = cellData?.value ?? 0;
+          const actuals = cellData?.actuals ?? 0;
+
+          return (
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                // paddingTop :'3px',
+                alignItems: 'stretch',
+                justifyContent: 'center',
+                position: 'relative',
+              }}
+            >
+              {showActuals ? (
+                <AllocationCellWithActuals
+                  params={{
+                    value,
+                    actuals,
+                  }}
+                />
+              ) : (
+                <span>{value}</span>
+              )}
+            </Box>
+          );
+        },
+      };
+    }
+    
     if (isWeekKey(column.field)) {
       return {
         ...column,

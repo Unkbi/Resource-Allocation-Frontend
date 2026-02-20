@@ -174,7 +174,7 @@ function ProjectAllocation({
 
         const formattedResources = filteredResources?.map(allocation => ({
           ...allocation,
-          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+          // totalEffort: calculateTotalEffort(normalizeRow(allocation)), commenting old total effort calculation 
           hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
@@ -1008,9 +1008,8 @@ function ProjectAllocation({
     },
     {
       field: 'totalEffort',
-      headerName: 'Total Effort',
-      width: 115,
-      minWidth: 115,
+      headerName: 'Totals All Time',
+      width: 63,
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,
@@ -1018,6 +1017,28 @@ function ProjectAllocation({
       // cellClassName: 'secondary-cell',
       headerAlign: 'left',
       primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const value = Number(params.value);
+        const formattedValue =
+          !isNaN(value) && value !== null
+            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            : null;
+        return <EllipsisNameCell value={formattedValue} />;
+      },
+    }, 
+    {
+      field: 'totalAllocationsTillDate',
+      headerName: 'Totals Till Date',
+      width: 67,
+      type: 'number',
+      sortable: true,
+      cellClassName: getCellClassName,
+      headerClassName: 'secondary-header',
+      headerAlign: 'left',
+      primaryColumn: true,
+       valueGetter: (params: any) => {
+       return params.value
+      },
       renderCell: (params: GridCellParams) => {
         const value = Number(params.value);
         const formattedValue =
@@ -1170,6 +1191,7 @@ function ProjectAllocation({
                 projectType: false,
                 projectTypeGroup: false,
                 totalEffort: true,
+                totalAllocationsTillDate:true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
                 email: false,

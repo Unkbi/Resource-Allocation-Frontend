@@ -28,6 +28,7 @@ import aiSummaryReducer from './reducers/aiSummaryReducer';
 import filterReducer from './reducers/filterReducer';
 import { customReportReducer } from './reducers/customReportReducer';
 import userPreferencesReducer from './reducers/userPreferencesReducer';
+import allocationTotalsReducer from './reducers/allocationTotalsReducer';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -75,6 +76,7 @@ export const makeStore = () => {
         filters: filterReducer(state?.filters, action),
         customReport: customReportReducer(state?.customReport, action),
         userPreferences: userPreferencesReducer(state?.userPreferences, action),
+        allocationTotals : allocationTotalsReducer(state?.allocationTotals, action)
       };
     },
     middleware: getDefaultMiddleware =>

@@ -1337,13 +1337,25 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       },
     },
     '& .grouping-header': {
-      padding: '3px',
+      padding: '4px 3px 3px 3px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderBottom: '2px solid #DDE1E4',
       '& .MuiDataGrid-columnHeaderTitleContainer': {
         alignItems: 'center',
+        justifyContent: 'center',
         borderBottom: 'none',
+        width: '100%',
         '& .MuiDataGrid-columnHeaderTitle': {
           fontWeight: 'bold',
           fontSize: '12px',
+          textAlign: 'center',
+          width: '100%',
+        },
+        '& .MuiDataGrid-columnHeaderDraggableContainer': {
+          justifyContent: 'center',
+          width: '100%',
         },
       },
     },
