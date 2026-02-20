@@ -58,10 +58,11 @@ export const followService = {
   },
 
   updateFollowPreferences: async (payload: UpdateFollowPreferencesPayload) => {
-    const response = await axiosInstance.post(
-      `${API_PROJECT_PORTFOLIO}/UpdateFollowPreferences`,
-      payload
-    );
+const { FollowId, ...rest } = payload;
+const response = await axiosInstance.put(
+  `${API_PROJECT_PORTFOLIO}/Follow/${FollowId}`,
+  {...rest }
+);
     return response.data;
   },
 
@@ -115,9 +116,10 @@ export const updateFollowPreferences = createAsyncThunk(
   'follow/updatePreferences',
   async (payload: UpdateFollowPreferencesPayload, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(
-        `${API_PROJECT_PORTFOLIO}/UpdateFollowPreferences`,
-        payload
+      const { FollowId, ...rest } = payload;
+      const response = await axiosInstance.put(
+        `${API_PROJECT_PORTFOLIO}/Follow/${payload.FollowId}`,
+        {...rest }
       );
       return response.data;
     } catch (error) {

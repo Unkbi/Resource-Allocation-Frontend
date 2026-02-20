@@ -1675,7 +1675,8 @@ function Resources({ permissions, loadingPermissions }) {
   };
 
   const handleFollowTeamSettings = params => {
-    //console.log('Opening settings for team:', params.row);
+    router.push(`/settings?menu=${encodeURIComponent('projects&teams')}`);
+    handleMenuClose();
   }
 
   const onChange = (event, newValue) => {

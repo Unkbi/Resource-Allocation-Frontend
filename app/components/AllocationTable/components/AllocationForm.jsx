@@ -3857,6 +3857,7 @@ const AllocationForm = () => {
           }
 
           dispatch(closeDialog());
+          dispatch({type: 'FETCH_FOLLOWS', payload: user?.id});
           setFormValue({});
         } catch (error) {
           console.error('Failed to save follow preferences:', error);

@@ -611,8 +611,8 @@ function Project({ permissions, loadingPermissions }) {
 
 
   const handleFollowSettings = params => {
-    //console.log('Handle follow settings clicked for project', params.row);
-  
+    router.push(`/settings?menu=${encodeURIComponent('projects&teams')}`);
+    handleMenuClose();  
   };
 
   const handleFollow = params => {
@@ -635,7 +635,7 @@ function Project({ permissions, loadingPermissions }) {
       'follow_project',
       dialogData,
       {
-        submitButtonText: existingFollow ? 'Save Preferences' : 'Follow',
+        submitButtonText: 'Save Preferences',
         cancelButtonText: 'Cancel',
       }
     );
