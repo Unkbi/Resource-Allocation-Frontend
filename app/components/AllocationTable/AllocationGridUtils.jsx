@@ -504,12 +504,14 @@ export const getFinalColumns = (
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
+  const { scalarSettings } = useSelector(state => state.allSettings);
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
     endDate,
-    isFormatWithK
+    isFormatWithK,
+    scalarSettings
   );
 
   const handleAddClick = params => {
@@ -645,8 +647,8 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        // sortable: groupBy == 'project' ? true : false, //Making it sortable in all views 
-        sortable : true ,
+        // sortable: groupBy == 'project' ? true : false, //Making it sortable in all views
+        sortable: true,
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
@@ -792,7 +794,7 @@ export const getFinalColumns = (
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
         // sortable: groupBy == 'project' ? true : false,
-        sortable :true ,
+        sortable: true,
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
@@ -1234,8 +1236,8 @@ export const getCellClassName = (
 
       const allocationValue =
         params.rowNode?.groupingField === 'resource'
-          ? Math.round(aggregatedValue * 10) / 10
-          : Math.round((aggregatedValue / totalRows) * 10) / 10;
+          ? Math.round(aggregatedValue * 100) / 100
+          : Math.round((aggregatedValue / totalRows) * 100) / 100;
 
       const sortedTheme = [...allocationTheme].sort(
         (a, b) => parseFloat(a.From) - parseFloat(b.From)
