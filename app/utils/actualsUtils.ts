@@ -1,4 +1,9 @@
-import { STEP, TOTAL_HOURS_IN_WEEK } from '../constants/constants';
+import {
+  FRACTIONS,
+  HOURS,
+  STEP,
+  TOTAL_HOURS_IN_WEEK,
+} from '../constants/constants';
 import { ActualAllocations, ActualAllocationTableRow } from '../types';
 import { getMondayOfISO } from './common';
 
@@ -41,6 +46,7 @@ export const formatAllocationTableDataWithToHours = (
     ...row,
     planned: row.planned ? row.planned * TOTAL_HOURS_IN_WEEK : 0,
     actuals: row.actuals ? row.actuals * TOTAL_HOURS_IN_WEEK : 0,
+    __unit: HOURS,
   }));
 };
 
@@ -65,6 +71,7 @@ export const formatAllocationTableDataWithToFTE = (
     ...row,
     planned: row.planned ? row.planned / TOTAL_HOURS_IN_WEEK : 0,
     actuals: row.actuals ? row.actuals / TOTAL_HOURS_IN_WEEK : 0,
+    __unit: FRACTIONS,
   }));
 };
 
