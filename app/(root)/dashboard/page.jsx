@@ -134,6 +134,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'activeProjectsByType',
   'totalHeadcount',
   'allocation_by_project_type_group',
+  'custom_allocation_percentage',
   'unapprovedProjectAllocation',
   'projectScoreByPM',
   'actuals_confirmation_status',
@@ -153,6 +154,7 @@ const TEAM_CHART_SEQUENCE = [
   'underAllocated',
   'overAllocated',
   'weeklyLoggedInUsersByTeam',
+  'userStatusSplitByTeam',
 ];
 
 const generateLayouts = chartKeys => {
@@ -229,6 +231,7 @@ export default function ExecutiveDashboardPage() {
     totalResourceCost = [],
     allocationPercentage = [],
     allocation_by_project_type_group = [],
+    custom_allocation_percentage = [],
     top_projects_by_variance = [],
     actuals_confirmation_status = [],
     actualsTrendWeekly = [],
@@ -285,6 +288,7 @@ export default function ExecutiveDashboardPage() {
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
   const [filteredTop5Projects, setFilteredTop5Projects] = useState([]);
+  const [filteredUserStatusSplit, setFilteredUserStatusSplit] = useState([]);
   const { projectTypes, projectTypeGroups,locationGroups } = useSelector(
     state => state.allSettings
   );
@@ -622,6 +626,12 @@ export default function ExecutiveDashboardPage() {
     );
   }, [activeProjectsByType]);
 
+  useEffect(() => {
+    setFilteredUserStatusSplit(
+      Array.isArray(weeklyLoggedInUsersByTeam) ? weeklyLoggedInUsersByTeam : []
+    );
+  }, [weeklyLoggedInUsersByTeam]);
+
   // Calculate the Monday of the selected week
   const getMonday = date => {
     const day = date.day();
@@ -718,6 +728,22 @@ export default function ExecutiveDashboardPage() {
    * Maps chart identifiers to appropriate report types and configurations
    */
   const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null) => {
+    // Special case: Navigate to custom tab for custom allocation chart
+    if (chartKey === 'custom_allocation_percentage') {
+      navigateToReport(
+        advancedFilters,
+        {
+          reportType: 'customProjectAllocation', // Dummy value for custom tab
+          period: 'custom',
+          customStartDate: currentWeekMonday.format('YYYY-MM-DD'),
+          customEndDate: currentWeekSunday.format('YYYY-MM-DD'),
+          show_actuals: 'true',
+        },
+        false,
+        router
+      );
+      return ;
+    }
     // Map chart keys to report types
     const chartToReportMap = {
       // Overview charts
@@ -741,6 +767,7 @@ export default function ExecutiveDashboardPage() {
       'projectScoreByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'unapprovedProjectActualsByTeam': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'weeklyLoggedInUsersByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'userStatusSplitByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'resourceCoverage': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'actualsTrendWeekly': { reportType: 'resourceProjectPeriod', period: 'custom' },
       'underAllocated': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
@@ -765,7 +792,7 @@ export default function ExecutiveDashboardPage() {
 
     // Navigate with advanced filters and chart config
     navigateToReport(advancedFilters, config, false, router);
-  }, [advancedFilters, router]);
+  }, [advancedFilters, router, currentWeekMonday, currentWeekSunday, lastWeekMonday, lastWeekSunday, threeWeeksBeforeMonday, twoWeeksAfterSunday]);
 
   const handleChartClick = chartName => {
     setSelectedChart(chartName);
@@ -783,10 +810,9 @@ export default function ExecutiveDashboardPage() {
 
   const hasAccessToQueryKey = queryKey => {
     if (!dashboardQueryKeys) return false;
-    // Sahadev : Patch Only for Corsair, as no one has access to Total Resource Cost, or Budget vs Plan vs Actual
-    if (queryKey === 'totalResourceCost' || queryKey === 'budgetVsPlanVsActual' ) return false;
     if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
+    if (queryKey==='userStatusSplitByTeam' || queryKey==='weeklyLoggedInUsersByTeam') return false; // Temporary fix to hide chart until drilldown issue is resolved
 
     const queryDetails = dashboardQueryKeys?.find(
       qk => qk.QueryKey === queryKey
@@ -2627,6 +2653,98 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
+
+    custom_allocation_percentage: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !custom_allocation_percentage ||
+          custom_allocation_percentage.length === 0 ||
+          custom_allocation_percentage.every(item =>
+            (Number(item.AllocationPercentage || 0) === 0) &&
+            (Number(item.ActualsPercentage || 0) === 0)
+          )
+        }
+        noDataMessage="No percentage allocation data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Prepare chart data
+          const categories = custom_allocation_percentage.map(item => item.ProjectBucket || 'Unknown');
+          const allocationData = custom_allocation_percentage.map(item => Number(item.AllocationPercentage || 0));
+          const actualsData = custom_allocation_percentage.map(item => Number(item.ActualsPercentage || 0));
+
+          return (
+            <Box sx={{ pt: 1, px: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  color: '#000000DE',
+                  mb: 1,
+                }}
+              >
+                Percentage Allocation by Project Reporting Type
+              </Typography>
+
+              <BarChart
+                width={config.width}
+                height={config.height}
+                series={[
+                  {
+                    data: allocationData,
+                    label: 'Allocation',
+                    id: 'allocationId',
+                    color: '#116086',
+                  },
+                  {
+                    data: actualsData,
+                    label: 'Actuals',
+                    id: 'actualsId',
+                    color: '#3790BB',
+                  },
+                ]}
+                xAxis={[
+                  {
+                    data: categories,
+                    scaleType: 'band',
+                    categoryGapRatio: 0.3,
+                    tickLabelStyle: { color: '#475569' },
+                  },
+                ]}
+                yAxis={[
+                  {
+                    label: 'Percentage Allocation (%)',
+                    max: 100,
+                    tickLabelStyle: { color: '#475569' },
+                  },
+                ]}
+                slotProps={{
+                  legend: {
+                    position: {
+                      vertical: 'bottom',
+                      horizontal: config.width < 400 ? 'start' : 'center',
+                    },
+                  },
+                }}
+                margin={{
+                  left: config.isSmallScreen ? 40 : 20,
+                  right: config.isSmallScreen ? 10 : 20,
+                  top: 20,
+                  bottom: config.isSmallScreen ? 40 : 20,
+                }}
+                grid={{ vertical: true, horizontal: true }}
+                onAxisClick={(event, axisData)=> {
+                  navigateToReportWithFilters('custom_allocation_percentage');
+                }}
+              />
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
   };
 
   const costsCharts = {
@@ -2855,7 +2973,7 @@ export default function ExecutiveDashboardPage() {
                       position: { vertical: 'bottom', horizontal: 'middle' },
                     },
                   }}
-                  margin={{ left: 20, right: 20, top: 20, bottom: 80 }}
+                  margin={{ left: 20, right: 20, top: 20, bottom: 20 }}
                   grid={{ horizontal: true }}
                   sx={{
                     cursor: 'pointer',
@@ -3645,6 +3763,146 @@ export default function ExecutiveDashboardPage() {
                       if (teamId) {
                         navigateToReportWithFilters('projectScoreByTeam', {
                           team: teamId
+                        });
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    userStatusSplitByTeam: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !filteredUserStatusSplit ||
+          filteredUserStatusSplit.length === 0 ||
+          filteredUserStatusSplit.every(item => {
+            const splits = item.user_status_split || {};
+            return (
+              Number(splits['Active'] || 0) === 0 &&
+              Number(splits['Invited'] || 0) === 0 &&
+              Number(splits['Not Invited'] || 0) === 0
+            );
+          })
+        }
+        noDataMessage="No invite status data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Define status types and their colors
+          const statusTypes = [
+            { key: 'Active', label: 'Active', color: '#00C49F' },
+            { key: 'Invited', label: 'Invited', color: '#FFD966' },
+            { key: 'Not Invited', label: 'Not Invited', color: '#FDAA5D' },
+          ];
+
+          // Sort teams by total users descending
+          const sortedUserStatusData = [
+            ...(filteredUserStatusSplit || []),
+          ].sort((a, b) => {
+            const aTotal = statusTypes.reduce(
+              (sum, type) =>
+                sum + Number(a.user_status_split?.[type.key] || 0),
+              0
+            );
+            const bTotal = statusTypes.reduce(
+              (sum, type) =>
+                sum + Number(b.user_status_split?.[type.key] || 0),
+              0
+            );
+            return bTotal - aTotal;
+          });
+
+          // Extract team names from sorted data
+          const teamNames = sortedUserStatusData.map(item =>
+            formatTeamName(
+              item.team_name,
+              dimensions.width < 400 ? 8 : 10,
+              sortedUserStatusData.length
+            )
+          );
+
+          // Create series data for each status type
+          const seriesData = statusTypes.map(type => ({
+            label: type.label,
+            id: type.key,
+            data: sortedUserStatusData.map(item =>
+              Number(item.user_status_split?.[type.key] || 0)
+            ),
+            color: type.color,
+            stack: 'total',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Invite Status by Team
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={seriesData}
+                  xAxis={[
+                    {
+                      data: teamNames,
+                      label: 'Team',
+                      scaleType: 'band',
+                      categoryGapRatio: 0.5,
+                      barGapRatio: 0.1,
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'No. of Users',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'row',
+                      position: { vertical: 'bottom', horizontal: 'middle' },
+                    },
+                  }}
+                  margin={{ left: 20, right: 20, top: 20, bottom: 20 }}
+                  grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
+                  onItemClick={(event, barItemIdentifier) => {
+                    const { dataIndex, seriesId } = barItemIdentifier || {};
+                    if (dataIndex !== undefined && seriesId) {
+                      const teamname = sortedUserStatusData[dataIndex]?.team_name;
+                      const teamId = teams.find(t => t.Name === teamname)?.Id;
+                      if (teamId && seriesId) {
+                        navigateToReportWithFilters('userStatusSplitByTeam', {
+                          // resourceStatuses: seriesId,
+                          team: teamId,
                         });
                       }
                     }

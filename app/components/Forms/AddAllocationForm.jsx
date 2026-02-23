@@ -25,7 +25,11 @@ import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { useDispatch } from 'react-redux';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { getProjectRangeWarnings } from './ValidationSchema';
-import { AllocationForm_Status_Filter, PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
+import {
+  AllocationForm_Status_Filter,
+  PROJECT_ACTIVE_STATUS,
+} from '@/app/constants/constants';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 const AddAllocationForm = ({ formikProps, setFormValue }) => {
   const { values, handleChange, handleBlur, setFieldValue } = formikProps;
@@ -120,13 +124,14 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
 
   const resourceTypeOptions =
     resources
-    ?.filter(resource => AllocationForm_Status_Filter.includes(resource.Status))
-    ?.sort((a, b) => a.FullName.localeCompare(b.FullName))
-    ?.map(resource => ({
-      value: resource.Id,
-      label: resource.FullName,
-    })) || [];
-
+      ?.filter(resource =>
+        AllocationForm_Status_Filter.includes(resource.Status)
+      )
+      ?.sort((a, b) => a.FullName.localeCompare(b.FullName))
+      ?.map(resource => ({
+        value: resource.Id,
+        label: resource.FullName,
+      })) || [];
 
   const handleCapacityChange = event => {
     const value = event.target.value;
@@ -159,10 +164,8 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
     let formattedValue = e.target.value;
     if (formattedValue && !isNaN(formattedValue)) {
       const numValue = Number(formattedValue);
-      formattedValue = (Math.round(numValue * 10) / 10).toString();
-      if (formattedValue.indexOf('.') === -1 && numValue <= 2) {
-        formattedValue = formattedValue + '.0';
-      }
+      // Round to 0.05 steps and format to 1-2 decimals
+      formattedValue = normalizeAllocationValue(numValue);
       setCustomCapacity(formattedValue);
       setFieldValue('AllocationEntered', Number(formattedValue));
     }

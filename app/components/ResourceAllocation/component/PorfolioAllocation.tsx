@@ -20,6 +20,7 @@ import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
   getFirstChild,
   initSortAllocations,
+  injectBlankProjectRows,
   normalizeRow,
 } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
@@ -74,6 +75,7 @@ function PortfolioAllocation({
     (state: RootState) => state.allResourcesDetail
   );
   const { portfolios } = useSelector((state: RootState) => state.portfolios);
+  const { projects } = useSelector((state: RootState) => state.projects);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -110,7 +112,13 @@ function PortfolioAllocation({
           dispatch(setLoading(false));
         }
 
-        const formattedResources = filteredResources?.map(allocation => ({
+        const formattedResources = injectBlankProjectRows(
+          filteredResources as AllAllocations[],
+          projects || [],
+          portfolios || [],
+          startDate || '',
+          endDate || ''
+        )?.map(allocation => ({
           ...allocation,
           totalEffort: calculateTotalEffort(normalizeRow(allocation)),
           hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
@@ -140,18 +148,18 @@ function PortfolioAllocation({
       })
     );
   };
-  
+
   const getPortfolioFirstChild = (params: GridCellParams) => {
-      if (
-        params.rowNode.type === 'group' &&
-        params.rowNode.groupingField === 'portfolioName'
-      ) {
-        const portfolioName = params.rowNode.groupingKey;
-        const portfolio = portfolios?.find(t => t.Name === portfolioName);
-        return portfolio;
-      }
-      return null;
-    };
+    if (
+      params.rowNode.type === 'group' &&
+      params.rowNode.groupingField === 'portfolioName'
+    ) {
+      const portfolioName = params.rowNode.groupingKey;
+      const portfolio = portfolios?.find(t => t.Name === portfolioName);
+      return portfolio;
+    }
+    return null;
+  };
 
   const getResource = (params: GridCellParams): Resource | null => {
     const { rowNode } = params;
@@ -276,8 +284,7 @@ function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Id
+          (item: any) => item.Resource?.Id === resource?.Id
         );
         const organizationName = resourceDetails?.Organization?.Name || '';
         return <EllipsisNameCell value={organizationName || ''} />;
@@ -803,7 +810,7 @@ function PortfolioAllocation({
     },
     {
       field: 'manager',
-      headerName: 'Manager',  // Resource page manager detail
+      headerName: 'Manager', // Resource page manager detail
       width: 130,
       type: 'string',
       isEditable: false,
@@ -811,8 +818,7 @@ function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Manager
+          (item: any) => item.Resource?.Id === resource?.Manager
         );
         const Manager = resourceDetails?.Resource?.FullName || '';
         return resource ? <EllipsisNameCell value={Manager || ''} /> : null;
@@ -829,11 +835,12 @@ function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Id
+          (item: any) => item.Resource?.Id === resource?.Id
         );
         const organizationStatus = resourceDetails?.Organization?.Status || '';
-        return resource ? <EllipsisNameCell value={organizationStatus || ''} /> : null;
+        return resource ? (
+          <EllipsisNameCell value={organizationStatus || ''} />
+        ) : null;
       },
     },
     {
@@ -893,13 +900,9 @@ function PortfolioAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
-        return (
-          <EllipsisNameCell
-            value={value as string}
-          />
-        );
+        return <EllipsisNameCell value={value as string} />;
       },
-    }
+    },
   ];
 
   const removeResourcesWithNoProjects = (allocations: AllAllocations[]) => {
@@ -963,9 +966,9 @@ function PortfolioAllocation({
                 organisationName: false,
                 manager: false,
                 organisationStatus: false,
-                portfolioDescription:false,
+                portfolioDescription: false,
                 portfolioStatus: false,
-                teamAllocationManager:false,
+                teamAllocationManager: false,
                 teamStatus: false,
                 teams: false,
               },
