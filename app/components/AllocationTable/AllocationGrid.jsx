@@ -1065,7 +1065,7 @@ function AllocationGrid({
               4000
             )
           );
-        } else if (totalForWeek > 2) {
+        } else if (totalForWeek > Number(max_allocation_error)) {
           newRow[key] = oldRow[key]?.value;
           dispatch(
             showToastAction(
