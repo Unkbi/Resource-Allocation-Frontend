@@ -170,6 +170,11 @@ const parseQueryParams = (
     filters.customEndDate = customEndDate;
   }
 
+  const showActuals = searchParams.get('show_actuals');
+  if (showActuals === 'true') {
+    filters.show_actuals = true;
+  }
+
   return filters;
 };
 
@@ -748,6 +753,80 @@ function ReportBuilderPage({
     if (loadingPermissions) return;
     if (!pendingQueryFilters || hasAppliedQueryParams || !isDataLoaded) return;
 
+    // Check which tab we're on
+    const currentTab = searchParams?.get('tab') || 'reports';
+
+    // Handle Custom Tab
+    if (currentTab === 'custom') {
+      // Parse dates for custom tab
+      const customStart = pendingQueryFilters.customStartDate
+        ? dayjs(pendingQueryFilters.customStartDate).format('MMM DD, YYYY')
+        : undefined;
+      const customEnd = pendingQueryFilters.customEndDate
+        ? dayjs(pendingQueryFilters.customEndDate).format('MMM DD, YYYY')
+        : undefined;
+
+      // Calculate date range
+      const { start, end } = calculateDateRange(
+        pendingQueryFilters.period || 'last_week',
+        customStart,
+        customEnd
+      );
+
+      // Set custom filters from query params
+      const customFiltersFromQuery: ReportFilters = {
+        reportType: 'resourceProjectPeriod',
+        period: pendingQueryFilters.period || 'last_week',
+        customDateRange:
+          pendingQueryFilters.customStartDate && pendingQueryFilters.customEndDate
+            ? [
+                dayjs(pendingQueryFilters.customStartDate),
+                dayjs(pendingQueryFilters.customEndDate),
+              ]
+            : undefined,
+        team: pendingQueryFilters.team || [],
+        organization: pendingQueryFilters.organization || [],
+        resourceType: pendingQueryFilters.resourceType || [],
+        resource: pendingQueryFilters.resource || [],
+        projectType: pendingQueryFilters.projectType || [],
+        projectTypeGroup: pendingQueryFilters.projectTypeGroup || [],
+        project: pendingQueryFilters.project || [],
+        portfolio: pendingQueryFilters.portfolio || [],
+        projectManager: pendingQueryFilters.projectManager || [],
+        allocationManager: pendingQueryFilters.allocationManager || [],
+        resourceStatuses: pendingQueryFilters.resourceStatuses || [],
+        resourceLocations: pendingQueryFilters.resourceLocations || [],
+        resourceWorkLocationGroup:
+          pendingQueryFilters.resourceWorkLocationGroup || [],
+        projectStatuses: pendingQueryFilters.projectStatuses || [],
+        show_actuals: pendingQueryFilters.show_actuals || false,
+      };
+
+      setCustomFilters(customFiltersFromQuery);
+
+      // Prepare API filters for custom report
+      const apiFilters: any = {
+        Projects: customFiltersFromQuery.project,
+        ProjectTypeGroups: customFiltersFromQuery.projectTypeGroup,
+        ProjectTypes: customFiltersFromQuery.projectType,
+        Teams: customFiltersFromQuery.team,
+        Organizations: customFiltersFromQuery.organization,
+        ProjectStatuses: ['Active'],
+        StartDate: start || undefined,
+        EndDate: end || undefined,
+      };
+
+      setAPIFilters(apiFilters);
+
+      // Auto-generate custom report
+      dispatch(fetchCustomReportRequest(apiFilters));
+      setHasAppliedQueryParams(true);
+      setFiltersExpanded(false);
+      setIsInitializing(false);
+      return;
+    }
+
+    // Handle Reports Tab (existing logic)
     // Data is loaded, now apply the query params
     const mergedFilters: ReportFilters = {
       reportType: pendingQueryFilters.reportType || 'resourceProjectPeriod',
@@ -817,6 +896,7 @@ function ReportBuilderPage({
     isDataLoaded,
     dispatch,
     loadingPermissions,
+    searchParams,
   ]);
 
   // Effect 3: Load from sessionStorage only on initial page load (not on tab switch)

@@ -1738,17 +1738,22 @@ const AllocationForm = () => {
                       ? currentView?.EndDate
                       : endDate
                 );
-
                 const blankRowsToBeRemoved = Object.values(formateUpdate).map(
                   row =>
                     getAllRowsForView(
-                      splitView ? 'bottomTeam' : 'teamAllocation'
+                      splitView
+                        ? 'bottomTeam'
+                        : teamsViewsGrouping.includes(currentView?.GroupBy)
+                          ? 'teamAllocation'
+                          : 'projectAllocation'
                     ).find(
                       r =>
-                        r.id.includes(row.teams) && r.id.includes(row.resource)
+                        (projectViewsGrouping.includes(currentView?.GroupBy) &&
+                          r.id.includes(row.project)) ||
+                        (r.id.includes(row.teams) &&
+                          r.id.includes(row.resource))
                     )
                 );
-
                 allUpdatedRows = [
                   ...Object.values(formateUpdate),
                   ...blankRowsToBeRemoved
@@ -3405,7 +3410,7 @@ const AllocationForm = () => {
           const postData = {
             users: [userItem],
           };
-          
+
           dispatch(
             showToast({
               open: true,
@@ -3415,7 +3420,7 @@ const AllocationForm = () => {
               autoHideTimer: 5000,
             })
           );
-          
+
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: SEND_INVITATION,
@@ -3491,7 +3496,7 @@ const AllocationForm = () => {
           const postData = {
             users: [...finalData],
           };
-          
+
           dispatch(
             showToast({
               open: true,
@@ -3501,7 +3506,7 @@ const AllocationForm = () => {
               autoHideTimer: 8000,
             })
           );
-          
+
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: SEND_INVITATION,
@@ -3577,15 +3582,15 @@ const AllocationForm = () => {
         };
 
         dispatch(
-            showToast({
-              open: true,
-              message: `Updating the changes for ${initialData.Name} `,
-              type: 'info',
-              position: 'bottom-left',
-              autoHideTimer: 5000,
-            })
+          showToast({
+            open: true,
+            message: `Updating the changes for ${initialData.Name} `,
+            type: 'info',
+            position: 'bottom-left',
+            autoHideTimer: 5000,
+          })
         );
-        
+
         try {
           const result = await new Promise((resolve, reject) => {
             dispatch({
@@ -3958,12 +3963,15 @@ const AllocationForm = () => {
           }
 
           // If result is empty, return immediately
-          if (response === null || !Array.isArray(response) || response.length === 0) {
+          if (
+            response === null ||
+            !Array.isArray(response) ||
+            response.length === 0
+          ) {
             setHistoryStatus('no-data');
             setHistoryData([]);
             return;
           }
-
 
           // Helper functions
           const getUserInitials = email => {
@@ -4023,9 +4031,7 @@ const AllocationForm = () => {
                 const yearStart = parseISO(
                   new Date(temp.getFullYear(), 0, 1).toISOString()
                 );
-                weekNumber = Math.ceil(
-                  ((temp - yearStart) / 86400000 + 1) / 7
-                );
+                weekNumber = Math.ceil(((temp - yearStart) / 86400000 + 1) / 7);
               }
             }
 
@@ -4053,14 +4059,18 @@ const AllocationForm = () => {
                 Math.floor(new Date(Timestamp)?.getTime() / 1000)
               ),
               action,
-              fromVersion: AllocationEnteredFromValue !== undefined ? String(AllocationEnteredFromValue) : '',
-              toVersion: AllocationEnteredToValue !== undefined ? String(AllocationEnteredToValue) : '',
+              fromVersion:
+                AllocationEnteredFromValue !== undefined
+                  ? String(AllocationEnteredFromValue)
+                  : '',
+              toVersion:
+                AllocationEnteredToValue !== undefined
+                  ? String(AllocationEnteredToValue)
+                  : '',
               byUser: `${modifingUserDetails?.firstName || ''} ${
                 modifingUserDetails?.lastName || ''
               }`,
-              _timestampRaw: Math.floor(
-                new Date(Timestamp)?.getTime() / 1000
-              ),
+              _timestampRaw: Math.floor(new Date(Timestamp)?.getTime() / 1000),
             };
           });
 
