@@ -860,7 +860,6 @@ function AllocationGrid({
     if (column.field === 'totalAllocationsTillDate') {
       return {
         ...column,
-        sortable: false,
         valueGetter: params => params.value?.value ?? 0,
 
         renderCell: params => {

@@ -1365,7 +1365,6 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      borderBottom: '2px solid #DDE1E4',
     },
     '& .MuiDataGrid-columnHeader[data-field="totalEffort"] .MuiDataGrid-columnHeaderTitle, \
     & .MuiDataGrid-columnHeader[data-field="totalAllocationsTillDate"] .MuiDataGrid-columnHeaderTitle':

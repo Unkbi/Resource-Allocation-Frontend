@@ -769,7 +769,7 @@ function PortfolioAllocation({
     {
       field: 'totalEffort',
       headerName: 'Total Effort',
-      width: 106,
+      width: 122,
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,
@@ -789,7 +789,7 @@ function PortfolioAllocation({
     {
       field: 'totalAllocationsTillDate',
       headerName: 'Effort Till Date',
-      width: 114,
+      width: 122,
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,

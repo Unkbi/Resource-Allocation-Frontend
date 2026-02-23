@@ -202,11 +202,11 @@ function TopProjectsView({
     {
       field: 'totalEffort',
       headerName: 'Total Effort',
-      width: 106,
+      width: 122,
       type: 'number',
       sortable: false,
       cellClassName: getCellClassName,
-      headerClassName: 'secondary-header',
+      headerClassName: 'totals-header',
       // cellClassName: 'secondary-cell',
       headerAlign: 'left',
       primaryColumn: true,
@@ -223,6 +223,33 @@ function TopProjectsView({
         );
       },
     },
+    {
+      field: 'totalAllocationsTillDate',
+      headerName: 'Effort Till Date',
+      width: 122,
+      type: 'number',
+      sortable: true,
+      cellClassName: getCellClassName,
+      headerClassName: 'totals-header',
+      headerAlign: 'left',
+      primaryColumn: true,
+      valueGetter: (params: any) => {
+        const allocations = params.row.allocations as any[];
+        const total = allocations.reduce((sum, allocation) => {
+          const effort = Number(allocation.Effort);
+          return sum + (isNaN(effort) ? 0 : effort);
+        }, 0);
+        return total;
+      },
+      renderCell: (params: GridCellParams) => {
+        const value = Number(params.value);
+        const formattedValue =
+          !isNaN(value) && value !== null
+            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            : null;
+        return <EllipsisNameCell value={formattedValue} />;
+      },
+    }, 
   ];
 
   return (
@@ -277,6 +304,7 @@ function TopProjectsView({
                 projectType: false,
                 projectTypeGroup: false,
                 totalEffort: true,
+                totalAllocationsTillDate:true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
               },

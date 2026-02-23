@@ -1007,7 +1007,7 @@ function ProjectAllocation({
     {
       field: 'totalEffort',
       headerName: 'Total Effort',
-      width: 114,
+      width: 122,
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,
@@ -1026,7 +1026,7 @@ function ProjectAllocation({
     {
       field: 'totalAllocationsTillDate',
       headerName: 'Effort Till Date',
-      width: 114,
+      width: 122,
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,
