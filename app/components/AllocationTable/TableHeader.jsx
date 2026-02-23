@@ -57,7 +57,11 @@ const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
     params.value == null ? 'weeklyCell' : clsx('super-app', 'weeklyCell'),
 });
 
-const createValueHandlers = (dispatch, isFormatWithK) => ({
+const createValueHandlers = (
+  dispatch,
+  isFormatWithK,
+  scalarSettings = null
+) => ({
   valueParser: value => {
     const parsed = parseFloat(
       value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, '')
@@ -108,13 +112,14 @@ const createValueHandlers = (dispatch, isFormatWithK) => ({
     }
 
     const formattedValue = normalizeAllocationValue(numericValue);
-    const hasError = formattedValue > 2;
+    const hasError =
+      formattedValue > Number(scalarSettings?.Max_Allocation_Error || '2.0');
 
     if (hasError) {
       dispatch(
         showToastAction(
           true,
-          'Invalid input. Please enter a number between 0 and 2.',
+          `Invalid input. Please enter a number between 0 and ${scalarSettings?.Max_Allocation_Error || '2.0'}.`,
           'error'
         )
       );
@@ -136,7 +141,8 @@ export const generateWeeklyColumns = (
   startDate,
   endDate,
   dispatch,
-  isFormatWithK
+  isFormatWithK,
+  scalarSettings = null
 ) => {
   const isoStart = parseISO(startDate);
   const isoEnd = parseISO(endDate);
@@ -162,7 +168,9 @@ export const generateWeeklyColumns = (
 
     return {
       ...createBaseColumnConfig(weekStartDate, isCurrentWeek),
-      ...(dispatch ? createValueHandlers(dispatch, isFormatWithK) : {}),
+      ...(dispatch
+        ? createValueHandlers(dispatch, isFormatWithK, scalarSettings)
+        : {}),
     };
   });
 };
@@ -233,11 +241,18 @@ export const getAllColumnsWithWeek = (
   dispatch,
   startDate,
   endDate,
-  isFormatWithK
+  isFormatWithK,
+  scalarSettings
 ) => {
   return [
     ...existingColumns,
-    ...generateWeeklyColumns(startDate, endDate, dispatch, isFormatWithK),
+    ...generateWeeklyColumns(
+      startDate,
+      endDate,
+      dispatch,
+      isFormatWithK,
+      scalarSettings
+    ),
   ];
 };
 
