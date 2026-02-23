@@ -812,6 +812,7 @@ export default function ExecutiveDashboardPage() {
     if (!dashboardQueryKeys) return false;
     if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
+    if (queryKey==='userStatusSplitByTeam') return false; // Temporary fix to hide chart until drilldown issue is resolved
 
     const queryDetails = dashboardQueryKeys?.find(
       qk => qk.QueryKey === queryKey
