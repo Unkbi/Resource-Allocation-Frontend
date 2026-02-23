@@ -1585,7 +1585,12 @@ function AllocationGrid({
       type={type}
       projectTypes={projectTypes}
       getRowHeight={params => {
-        if (params?.model?.projectId === '') {
+        if (
+          !params?.id.startsWith('auto-generated-row') &&
+          (!params?.model?.project ||
+            ((groupBy === 'project' || groupBy === 'portfolioName') &&
+              !params?.model?.resource))
+        ) {
           // Sahadev: really small value, it doesnt accept 0
           // New solution for hiding empty rows
           return 0.000000000001;

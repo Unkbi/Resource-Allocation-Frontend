@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Typography, Button, Tabs, Tab } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReportBuilderToolbar from './ReportBuilderToolbar';
 import ReportBuilderFilters, { ReportFilters } from './ReportBuilderFilters';
 import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
@@ -170,6 +170,11 @@ const parseQueryParams = (
     filters.customEndDate = customEndDate;
   }
 
+  const showActuals = searchParams.get('show_actuals');
+  if (showActuals === 'true') {
+    filters.show_actuals = true;
+  }
+
   return filters;
 };
 
@@ -302,6 +307,9 @@ function ReportBuilderPage({
   const { projects } = useSelector((state: RootState) => state.projects);
 
   const [APIFilters, setAPIFilters] = useState<any>(null);
+
+  // Ref to track if we've already attempted initial sessionStorage load
+  const hasAttemptedInitialLoadRef = useRef(false);
 
   // Check if all necessary data is loaded
   const isDataLoaded =
@@ -655,7 +663,9 @@ function ReportBuilderPage({
           : new URLSearchParams()
       );
       if (Object.keys(queryFilters).length > 0) {
+        // Filters are present (drill-down scenario) - skip permission checks
         setIsInitializing(true);
+        setNoAccess(false);
 
         // Clear sessionStorage to prevent Effect 3 from loading old report
         sessionStorage.removeItem('last_generated_report');
@@ -671,36 +681,152 @@ function ReportBuilderPage({
         // Mark that we're initializing with query params
         return; // Skip loading from sessionStorage
       }
-      // Query params exist but nothing to apply
-      // Not a valid Drill down scenario
-      // Check if permissions to reports is allowed
-      if (
-        searchParams.get('tab') === 'reports' &&
-        permissions &&
-        !permissions['Reports'].r
-      ) {
+      // Query params exist but no filters - enforce permission checks
+      // Define tab to permission mapping
+      const tabPermissionMap = [
+        { tab: 'reports', permission: 'Reports' },
+        { tab: 'aisummary', permission: 'AISummary' },
+        { tab: 'custom', permission: 'CustomReports' },
+      ];
+
+      // Check if user has access to any tab
+      const accessibleTabs = tabPermissionMap.filter(
+        ({ permission }) => permissions && permissions[permission]?.r
+      );
+
+      // If no access to any tab, deny access
+      if (accessibleTabs.length === 0) {
         setNoAccess(true);
+        setIsInitializing(false);
+        return;
       }
+
+      setNoAccess(false);
+
+      // Check if user has permission for the requested tab
+      const requestedTab = searchParams.get('tab') || 'reports';
+      const isTabAccessible = accessibleTabs.some(
+        ({ tab }) => tab === requestedTab
+      );
+
+      if (!isTabAccessible) {
+        // Redirect to first accessible tab
+        const firstAccessibleTab = accessibleTabs[0].tab;
+        const params = new URLSearchParams(searchParams?.toString() || '');
+        params.set('tab', firstAccessibleTab);
+        router.replace(`${pathname}?${params.toString()}`);
+      }
+
+      // Reset hasAppliedQueryParams to allow Effect 3 to load from sessionStorage
+      setHasAppliedQueryParams(false);
       setIsInitializing(false);
       return;
     }
 
-    // No query params present
-    // Check if permissions to reports is allowed as only when their are no query params
-    if (permissions && !permissions['Reports'].r) {
+    // No query params present - enforce permission checks
+    // Define tab to permission mapping
+    const tabPermissionMap = [
+      { tab: 'reports', permission: 'Reports' },
+      { tab: 'aisummary', permission: 'AISummary' },
+      { tab: 'custom', permission: 'CustomReports' },
+    ];
+
+    // Check if user has access to any tab
+    const accessibleTabs = tabPermissionMap.filter(
+      ({ permission }) => permissions && permissions[permission]?.r
+    );
+
+    // If no access to any tab, deny access
+    if (accessibleTabs.length === 0) {
       setNoAccess(true);
-    } else {
-      setNoAccess(false);
+      setIsInitializing(false);
+      return;
     }
+
+    setNoAccess(false);
     setIsInitializing(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, loadingPermissions]); // Only run when searchParams change
+  }, [searchParams, loadingPermissions]);
 
   // Effect 2: Apply pending query params once data is loaded
   useEffect(() => {
     if (loadingPermissions) return;
     if (!pendingQueryFilters || hasAppliedQueryParams || !isDataLoaded) return;
 
+    // Check which tab we're on
+    const currentTab = searchParams?.get('tab') || 'reports';
+
+    // Handle Custom Tab
+    if (currentTab === 'custom') {
+      // Parse dates for custom tab
+      const customStart = pendingQueryFilters.customStartDate
+        ? dayjs(pendingQueryFilters.customStartDate).format('MMM DD, YYYY')
+        : undefined;
+      const customEnd = pendingQueryFilters.customEndDate
+        ? dayjs(pendingQueryFilters.customEndDate).format('MMM DD, YYYY')
+        : undefined;
+
+      // Calculate date range
+      const { start, end } = calculateDateRange(
+        pendingQueryFilters.period || 'last_week',
+        customStart,
+        customEnd
+      );
+
+      // Set custom filters from query params
+      const customFiltersFromQuery: ReportFilters = {
+        reportType: 'resourceProjectPeriod',
+        period: pendingQueryFilters.period || 'last_week',
+        customDateRange:
+          pendingQueryFilters.customStartDate && pendingQueryFilters.customEndDate
+            ? [
+                dayjs(pendingQueryFilters.customStartDate),
+                dayjs(pendingQueryFilters.customEndDate),
+              ]
+            : undefined,
+        team: pendingQueryFilters.team || [],
+        organization: pendingQueryFilters.organization || [],
+        resourceType: pendingQueryFilters.resourceType || [],
+        resource: pendingQueryFilters.resource || [],
+        projectType: pendingQueryFilters.projectType || [],
+        projectTypeGroup: pendingQueryFilters.projectTypeGroup || [],
+        project: pendingQueryFilters.project || [],
+        portfolio: pendingQueryFilters.portfolio || [],
+        projectManager: pendingQueryFilters.projectManager || [],
+        allocationManager: pendingQueryFilters.allocationManager || [],
+        resourceStatuses: pendingQueryFilters.resourceStatuses || [],
+        resourceLocations: pendingQueryFilters.resourceLocations || [],
+        resourceWorkLocationGroup:
+          pendingQueryFilters.resourceWorkLocationGroup || [],
+        projectStatuses: pendingQueryFilters.projectStatuses || [],
+        show_actuals: pendingQueryFilters.show_actuals || false,
+      };
+
+      setCustomFilters(customFiltersFromQuery);
+
+      // Prepare API filters for custom report
+      const apiFilters: any = {
+        Projects: customFiltersFromQuery.project,
+        ProjectTypeGroups: customFiltersFromQuery.projectTypeGroup,
+        ProjectTypes: customFiltersFromQuery.projectType,
+        Teams: customFiltersFromQuery.team,
+        Organizations: customFiltersFromQuery.organization,
+        ProjectStatuses: ['Active'],
+        StartDate: start || undefined,
+        EndDate: end || undefined,
+      };
+
+      setAPIFilters(apiFilters);
+
+      // Auto-generate custom report
+      dispatch(fetchCustomReportRequest(apiFilters));
+      setHasAppliedQueryParams(true);
+      setFiltersExpanded(false);
+      setIsInitializing(false);
+      return;
+    }
+
+    // Handle Reports Tab (existing logic)
     // Data is loaded, now apply the query params
     const mergedFilters: ReportFilters = {
       reportType: pendingQueryFilters.reportType || 'resourceProjectPeriod',
@@ -770,13 +896,26 @@ function ReportBuilderPage({
     isDataLoaded,
     dispatch,
     loadingPermissions,
+    searchParams,
   ]);
 
-  // Effect 3: Load from sessionStorage if no query params
+  // Effect 3: Load from sessionStorage only on initial page load (not on tab switch)
   useEffect(() => {
     if (loadingPermissions) return;
-    // Only load from sessionStorage if there are no query params and we haven't already applied them
-    if (pendingQueryFilters || hasAppliedQueryParams) return;
+    // Only load from sessionStorage if:
+    // 1. This is the initial page load (not switching tabs)
+    // 2. Active tab is 'reports'
+    // 3. There are no query params and we haven't already applied them
+    if (
+      hasAttemptedInitialLoadRef.current ||
+      activeTab !== 'reports' ||
+      pendingQueryFilters ||
+      hasAppliedQueryParams
+    )
+      return;
+
+    // Mark that we've attempted the initial load
+    hasAttemptedInitialLoadRef.current = true;
 
     const savedLastReport = sessionStorage.getItem('last_generated_report');
 
@@ -1023,6 +1162,19 @@ function ReportBuilderPage({
     }
   }, [searchParams]);
 
+  // Track if we're in a drill-down scenario (have pending or applied query filters)
+  const isDrillingDown = pendingQueryFilters !== null || hasAppliedQueryParams;
+
+  // loading permissions
+  if (loadingPermissions) {
+    return <LoadingScreen />;
+  }
+
+  // no access
+  if (noAccess) {
+    return <ErrorPage type="accessDenied" redirectPath="/dashboard" />;
+  }
+
   return (
     <Box
       sx={{
@@ -1033,7 +1185,7 @@ function ReportBuilderPage({
       }}
     >
       {/* Show loading overlay when initializing from query params (only for reports tab) */}
-      {(isInitializing || loadingPermissions) && activeTab === 'reports' && (
+      {isInitializing && activeTab === 'reports' && (
         <Box
           sx={{
             position: 'absolute',
@@ -1046,367 +1198,377 @@ function ReportBuilderPage({
         </Box>
       )}
 
-      {noAccess ? (
-        <ErrorPage type="accessDenied" redirectPath="/dashboard" />
-      ) : (
-        <>
-          {/* Tabs */}
-          <Box
+      {/* Reports Tab */}
+      {(permissions?.['Reports']?.r ||
+        permissions?.['AISummary']?.r ||
+        permissions?.['CustomReports']?.r ||
+        isDrillingDown) && (
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            backgroundColor: '#fff',
+            px: 3,
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
             sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              backgroundColor: '#fff',
-              px: 3,
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontSize: '14px',
+                fontWeight: 500,
+                minHeight: 48,
+                color: '#6B7280',
+                '&.Mui-selected': {
+                  color: '#152E75',
+                  fontWeight: 600,
+                },
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#152E75',
+                height: 3,
+              },
             }}
           >
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              sx={{
-                '& .MuiTab-root': {
-                  textTransform: 'none',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  minHeight: 48,
-                  color: '#6B7280',
-                  '&.Mui-selected': {
-                    color: '#152E75',
-                    fontWeight: 600,
-                  },
-                },
-                '& .MuiTabs-indicator': {
-                  backgroundColor: '#152E75',
-                  height: 3,
-                },
-              }}
-            >
+            {(permissions?.['Reports']?.r || isDrillingDown) && (
               <Tab label="Reports" value="reports" />
+            )}
+            {permissions?.['AISummary']?.r && (
               <Tab label="AI Summary" value="aisummary" />
+            )}
+            {permissions?.['CustomReports']?.r && (
               <Tab label="Custom" value="custom" />
-            </Tabs>
+            )}
+          </Tabs>
+        </Box>
+      )}
+
+      {/* Conditional rendering based on active tab */}
+      {activeTab === 'reports' && (
+        <>
+          {/* Toolbar */}
+          <ReportBuilderToolbar
+            reportType={filters.reportType as ReportType}
+            tab="reports"
+            onGenerateReport={handleGenerateReport}
+            onExport={handleExport}
+            onShare={handleShare}
+            isLoading={isLoading}
+            onReportTypeChange={(reportType: ReportType) => {
+              setReportGenerated(false);
+              setShowData(false);
+              setReportData([]);
+              setFilters({
+                reportType: reportType,
+                period: 'last_week',
+                customDateRange: undefined,
+                team: [],
+                organization: [],
+                resourceType: [],
+                resource: [],
+                projectType: [],
+                projectTypeGroup: [],
+                project: [],
+                portfolio: [],
+                projectManager: [],
+                allocationManager: [],
+                resourceStatuses: [],
+                resourceLocations: [],
+                resourceWorkLocationGroup: [],
+                projectStatuses: [],
+              });
+              setFiltersExpanded(true);
+            }}
+            selectedFiltersCount={getSelectedFiltersCount()}
+          />
+
+          {/* Filters */}
+          <ReportBuilderFilters
+            expanded={filtersExpanded}
+            onToggle={() => setFiltersExpanded(!filtersExpanded)}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onResetFilters={handleResetFilters}
+          />
+
+          {/* Content Area */}
+          <Box
+            sx={{
+              flex: 1,
+              backgroundColor: '#F9FAFB',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {!reportGenerated && !showData ? (
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '15px',
+                    fontWeight: 500,
+                    color: '#6B7280',
+                    mb: 3,
+                  }}
+                >
+                  Configure your filters and generate a report to see data here
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={handleGenerateReport}
+                  disabled={
+                    !(permissions && permissions['Reports'].r) || isLoading
+                  }
+                  sx={{
+                    height: 40,
+                    backgroundColor: '#152E75',
+                    color: '#fff',
+                    textTransform: 'none',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    px: 4,
+                    borderRadius: '6px',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      backgroundColor: '#1C3A8C',
+                      boxShadow: 'none',
+                    },
+                    '&:disabled': {
+                      backgroundColor: '#D1D5DB',
+                    },
+                  }}
+                >
+                  {isLoading ? 'Generating...' : 'Generate Report'}
+                </Button>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                  p: isFullscreenGrid ? 0 : 0,
+                }}
+              >
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: isFullscreenGrid ? '100vh' : '100%',
+                    minHeight: 400,
+                    backgroundColor: '#ffffff',
+                    borderRadius: isFullscreenGrid ? 0 : '0px',
+                    overflow: 'hidden',
+                    position: isFullscreenGrid ? 'fixed' : 'relative',
+                    top: isFullscreenGrid ? 0 : 'auto',
+                    left: isFullscreenGrid ? 0 : 'auto',
+                    right: isFullscreenGrid ? 0 : 'auto',
+                    bottom: isFullscreenGrid ? 0 : 'auto',
+                    zIndex: isFullscreenGrid ? 1300 : 'auto',
+                  }}
+                >
+                  <StyledDataGrid
+                    key={filters.reportType}
+                    rows={reportData}
+                    columns={columns}
+                    hideFooter
+                    loading={isLoading}
+                    initialState={{
+                      pagination: {
+                        paginationModel: { pageSize: 25, page: 0 },
+                      },
+                      sorting: {
+                        sortModel: [
+                          {
+                            field:
+                              columns.find(
+                                col =>
+                                  col.field === 'resource_name' ||
+                                  col.field === 'project_name'
+                              )?.field ||
+                              columns[0]?.field ||
+                              'id',
+                            sort: 'asc',
+                          },
+                        ],
+                      },
+                      columns: {
+                        columnVisibilityModel: hiddenColumns,
+                      },
+                    }}
+                    pageSizeOptions={[10, 25, 50, 100]}
+                    disableRowSelectionOnClick
+                    localeText={{
+                      noRowsLabel: 'No data found',
+                    }}
+                    slots={{
+                      toolbar: ReportBuilderDataGridToolbar,
+                    }}
+                    slotProps={{
+                      toolbar: {
+                        isFullscreen: isFullscreenGrid,
+                        onToggleFullscreen: () =>
+                          setIsFullscreenGrid(prev => !prev),
+                        GridRowCount: reportData.length,
+                        tab: 'reports',
+                      } as any,
+                      columnsPanel: {
+                        className: 'styleColumnMenu',
+                        sx: ColumnManagementStyles,
+                      },
+                      loadingOverlay: {
+                        variant: 'skeleton',
+                        noRowsVariant: 'skeleton',
+                      },
+                    }}
+                    sx={{
+                      height: '100%',
+                      '& .MuiDataGrid-virtualScrollerContent': {
+                        backgroundColor: '#F7FBFF',
+                      },
+                      '& .MuiDataGrid-row:hover': {
+                        backgroundColor: '#F7FBFF',
+                      },
+                      '& .MuiDataGrid-cell': {
+                        border: '0.5px solid #E5E7EB !important',
+                      },
+                      '& .MuiDataGrid-columnHeaders': {
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 3,
+                        backgroundColor: '#F1F6FF',
+                      },
+                      '& .MuiDataGrid-cell--textRight': {
+                        textAlign: 'right !important',
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
+            )}
           </Box>
+        </>
+      )}
 
-          {/* Conditional rendering based on active tab */}
-          {activeTab === 'reports' && (
-            <>
-              {/* Toolbar */}
-              <ReportBuilderToolbar
-                reportType={filters.reportType as ReportType}
-                tab="reports"
-                onGenerateReport={handleGenerateReport}
-                onExport={handleExport}
-                onShare={handleShare}
-                isLoading={isLoading}
-                onReportTypeChange={(reportType: ReportType) => {
-                  setReportGenerated(false);
-                  setShowData(false);
-                  setReportData([]);
-                  setFilters({
-                    reportType: reportType,
-                    period: 'last_week',
-                    customDateRange: undefined,
-                    team: [],
-                    organization: [],
-                    resourceType: [],
-                    resource: [],
-                    projectType: [],
-                    projectTypeGroup: [],
-                    project: [],
-                    portfolio: [],
-                    projectManager: [],
-                    allocationManager: [],
-                    resourceStatuses: [],
-                    resourceLocations: [],
-                    resourceWorkLocationGroup: [],
-                    projectStatuses: [],
-                  });
-                  setFiltersExpanded(true);
-                }}
-                selectedFiltersCount={getSelectedFiltersCount()}
-              />
+      {/* AI Summary Tab */}
+      {activeTab === 'aisummary' && (
+        <>
+          <ReportBuilderToolbar
+            reportType={summaryFilters.reportType as ReportType}
+            tab="aisummary"
+            onGenerateReport={handleGenerateSummary}
+            onExport={handleExport}
+            onShare={handleShare}
+            isLoading={isLoading}
+            onSummaryTypeChange={(summaryType: SummaryType) => {
+              setReportGenerated(false);
+              setShowData(false);
+              setReportData([]);
+              setSummaryFilters({
+                reportType: 'resourceProjectPeriod',
+                summaryType: summaryType,
+                period: 'last_week',
+                customDateRange: undefined,
+                team: [],
+                organization: [],
+                resourceType: [],
+                resource: [],
+                projectType: [],
+                projectTypeGroup: [],
+                project: [],
+                portfolio: [],
+                projectManager: [],
+                allocationManager: [],
+                resourceStatuses: [],
+                resourceLocations: [],
+                resourceWorkLocationGroup: [],
+                projectStatuses: [],
+              });
+              setFiltersExpanded(true);
+            }}
+            selectedFiltersCount={getSummarySelectedFiltersCount()}
+          />
 
-              {/* Filters */}
-              <ReportBuilderFilters
-                expanded={filtersExpanded}
-                onToggle={() => setFiltersExpanded(!filtersExpanded)}
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                onResetFilters={handleResetFilters}
-              />
+          <ReportBuilderFilters
+            expanded={filtersExpanded}
+            onToggle={() => setFiltersExpanded(!filtersExpanded)}
+            filters={summaryFilters}
+            onFiltersChange={handleSummaryFiltersChange}
+            onResetFilters={handleResetSummaryFilters}
+            mode="aisummary"
+          />
 
-              {/* Content Area */}
-              <Box
-                sx={{
-                  flex: 1,
-                  backgroundColor: '#F9FAFB',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                {!reportGenerated && !showData ? (
-                  <Box
-                    sx={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: '15px',
-                        fontWeight: 500,
-                        color: '#6B7280',
-                        mb: 3,
-                      }}
-                    >
-                      Configure your filters and generate a report to see data
-                      here
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      onClick={handleGenerateReport}
-                      disabled={isLoading}
-                      sx={{
-                        height: 40,
-                        backgroundColor: '#152E75',
-                        color: '#fff',
-                        textTransform: 'none',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        px: 4,
-                        borderRadius: '6px',
-                        boxShadow: 'none',
-                        '&:hover': {
-                          backgroundColor: '#1C3A8C',
-                          boxShadow: 'none',
-                        },
-                        '&:disabled': {
-                          backgroundColor: '#D1D5DB',
-                        },
-                      }}
-                    >
-                      {isLoading ? 'Generating...' : 'Generate Report'}
-                    </Button>
-                  </Box>
-                ) : (
-                  <Box
-                    sx={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      overflow: 'hidden',
-                      p: isFullscreenGrid ? 0 : 0,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        flex: 1,
-                        height: isFullscreenGrid ? '100vh' : '100%',
-                        minHeight: 400,
-                        backgroundColor: '#ffffff',
-                        borderRadius: isFullscreenGrid ? 0 : '0px',
-                        overflow: 'hidden',
-                        position: isFullscreenGrid ? 'fixed' : 'relative',
-                        top: isFullscreenGrid ? 0 : 'auto',
-                        left: isFullscreenGrid ? 0 : 'auto',
-                        right: isFullscreenGrid ? 0 : 'auto',
-                        bottom: isFullscreenGrid ? 0 : 'auto',
-                        zIndex: isFullscreenGrid ? 1300 : 'auto',
-                      }}
-                    >
-                      <StyledDataGrid
-                        key={filters.reportType}
-                        rows={reportData}
-                        columns={columns}
-                        hideFooter
-                        loading={isLoading}
-                        initialState={{
-                          pagination: {
-                            paginationModel: { pageSize: 25, page: 0 },
-                          },
-                          sorting: {
-                            sortModel: [
-                              {
-                                field:
-                                  columns.find(
-                                    col =>
-                                      col.field === 'resource_name' ||
-                                      col.field === 'project_name'
-                                  )?.field ||
-                                  columns[0]?.field ||
-                                  'id',
-                                sort: 'asc',
-                              },
-                            ],
-                          },
-                          columns: {
-                            columnVisibilityModel: hiddenColumns,
-                          },
-                        }}
-                        pageSizeOptions={[10, 25, 50, 100]}
-                        disableRowSelectionOnClick
-                        localeText={{
-                          noRowsLabel: 'No data found',
-                        }}
-                        slots={{
-                          toolbar: ReportBuilderDataGridToolbar,
-                        }}
-                        slotProps={{
-                          toolbar: {
-                            isFullscreen: isFullscreenGrid,
-                            onToggleFullscreen: () =>
-                              setIsFullscreenGrid(prev => !prev),
-                            GridRowCount: reportData.length,
-                            tab: 'reports',
-                          } as any,
-                          columnsPanel: {
-                            className: 'styleColumnMenu',
-                            sx: ColumnManagementStyles,
-                          },
-                          loadingOverlay: {
-                            variant: 'skeleton',
-                            noRowsVariant: 'skeleton',
-                          },
-                        }}
-                        sx={{
-                          height: '100%',
-                          '& .MuiDataGrid-virtualScrollerContent': {
-                            backgroundColor: '#F7FBFF',
-                          },
-                          '& .MuiDataGrid-row:hover': {
-                            backgroundColor: '#F7FBFF',
-                          },
-                          '& .MuiDataGrid-cell': {
-                            border: '0.5px solid #E5E7EB !important',
-                          },
-                          '& .MuiDataGrid-columnHeaders': {
-                            position: 'sticky',
-                            top: 0,
-                            zIndex: 3,
-                            backgroundColor: '#F1F6FF',
-                          },
-                          '& .MuiDataGrid-cell--textRight': {
-                            textAlign: 'right !important',
-                          },
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                )}
-              </Box>
-            </>
-          )}
+          <Box
+            sx={{
+              flex: 1,
+              backgroundColor: '#F9FAFB',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <AISummaryTab />
+          </Box>
+        </>
+      )}
 
-          {/* AI Summary Tab */}
-          {activeTab === 'aisummary' && (
-            <>
-              <ReportBuilderToolbar
-                reportType={summaryFilters.reportType as ReportType}
-                tab="aisummary"
-                onGenerateReport={handleGenerateSummary}
-                onExport={handleExport}
-                onShare={handleShare}
-                isLoading={isLoading}
-                onSummaryTypeChange={(summaryType: SummaryType) => {
-                  setReportGenerated(false);
-                  setShowData(false);
-                  setReportData([]);
-                  setSummaryFilters({
-                    reportType: 'resourceProjectPeriod',
-                    summaryType: summaryType,
-                    period: 'last_week',
-                    customDateRange: undefined,
-                    team: [],
-                    organization: [],
-                    resourceType: [],
-                    resource: [],
-                    projectType: [],
-                    projectTypeGroup: [],
-                    project: [],
-                    portfolio: [],
-                    projectManager: [],
-                    allocationManager: [],
-                    resourceStatuses: [],
-                    resourceLocations: [],
-                    resourceWorkLocationGroup: [],
-                    projectStatuses: [],
-                  });
-                  setFiltersExpanded(true);
-                }}
-                selectedFiltersCount={getSummarySelectedFiltersCount()}
-              />
+      {/* Custom Tab*/}
+      {activeTab === 'custom' && (
+        <>
+          <ReportBuilderToolbar
+            reportType={customFilters.reportType as ReportType}
+            tab="custom"
+            onGenerateReport={handleGenerateCustomReport}
+            onExport={handleExport}
+            onShare={handleShare}
+            isLoading={customReportState.loading}
+            selectedFiltersCount={getCustomSelectedFiltersCount()}
+          />
 
-              <ReportBuilderFilters
-                expanded={filtersExpanded}
-                onToggle={() => setFiltersExpanded(!filtersExpanded)}
-                filters={summaryFilters}
-                onFiltersChange={handleSummaryFiltersChange}
-                onResetFilters={handleResetSummaryFilters}
-                mode="aisummary"
-              />
+          {/* Filters for Custom tab */}
+          <ReportBuilderFilters
+            expanded={filtersExpanded}
+            onToggle={() => setFiltersExpanded(!filtersExpanded)}
+            filters={customFilters}
+            onFiltersChange={handleCustomFiltersChange}
+            onResetFilters={handleResetCustomFilters}
+            mode="custom"
+          />
 
-              <Box
-                sx={{
-                  flex: 1,
-                  backgroundColor: '#F9FAFB',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <AISummaryTab />
-              </Box>
-            </>
-          )}
-
-          {/* Custom Tab*/}
-          {activeTab === 'custom' && (
-            <>
-              <ReportBuilderToolbar
-                reportType={customFilters.reportType as ReportType}
-                tab="custom"
-                onGenerateReport={handleGenerateCustomReport}
-                onExport={handleExport}
-                onShare={handleShare}
-                isLoading={customReportState.loading}
-                selectedFiltersCount={getCustomSelectedFiltersCount()}
-              />
-
-              {/* Filters for Custom tab */}
-              <ReportBuilderFilters
-                expanded={filtersExpanded}
-                onToggle={() => setFiltersExpanded(!filtersExpanded)}
-                filters={customFilters}
-                onFiltersChange={handleCustomFiltersChange}
-                onResetFilters={handleResetCustomFilters}
-                mode="custom"
-              />
-
-              <Box
-                sx={{
-                  flex: 1,
-                  backgroundColor: '#F9FAFB',
-                  overflow: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  p: 0,
-                }}
-              >
-                <CustomTab
-                  showActuals={customFilters.show_actuals || false}
-                  APIFilters={APIFilters}
-                />
-              </Box>
-            </>
-          )}
+          <Box
+            sx={{
+              flex: 1,
+              backgroundColor: '#F9FAFB',
+              overflow: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              p: 0,
+            }}
+          >
+            <CustomTab
+              showActuals={customFilters.show_actuals || false}
+              APIFilters={APIFilters}
+            />
+          </Box>
         </>
       )}
     </Box>
   );
 }
 
-export default withRBAC(ReportBuilderPage, ['Reports']);
+export default withRBAC(ReportBuilderPage, [
+  'Reports',
+  'AISummary',
+  'CustomReports',
+]);
