@@ -37,6 +37,7 @@ import {
   AllocationForm_Status_Filter,
   DATE_FORMAT,
   PROJECT_ALLOCATION_STATUS,
+  PROJECT_INACTIVE_STATUS,
   teamsViewsGrouping,
 } from '../constants/constants';
 import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
@@ -245,7 +246,12 @@ export function formatAllAllocations(
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
         projectTypeGroup: projectTypeGroup?.Name || null,
-        projectOvertimeAllowed:project?.AllowOvertime === true ? 'Yes': project?.AllowOvertime === false ? 'No': null,
+        projectOvertimeAllowed:
+          project?.AllowOvertime === true
+            ? 'Yes'
+            : project?.AllowOvertime === false
+              ? 'No'
+              : null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
@@ -264,7 +270,8 @@ export function formatAllAllocations(
         workLocation: locationDetails?.Name || null,
         department: resource?.Department || null,
         hrLevel: resource?.HRLevel || null,
-        manager: getResourceFromUid(resource?.Manager , resources)?.FullName ||null,
+        manager:
+          getResourceFromUid(resource?.Manager, resources)?.FullName || null,
         contractorHourlyRate: resource?.ContractorHourlyRate || null,
         contractorHourlyRateCurrency:
           resource?.ContractorHourlyRateCurrency || null,
@@ -407,6 +414,95 @@ export function injectBlankRows(
   return [...allocations, ...extraRows];
 }
 
+export function injectBlankProjectRows(
+  allocations: AllAllocations[],
+  projects: Project[],
+  portfolios: Portfolio[],
+  StartDate?: string,
+  EndDate?: string
+) {
+  let weeks = null;
+  if (StartDate && EndDate) {
+    weeks = getWeeksInRange(StartDate, EndDate);
+  }
+
+  const existingKeys = new Set(allocations.map(a => `${a.project}___`));
+
+  const extraRows: AllAllocations[] = [];
+
+  projects.forEach(project => {
+    // Filter out Allocations that belong to resource without an AllocationForm_Status_FILTER Status.
+    if (project?.Status && PROJECT_INACTIVE_STATUS.includes(project?.Status))
+      return;
+
+    const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
+    const key = `${project.Name}___`;
+
+    if (!existingKeys.has(key)) {
+      extraRows.push({
+        id: `project/${project.Name}`,
+        resourceId: null,
+        project: project.Name,
+        projectId: project.Id,
+        projectSponsor: project.ProjectSponsor || '',
+        projectManager: project.ProjectManager || '',
+        projectStatus: project.Status || '',
+        projectLocation: project.Location || '',
+        projectType: project.Type || '',
+        projectTypeGroup: '',
+        projectOvertimeAllowed: project.AllowOvertime || null,
+        projectCost: project.Budget || null,
+        projectCurrency: project.BudgetCurrency || '',
+        projectStartDate: project.StartDate || '',
+        projectEndDate: project.EndDate || '',
+        projectDescription: project.Description || '',
+        portfolioId: portfolio ? portfolio?.Id : null,
+        portfolioName: portfolio ? portfolio?.Name : 'zzzzz',
+        portfolioSidebarColor: portfolio ? portfolio?.SidebarColor : null,
+        portfolioDescription: portfolio ? portfolio?.Description || null : null,
+        portfolioStatus: portfolio ? portfolio?.Status || null : null,
+        organisationId: null,
+        organisationName: '',
+        organisationStatus: '',
+        email: null,
+        phoneNumber: null,
+        resourceStartDate: null,
+        resourceEndDate: null,
+        resourceLocationCategory: null,
+        workLocation: null,
+        department: null,
+        hrLevel: null,
+        manager: null,
+        contractorHourlyRate: null,
+        contractorHourlyRateCurrency: null,
+        averageWeeklyHours: null,
+        resourceStatus: null,
+        resource: null,
+        totalEffort: 0,
+        role: '',
+        teams: '',
+        resourceType: '',
+        teamStatus: '',
+        teamAllocationManager: '',
+        teamId: '',
+        hasAllocation: false,
+      });
+
+      if (weeks) {
+        weeks.forEach(week => {
+          extraRows[extraRows.length - 1][week.key] = {
+            allocationId: null,
+            value: null,
+            period: week.period,
+          };
+        });
+      }
+    }
+  });
+
+  return [...allocations, ...extraRows];
+}
+
 export function formatCostAllocations(
   allocations: CostAllocation[],
   teams: Team[],
@@ -488,7 +584,12 @@ export function formatCostAllocations(
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
         projectTypeGroup: projectTypeGroup?.Name || null,
-        projectOvertimeAllowed:project?.AllowOvertime === true ? 'Yes' : project?.AllowOvertime === false ? 'No': null,
+        projectOvertimeAllowed:
+          project?.AllowOvertime === true
+            ? 'Yes'
+            : project?.AllowOvertime === false
+              ? 'No'
+              : null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
@@ -502,7 +603,8 @@ export function formatCostAllocations(
         workLocation: locationDetails?.Name || null,
         department: resource?.Department || null,
         hrLevel: resource?.HRLevel || null,
-        manager: getResourceFromUid(resource?.Manager , resources)?.FullName ||null,
+        manager:
+          getResourceFromUid(resource?.Manager, resources)?.FullName || null,
         contractorHourlyRate: resource?.ContractorHourlyRate || null,
         contractorHourlyRateCurrency:
           resource?.ContractorHourlyRateCurrency || null,
@@ -625,7 +727,12 @@ export const generateEmptyRow = (
     projectLocation: project?.Location || null,
     projectType: project?.Type || null,
     projectTypeGroup: null,
-    projectOvertimeAllowed: project?.AllowOvertime === true? 'Yes': project?.AllowOvertime === false ? 'No': null,
+    projectOvertimeAllowed:
+      project?.AllowOvertime === true
+        ? 'Yes'
+        : project?.AllowOvertime === false
+          ? 'No'
+          : null,
     projectCost: project?.Budget ?? null,
     projectCurrency: project?.BudgetCurrency || null,
     projectStartDate: project?.StartDate || null,
@@ -639,12 +746,88 @@ export const generateEmptyRow = (
     workLocation: locationDetails?.Name || null,
     department: resource?.Department || null,
     hrLevel: resource?.HRLevel || null,
-    manager: getResourceFromUid(resource?.Manager , resources)?.FullName ||null,
+    manager: getResourceFromUid(resource?.Manager, resources)?.FullName || null,
     contractorHourlyRate: resource?.ContractorHourlyRate || null,
     contractorHourlyRateCurrency:
       resource?.ContractorHourlyRateCurrency || null,
     averageWeeklyHours: resource?.AverageWeeklyHours || null,
     resourceStatus: resource?.Status || null,
+    totalEffort: 0,
+  };
+
+  weeks.forEach(week => {
+    emptyRow[week.key] = {
+      allocationId: null,
+      value: null,
+      period: week.period,
+    };
+  });
+
+  return emptyRow;
+};
+
+export const generateEmptyProjectRow = (
+  startDate: string,
+  endDate: string,
+  portfolios: Portfolio[] | null,
+  projects: Project[] | null,
+  allocation: Allocation
+): AllocationGridCell => {
+  const weeks = getWeeksInRange(startDate, endDate);
+
+  const project = projects?.find(p => p.Id === allocation.Project);
+  const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
+  const key = `project/${allocation.ProjectName}___`;
+
+  const emptyRow: AllocationGridCell = {
+    id: key,
+    resourceId: null,
+    resource: null,
+    role: null,
+    resourceType: null,
+    teams: null,
+    teamStatus: null,
+    teamAllocationManager: null,
+    organisationId: null,
+    organisationName: null,
+    organisationStatus: null,
+    portfolioId: portfolio ? portfolio?.Id : null,
+    portfolioName: portfolio ? portfolio?.Name : 'zzzzz',
+    portfolioSidebarColor: portfolio ? portfolio?.SidebarColor : null,
+    portfolioDescription: portfolio ? portfolio?.Description || null : null,
+    portfolioStatus: portfolio ? portfolio?.Status || null : null,
+    project: project?.Name || allocation.ProjectName || null,
+    projectId: project?.Id || allocation.Project || null,
+    projectSponsor: null,
+    projectManager: null,
+    projectStatus: project?.Status || null,
+    projectLocation: project?.Location || null,
+    projectType: project?.Type || null,
+    projectTypeGroup: null,
+    projectOvertimeAllowed:
+      project?.AllowOvertime === true
+        ? 'Yes'
+        : project?.AllowOvertime === false
+          ? 'No'
+          : null,
+    projectCost: project?.Budget ?? null,
+    projectCurrency: project?.BudgetCurrency || null,
+    projectStartDate: project?.StartDate || null,
+    projectEndDate: project?.EndDate || null,
+    projectDescription: project?.Description || null,
+    email: null,
+    phoneNumber: null,
+    resourceStartDate: null,
+    resourceEndDate: null,
+    resourceLocationCategory: null,
+    workLocation: null,
+    department: null,
+    hrLevel: null,
+    manager: null,
+    contractorHourlyRate: null,
+    contractorHourlyRateCurrency: null,
+    averageWeeklyHours: null,
+    resourceStatus: null,
     totalEffort: 0,
   };
 
