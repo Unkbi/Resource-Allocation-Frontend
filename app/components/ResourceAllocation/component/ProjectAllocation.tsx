@@ -12,7 +12,6 @@ import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Location } from '@/app/types';
 import {
-  calculateTotalEffort,
   getAllocationManagerFromPath,
   getResourceFromUid,
   getTotalWeeks,
@@ -174,8 +173,7 @@ function ProjectAllocation({
 
         const formattedResources = filteredResources?.map(allocation => ({
           ...allocation,
-          // totalEffort: calculateTotalEffort(normalizeRow(allocation)), commenting old total effort calculation 
-          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          hasAllocation: (allocation?.totalEffort ?? 0) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
             _resources || []
@@ -1008,13 +1006,12 @@ function ProjectAllocation({
     },
     {
       field: 'totalEffort',
-      headerName: 'Totals All Time',
-      width: 63,
+      headerName: 'Total Effort',
+      width: 114,
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,
-      headerClassName: 'secondary-header',
-      // cellClassName: 'secondary-cell',
+      headerClassName: 'totals-header',
       headerAlign: 'left',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
@@ -1028,16 +1025,21 @@ function ProjectAllocation({
     }, 
     {
       field: 'totalAllocationsTillDate',
-      headerName: 'Totals Till Date',
-      width: 67,
+      headerName: 'Effort Till Date',
+      width: 114,
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,
-      headerClassName: 'secondary-header',
+      headerClassName: 'totals-header',
       headerAlign: 'left',
       primaryColumn: true,
-       valueGetter: (params: any) => {
-       return params.value
+      valueGetter: (params: any) => {
+        const allocations = params.row.allocations as any[];
+        const total = allocations.reduce((sum, allocation) => {
+          const effort = Number(allocation.Effort);
+          return sum + (isNaN(effort) ? 0 : effort);
+        }, 0);
+        return total;
       },
       renderCell: (params: GridCellParams) => {
         const value = Number(params.value);

@@ -12,7 +12,6 @@ import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Location } from '@/app/types';
 import {
-  calculateTotalEffort,
   formatDateMMDDYYYY,
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
@@ -112,8 +111,7 @@ function PortfolioAllocation({
 
         const formattedResources = filteredResources?.map(allocation => ({
           ...allocation,
-          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          hasAllocation: (allocation?.totalEffort ?? 0) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
             _resources || []
@@ -775,7 +773,7 @@ function PortfolioAllocation({
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,
-      headerClassName: 'secondary-header',
+      headerClassName: 'totals-header',
       // cellClassName: 'secondary-cell',
       headerAlign: 'left',
       primaryColumn: true,
@@ -788,6 +786,33 @@ function PortfolioAllocation({
         return <EllipsisNameCell value={formattedValue} />;
       },
     },
+    {
+      field: 'totalAllocationsTillDate',
+      headerName: 'Effort Till Date',
+      width: 114,
+      type: 'number',
+      sortable: true,
+      cellClassName: getCellClassName,
+      headerClassName: 'totals-header',
+      headerAlign: 'left',
+      primaryColumn: true,
+      valueGetter: (params: any) => {
+        const allocations = params.row.allocations as any[];
+        const total = allocations.reduce((sum, allocation) => {
+          const effort = Number(allocation.Effort);
+          return sum + (isNaN(effort) ? 0 : effort);
+        }, 0);
+        return total;
+      },
+      renderCell: (params: GridCellParams) => {
+        const value = Number(params.value);
+        const formattedValue =
+          !isNaN(value) && value !== null
+            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            : null;
+        return <EllipsisNameCell value={formattedValue} />;
+      },
+    }, 
     {
       field: 'department',
       headerName: 'Department',

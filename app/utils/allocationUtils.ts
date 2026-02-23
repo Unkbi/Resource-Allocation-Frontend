@@ -209,13 +209,17 @@ export function formatAllAllocations(
     const resource = resourceDetails?.Resource;
     const allTimeTotal = totalAllocations?.find(
       (t: any) =>
-        t.ResourceTotals.length && t.ResourceTotals?.[0].Resource === alloc.Resource &&
         t.Project === alloc.Project
     );
+    const resourceAllTimeTotal = allTimeTotal?.ResourceTotals?.find(
+      (r: any) => r.Resource === alloc.Resource
+    );
     const tillDateTotal = totalAllocationsTillDate?.find(
-     (t: any) =>
-        t.ResourceTotals.length && t.ResourceTotals?.[0].Resource === alloc.Resource &&
+      (t: any) =>
         t.Project === alloc.Project
+    );
+    const resourceTillDateTotal = tillDateTotal?.ResourceTotals?.find(
+      (r: any) => r.Resource === alloc.Resource
     );
     // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
     // Filter out Allocations that belong to projects without an PROJECT_ACTIVE_STATUS Status.
@@ -285,10 +289,10 @@ export function formatAllAllocations(
         organisationId: organisation?.Id,
         organisationName: organisation?.Name,
         organisationStatus: organisation?.Status,
-        totalEffort: allTimeTotal?.TotalAllocationsEntered ?? 0,
+        totalEffort: resourceAllTimeTotal?.TotalAllocationsEntered ?? 0,
         totalAllocationsTillDate: {
-          value :tillDateTotal?.TotalAllocationsEntered ?? 0,
-          actuals: tillDateTotal?.TotalActualsEntered ?? 0,
+          value :resourceTillDateTotal?.TotalAllocationsEntered ?? 0,
+          actuals: resourceTillDateTotal?.TotalActualsEntered ?? 0,
       }
       };
 

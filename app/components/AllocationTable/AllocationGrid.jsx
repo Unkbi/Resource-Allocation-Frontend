@@ -874,19 +874,20 @@ function AllocationGrid({
                 width: '100%',
                 height: '100%',
                 display: 'flex',
-                // paddingTop :'3px',
                 alignItems: 'stretch',
                 justifyContent: 'center',
                 position: 'relative',
               }}
             >
               {showActuals ? (
+                 <Box sx={{ paddingTop: '3px' }}>
                 <AllocationCellWithActuals
                   params={{
                     value,
                     actuals,
                   }}
                 />
+                  </Box>
               ) : (
                 <span>{value}</span>
               )}
@@ -960,7 +961,9 @@ function AllocationGrid({
                 }}
               >
                 {shouldShowActuals ? (
+                  <Box sx={{ paddingTop: '1px' }}>
                   <AllocationCellWithActuals params={cellData} />
+                    </Box>
                 ) : (
                   <span>{value}</span>
                 )}

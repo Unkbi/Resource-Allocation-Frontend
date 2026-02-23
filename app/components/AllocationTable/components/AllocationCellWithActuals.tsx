@@ -54,7 +54,7 @@ const AllocationCellWithActuals = ({
         </Box>
         <Box
           sx={{
-            width: '50px',
+            width: 'var(--width)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
