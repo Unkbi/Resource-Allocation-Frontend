@@ -504,12 +504,14 @@ export const getFinalColumns = (
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
+  const { scalarSettings } = useSelector(state => state.allSettings);
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
     endDate,
-    isFormatWithK
+    isFormatWithK,
+    scalarSettings
   );
 
   const handleAddClick = params => {
