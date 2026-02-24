@@ -1312,12 +1312,7 @@ export const getCellClassName = (
           break;
         }
       }
-
-      // If no matching range found and value exceeds max range, use the last theme
-      if (!matchingRange && sortedTheme.length > 0) {
-        matchingRange = sortedTheme[sortedTheme.length - 1];
-      }
-
+      
       if (matchingRange) {
         const base = `allocation-theme-${matchingRange.id}`;
         const groupClass =
