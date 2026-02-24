@@ -5,7 +5,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState: AllocationTotalsState = {
   totalAllocations: [],
- totalAllocationCosts: null,
+  totalAllocationCosts: [],
   totalAllocationSummary: null,
   totalAllocationsTillDate: [],
   totalAllocationCostsTillDate: null,
@@ -17,6 +17,8 @@ const initialState: AllocationTotalsState = {
   totalActualsGrandTotal: 0,
   totalAllocationsTillDateGrandTotal: 0,
   totalActualsTillDateGrandTotal: 0,
+  GrandTotalActualsCost: 0,
+  GrandTotalPlannedCost: 0,
 };
 
 const allocationTotalsSlice = createSlice({
@@ -32,7 +34,12 @@ const allocationTotalsSlice = createSlice({
         data?.GrandTotalActualsEntered ?? 0;
     },
     setTotalAllocationCosts: (state, action) => {
-      state.totalAllocationCosts = formatAPIResponse("AllocationCosts", action.payload);
+      const data = action.payload;
+      state.totalAllocationCosts = data?.Projects || [];
+      state.GrandTotalPlannedCost =
+        data?.GrandTotalPlannedCost ?? 0;
+      state.GrandTotalActualsCost =
+        data?.GrandTotalActualsCost ?? 0;
     },
     setTotalAllocationSummary: (state, action) => {
       state.totalAllocationSummary = formatAPIResponse("AllocationSummary", action.payload);
@@ -53,7 +60,7 @@ const allocationTotalsSlice = createSlice({
     },
     clearAllocationTotals: (state) => {
       state.totalAllocations = [];
-      state.totalAllocationCosts = null;
+      state.totalAllocationCosts = [];
       state.totalAllocationSummary = null;
       state.totalAllocationsTillDate = [];
       state.totalAllocationCostsTillDate = null;

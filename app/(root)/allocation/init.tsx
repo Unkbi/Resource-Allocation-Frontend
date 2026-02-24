@@ -161,11 +161,11 @@ function AllocationInit({
 
    useEffect(() => {
     if (totalAllocations.length === 0) {
-     dispatch({
-    type: FETCH_TOTAL_ALLOCATIONS,
-       payload: {},
-     });
-    }
+      dispatch({
+        type: FETCH_TOTAL_ALLOCATIONS,
+        payload: {},
+      });
+     }
    }, []);
   
    useEffect(() => {
