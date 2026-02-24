@@ -10,6 +10,7 @@ export interface ChartReportConfig {
   customStartDate?: string;
   customEndDate?: string;
   additionalFilters?: Record<string, string | string[]>;
+  show_actuals?: string;
 }
 
 /**
@@ -59,6 +60,10 @@ export const buildReportUrl = (
     if (endDate && typeof endDate === 'string') {
       params.set('customEndDate', endDate);
     }
+  }
+
+  if(config.show_actuals) {
+    params.set('show_actuals', config.show_actuals);
   }
 
   // Add additional filters from chart clicks

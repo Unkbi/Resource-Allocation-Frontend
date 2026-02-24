@@ -170,6 +170,11 @@ const parseQueryParams = (
     filters.customEndDate = customEndDate;
   }
 
+  const showActuals = searchParams.get('show_actuals');
+  if (showActuals === 'true') {
+    filters.show_actuals = true;
+  }
+
   return filters;
 };
 
@@ -794,7 +799,7 @@ function ReportBuilderPage({
         resourceWorkLocationGroup:
           pendingQueryFilters.resourceWorkLocationGroup || [],
         projectStatuses: pendingQueryFilters.projectStatuses || [],
-        show_actuals: false,
+        show_actuals: pendingQueryFilters.show_actuals || false,
       };
 
       setCustomFilters(customFiltersFromQuery);
