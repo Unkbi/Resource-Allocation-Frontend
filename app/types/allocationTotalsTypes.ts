@@ -1,7 +1,6 @@
-
 export interface AllocationTotalsState {
   totalAllocations: ProjectTotal[];
-  totalAllocationCosts:TotalAllocationCostResponse | null;
+  totalAllocationCosts: TotalAllocationCostResponse | null;
   totalAllocationSummary: AllocationSummary | null;
   totalAllocationsTillDate: ProjectTotal[];
   totalAllocationCostsTillDate: TotalAllocationCostResponse | null;
@@ -29,6 +28,12 @@ export interface ProjectTotal {
   TotalAllocationsEntered: number;
   TotalActualsEntered: number;
   ResourceTotals: ResourceTotal[];
+}
+
+export interface TotalAllocationResponse {
+  Projects: ProjectTotal[];
+  GrandTotalActualsEntered: number;
+  GrandTotalAllocationsEntered: number;
 }
 
 export interface AllocationSummary {

@@ -1245,7 +1245,7 @@ export const getCellClassName = (
       type === 'cost' &&
       params.rowNode?.type === 'group' &&
       params.rowNode?.groupingField === 'project' &&
-      params?.field === 'totalEffort' 
+      params?.field === 'totalEffort'
     ) {
       const project = allProjects.find(
         row => row.Name === params.rowNode.groupingKey

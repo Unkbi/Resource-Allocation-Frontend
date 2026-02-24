@@ -190,6 +190,7 @@ import {
   CREATE_BUSINESS_IMPACT,
   UPDATE_BUSINESS_IMPACT,
 } from '@/app/redux/actions/businessImpactActions';
+import { UPDATE_TOTAL_ALLOCATIONS } from '@/app/redux/actions/allocationTotalsAction';
 
 const initialValuesMap = {
   add_project: {
@@ -1816,58 +1817,120 @@ const AllocationForm = () => {
                 ...new Set(new_resources.map(resource => resource?.team)),
               ];
               if (allUpdatedRows?.length > 0) {
-                if (splitView) {
-                  let allRowsForTopProjectAllocationGrid =
-                    topProjectAllocationGrid.getAllRows();
-                  // Update Allocation for Top Project Allocation Grid
-                  await updateRowsForView('topProject', [
-                    ...allUpdatedRows,
-                    ...allRowsForTopProjectAllocationGrid
-                      .filter(row => row.id.startsWith(row.projectId))
-                      .map(row => ({
-                        ...row,
-                        _action: 'delete',
-                      })),
-                  ]);
-                  // After completing filter to show only current selected Project
-                  allRowsForTopProjectAllocationGrid =
-                    topProjectAllocationGrid.getAllRows();
-                  topProjectAllocationGrid.setRows(
-                    filterAllocationsForSelectedProject(
-                      allRowsForTopProjectAllocationGrid,
-                      splitViewCurrentProject
-                    )
-                  );
+                // Get New Project Totals, for the projects Updated
+                const updatedProjects = [
+                  ...new Set(allUpdatedRows.map(row => row.projectId)),
+                ];
+                try {
+                  const response = await new Promise((resolve, reject) => {
+                    dispatch({
+                      type: UPDATE_TOTAL_ALLOCATIONS,
+                      payload: {
+                        updatedProjects: updatedProjects,
+                        resolve,
+                        reject,
+                      },
+                    });
+                  });
 
-                  // Update Allocation for Bottom Team Allocation Grid
-                  updateRowsForView('bottomTeam', allUpdatedRows);
-                  updateRowsForView('projectAllocation', allUpdatedRows);
-                  updateRowsForView('teamAllocation', allUpdatedRows);
-                } else if (teamsViewsGrouping.includes(currentView?.GroupBy)) {
-                  updateRowsForView('teamAllocation', allUpdatedRows);
-                } else if (
-                  projectViewsGrouping.includes(currentView?.GroupBy)
-                ) {
-                  updateRowsForView('projectAllocation', allUpdatedRows);
-                } else {
+                  allUpdatedRows = allUpdatedRows.map(row => {
+                    const updatedProjectTotal =
+                      response.totalAllocation?.Projects?.find(
+                        p => p.Project === row.projectId
+                      );
+                    const updatedProjectTotalTillDate =
+                      response.totalAllocationTillDate?.Projects?.find(
+                        p => p.Project === row.projectId
+                      );
+                    const updatedResourceTotalTillDate =
+                      updatedProjectTotalTillDate?.ResourceTotals?.find(
+                        r => r.Resource === row.resourceId
+                      );
+                    if (updatedProjectTotal && updatedProjectTotalTillDate) {
+                      const updatedRow = {
+                        ...row,
+                        totalEffort:
+                          updatedProjectTotal?.ResourceTotals?.find(
+                            r => r.Resource === row.resourceId
+                          )?.TotalAllocationsEntered || 0,
+                        totalAllocationsTillDate: {
+                          actuals:
+                            updatedResourceTotalTillDate?.TotalActualsEntered ||
+                            0,
+                          value:
+                            updatedResourceTotalTillDate?.TotalAllocationsEntered ||
+                            0,
+                        },
+                      };
+                      return updatedRow;
+                    }
+                    return row;
+                  });
+
+                  if (splitView) {
+                    let allRowsForTopProjectAllocationGrid =
+                      topProjectAllocationGrid.getAllRows();
+                    // Update Allocation for Top Project Allocation Grid
+                    await updateRowsForView('topProject', [
+                      ...allUpdatedRows,
+                      ...allRowsForTopProjectAllocationGrid
+                        .filter(row => row.id.startsWith(row.projectId))
+                        .map(row => ({
+                          ...row,
+                          _action: 'delete',
+                        })),
+                    ]);
+                    // After completing filter to show only current selected Project
+                    allRowsForTopProjectAllocationGrid =
+                      topProjectAllocationGrid.getAllRows();
+                    topProjectAllocationGrid.setRows(
+                      filterAllocationsForSelectedProject(
+                        allRowsForTopProjectAllocationGrid,
+                        splitViewCurrentProject
+                      )
+                    );
+
+                    // Update Allocation for Bottom Team Allocation Grid
+                    updateRowsForView('bottomTeam', allUpdatedRows);
+                    updateRowsForView('projectAllocation', allUpdatedRows);
+                    updateRowsForView('teamAllocation', allUpdatedRows);
+                  } else if (
+                    teamsViewsGrouping.includes(currentView?.GroupBy)
+                  ) {
+                    updateRowsForView('teamAllocation', allUpdatedRows);
+                  } else if (
+                    projectViewsGrouping.includes(currentView?.GroupBy)
+                  ) {
+                    updateRowsForView('projectAllocation', allUpdatedRows);
+                  } else {
+                    dispatch(
+                      showToastAction(
+                        true,
+                        'Unable to update allocation grid for the current view. View grouping not recognized.',
+                        'error',
+                        4000
+                      )
+                    );
+                    return;
+                  }
+
                   dispatch(
                     showToastAction(
                       true,
-                      'Unable to update allocation grid for the current view. View grouping not recognized.',
-                      'error',
-                      4000
+                      `Successfully updated allocation for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
+                      'success'
                     )
                   );
-                  return;
+                } catch (error) {
+                  console.error('Error updating total allocations:', error);
+                  dispatch(
+                    showToastAction(
+                      true,
+                      `Error updating total allocations for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
+                      'error'
+                    )
+                  );
                 }
-
-                dispatch(
-                  showToastAction(
-                    true,
-                    `Successfully updated allocation for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
-                    'success'
-                  )
-                );
               }
               handleOnAdd(new_resources, filteredProjects);
               handleScrollAndFocus(new_resources, allMondays, filteredProjects);

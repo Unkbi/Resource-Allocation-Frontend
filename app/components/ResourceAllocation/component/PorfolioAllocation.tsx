@@ -29,6 +29,7 @@ import {
 } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 interface PortfolioAllocationProps {
   startDate: string | null;
@@ -788,9 +789,9 @@ function PortfolioAllocation({
         const value = Number(params.value);
         const formattedValue =
           !isNaN(value) && value !== null
-            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            ? normalizeAllocationValue(value)
             : null;
-        return <EllipsisNameCell value={formattedValue} />;
+        return <EllipsisNameCell value={`${formattedValue}`} />;
       },
     },
     {
@@ -803,23 +804,15 @@ function PortfolioAllocation({
       headerClassName: 'totals-header',
       headerAlign: 'left',
       primaryColumn: true,
-      valueGetter: (params: any) => {
-        const allocations = params.row.allocations as any[];
-        const total = allocations.reduce((sum, allocation) => {
-          const effort = Number(allocation.Effort);
-          return sum + (isNaN(effort) ? 0 : effort);
-        }, 0);
-        return total;
-      },
       renderCell: (params: GridCellParams) => {
         const value = Number(params.value);
         const formattedValue =
           !isNaN(value) && value !== null
-            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            ? normalizeAllocationValue(value)
             : null;
-        return <EllipsisNameCell value={formattedValue} />;
+        return <EllipsisNameCell value={`${formattedValue}`} />;
       },
-    }, 
+    },
     {
       field: 'department',
       headerName: 'Department',

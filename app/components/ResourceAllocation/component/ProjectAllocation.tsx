@@ -50,6 +50,7 @@ import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -1038,9 +1039,9 @@ function ProjectAllocation({
         const value = Number(params.value);
         const formattedValue =
           !isNaN(value) && value !== null
-            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            ? normalizeAllocationValue(value)
             : null;
-        return <EllipsisNameCell value={formattedValue} />;
+        return <EllipsisNameCell value={`${formattedValue}`} />;
       },
     },
     {
@@ -1053,23 +1054,15 @@ function ProjectAllocation({
       headerClassName: 'totals-header',
       headerAlign: 'left',
       primaryColumn: true,
-      valueGetter: (params: any) => {
-        const allocations = params.row.allocations as any[];
-        const total = allocations.reduce((sum, allocation) => {
-          const effort = Number(allocation.Effort);
-          return sum + (isNaN(effort) ? 0 : effort);
-        }, 0);
-        return total;
-      },
       renderCell: (params: GridCellParams) => {
         const value = Number(params.value);
         const formattedValue =
           !isNaN(value) && value !== null
-            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            ? normalizeAllocationValue(value)
             : null;
-        return <EllipsisNameCell value={formattedValue} />;
+        return <EllipsisNameCell value={`${formattedValue}`} />;
       },
-    }, 
+    },
     {
       field: 'department',
       headerName: 'Department',
@@ -1211,7 +1204,7 @@ function ProjectAllocation({
                 projectType: false,
                 projectTypeGroup: false,
                 totalEffort: true,
-                totalAllocationsTillDate:true,
+                totalAllocationsTillDate: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
                 email: false,

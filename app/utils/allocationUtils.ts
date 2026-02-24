@@ -294,10 +294,17 @@ export function formatAllAllocations(
         organisationId: organisation?.Id,
         organisationName: organisation?.Name,
         organisationStatus: organisation?.Status,
-        totalEffort: resourceAllTimeTotal?.TotalAllocationsEntered ?? 0,
+        totalEffort:
+          Math.round(
+            (resourceAllTimeTotal?.TotalAllocationsEntered ?? 0) * 100
+          ) / 100,
         totalAllocationsTillDate: {
-          value: resourceTillDateTotal?.TotalAllocationsEntered ?? 0,
-          actuals: resourceTillDateTotal?.TotalActualsEntered ?? 0,
+          value: Math.round(
+            ((resourceTillDateTotal?.TotalAllocationsEntered ?? 0) * 100) / 100
+          ),
+          actuals: Math.round(
+            ((resourceTillDateTotal?.TotalActualsEntered ?? 0) * 100) / 100
+          ),
         },
       };
 
