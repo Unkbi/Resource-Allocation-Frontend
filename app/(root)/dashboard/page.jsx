@@ -812,7 +812,7 @@ export default function ExecutiveDashboardPage() {
     if (!dashboardQueryKeys) return false;
     if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
-    if (queryKey === 'budgetVsPlanVsActual') return false; // Hide cost chart until permissions are properly implemented
+    if (queryKey === 'budgetVsPlanVsActual' || queryKey === 'totalResourceCost') return false; // Hide cost chart until permissions are properly implemented
     if (queryKey==='userStatusSplitByTeam' || queryKey==='weeklyLoggedInUsersByTeam') return false; // Temporary fix to hide chart until drilldown issue is resolved
 
     const queryDetails = dashboardQueryKeys?.find(
