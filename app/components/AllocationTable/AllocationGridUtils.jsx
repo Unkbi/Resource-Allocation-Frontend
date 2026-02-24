@@ -1237,7 +1237,10 @@ export const getCellClassName = (
   isCellEditable,
   groupBy = ''
 ) => {
-  if (params?.field === 'totalEffort') {
+  if (
+    params?.field === 'totalEffort' ||
+    params?.field === 'totalAllocationsTillDate'
+  ) {
     if (
       type === 'cost' &&
       params.rowNode?.type === 'group' &&

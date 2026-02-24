@@ -6,7 +6,6 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import {
-  calculateTotalEffort,
   formatDateMMDDYYYY,
   getAllocationManagerFromPath,
   getResourceFromUid,
@@ -145,8 +144,7 @@ function OrganisationAllocation({
 
         const formattedResources = filteredResources?.map(allocation => ({
           ...allocation,
-          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          hasAllocation: (allocation?.totalEffort ?? 0) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
             _resources || []

@@ -46,6 +46,7 @@ import {
   fetchResourceAllocationsForSaga,
   fetchTeamAllocationsForSaga,
 } from '../services/teamServices';
+import { ProjectTotal, ProjectTotalCost } from '../types/allocationTotalsTypes';
 
 export const formatAllocations = (
   allocationsData: ApiResponse<Allocation[]>,
@@ -186,7 +187,9 @@ export function formatAllAllocations(
   allResourcesDetail: AllResourceDetail[],
   location: Location[],
   startDate: string,
-  endDate: string
+  endDate: string,
+  totalAllocations: any[],
+  totalAllocationsTillDate: any[]
 ) {
   if (!allocations || allocations.length === 0) {
     return [];
@@ -206,6 +209,18 @@ export function formatAllAllocations(
       r => r?.Resource?.Id === alloc.Resource
     );
     const resource = resourceDetails?.Resource;
+    const allTimeTotal = totalAllocations?.find(
+      (t: any) => t.Project === alloc.Project
+    );
+    const resourceAllTimeTotal = allTimeTotal?.ResourceTotals?.find(
+      (r: any) => r.Resource === alloc.Resource
+    );
+    const tillDateTotal = totalAllocationsTillDate?.find(
+      (t: any) => t.Project === alloc.Project
+    );
+    const resourceTillDateTotal = tillDateTotal?.ResourceTotals?.find(
+      (r: any) => r.Resource === alloc.Resource
+    );
     // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
     // Filter out Allocations that belong to projects without an PROJECT_ACTIVE_STATUS Status.
     if (
@@ -280,7 +295,18 @@ export function formatAllAllocations(
         organisationId: organisation?.Id,
         organisationName: organisation?.Name,
         organisationStatus: organisation?.Status,
-        totalEffort: 0,
+        totalEffort:
+          Math.round(
+            (resourceAllTimeTotal?.TotalAllocationsEntered ?? 0) * 100
+          ) / 100,
+        totalAllocationsTillDate: {
+          value: Math.round(
+            ((resourceTillDateTotal?.TotalAllocationsEntered ?? 0) * 100) / 100
+          ),
+          actuals: Math.round(
+            ((resourceTillDateTotal?.TotalActualsEntered ?? 0) * 100) / 100
+          ),
+        },
       };
 
       for (const w of weeks) {
@@ -305,8 +331,6 @@ export function formatAllAllocations(
       actuals: alloc.ActualsEntered || null,
       notes: alloc.Notes || null,
     };
-
-    entry.totalEffort += alloc.AllocationEntered;
   }
 
   return sortAllAllocations(Array.from(grouped.values()));
@@ -513,7 +537,8 @@ export function formatCostAllocations(
   location: Location[],
   teamResources: Record<string, Resource[]>, // UPDATED TYPE
   startDate: string,
-  endDate: string
+  endDate: string,
+  totalAllocationCosts: ProjectTotalCost[]
 ) {
   if (!allocations || allocations.length === 0) {
     return [];
@@ -547,6 +572,15 @@ export function formatCostAllocations(
       ptg => ptg.Id === projectType?.Group
     );
     const resource = resources.find(r => r.Id === alloc.Resource);
+
+    const allTimeTotal = totalAllocationCosts?.find(
+      (t: any) =>
+        t.Project === alloc.Project
+    );
+    const resourceAllTimeTotalCost = allTimeTotal?.ResourceCosts?.find(
+      (r: any) => r.Resource === alloc.Resource
+    );
+ 
     // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
     if (
       resource?.Status &&
@@ -610,7 +644,7 @@ export function formatCostAllocations(
           resource?.ContractorHourlyRateCurrency || null,
         averageWeeklyHours: resource?.AverageWeeklyHours || null,
         resourceStatus: resource?.Status || null,
-        totalEffort: 0,
+        totalEffort: (resourceAllTimeTotalCost?.TotalPlannedCost ?? 0) / 1000,
       };
 
       for (const w of weeks) {
@@ -633,7 +667,7 @@ export function formatCostAllocations(
       value: alloc.Cost,
       period: alloc.Period.split('T')[0],
     };
-    entry.totalCost += alloc.Cost;
+  
   }
 
   return Array.from(grouped.values());
