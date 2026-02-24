@@ -11,7 +11,6 @@ import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Location, Project } from '@/app/types';
 import {
-  calculateTotalEffort,
   getAllocationManagerFromPath,
   getProjectBudgetCategory,
   getProjectBudgetColor,
@@ -25,6 +24,7 @@ import {
   FETCH_PROJECT_TYPE_GROUPS,
   FETCH_PROJECT_TYPES,
 } from '@/app/redux/actions/allSettingsActions';
+import { FETCH_TOTAL_ALLOCATION_COST } from '@/app/redux/actions/allocationTotalsAction';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
@@ -66,6 +66,9 @@ const ProjectCost = ({
     (state: RootState) => state.allResourcesDetail
   );
   const { setRows, ready } = useAllocationGrid('main');
+  
+  const { totalAllocationCosts } = useSelector(
+    (state: RootState) => state.allocationTotals);
 
   useEffect(() => {
     if (projectTypes.length === 0) {
@@ -80,14 +83,21 @@ const ProjectCost = ({
   }, []);
 
   useEffect(() => {
+    if (totalAllocationCosts.length === 0) {
+      dispatch({
+        type: FETCH_TOTAL_ALLOCATION_COST,
+        payload: {},
+      });
+    }
+  }, []);   
+  useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['AllocationCost'].r && ready && projectCosts) {
       const filteredResources = removeResourcesWithNoProjects(projectCosts);
 
       const formattedResources = filteredResources?.map(allocation => ({
         ...allocation,
-        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+        hasAllocation: (allocation?.totalEffort ?? 0) > 0,
         teamAllocationManager: getAllocationManagerFromPath(
           allocation?.teamAllocationManager,
           _resources || []
@@ -112,10 +122,11 @@ const ProjectCost = ({
           projectTypeGroups: projectTypeGroups,
           startDate: startDate,
           endDate: endDate,
+          totalAllocationCosts: totalAllocationCosts,
         },
       });
     }
-  }, [startDate, endDate, teams, projects, resources, loadingPermissions]);
+  }, [startDate, endDate, teams, projects, resources, loadingPermissions,totalAllocationCosts]);
 
   const _resources = useSelector(
     (state: RootState) => state.resources.resources

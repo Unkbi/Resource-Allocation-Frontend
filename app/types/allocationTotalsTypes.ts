@@ -1,6 +1,6 @@
 export interface AllocationTotalsState {
   totalAllocations: ProjectTotal[];
-  totalAllocationCosts: TotalAllocationCostResponse | null;
+  totalAllocationCosts: ProjectTotalCost[];
   totalAllocationSummary: AllocationSummary | null;
   totalAllocationsTillDate: ProjectTotal[];
   totalAllocationCostsTillDate: TotalAllocationCostResponse | null;
@@ -12,6 +12,8 @@ export interface AllocationTotalsState {
   totalActualsGrandTotal: number;
   totalAllocationsTillDateGrandTotal: number;
   totalActualsTillDateGrandTotal: number;
+  GrandTotalActualsCost: number;
+  GrandTotalPlannedCost: number;
 }
 
 export interface ResourceTotal {
@@ -19,6 +21,13 @@ export interface ResourceTotal {
   ResourceName: string;
   TotalAllocationsEntered: number;
   TotalActualsEntered: number;
+}
+
+export interface ResourceTotalCost {
+  Resource: string;
+  ResourceName: string;
+  TotalPlannedCost: number;
+  TotalActualsCost: number;
 }
 
 export interface ProjectTotal {
@@ -34,6 +43,15 @@ export interface TotalAllocationResponse {
   Projects: ProjectTotal[];
   GrandTotalActualsEntered: number;
   GrandTotalAllocationsEntered: number;
+}
+
+export interface ProjectTotalCost {
+  Project: string;
+  ProjectName: string;
+  Status: string;
+  TotalPlannedCost: number;
+  TotalActualsCost: number;
+  ResourceCosts: ResourceTotalCost[];
 }
 
 export interface AllocationSummary {
@@ -58,7 +76,7 @@ export interface ProjectCost {
 }
 
 export interface TotalAllocationCostResponse {
-  Projects: ProjectCost[];
+  Projects: ProjectTotalCost[];
   GrandTotalPlannedCost: number;
   GrandTotalActualsCost: number;
 }

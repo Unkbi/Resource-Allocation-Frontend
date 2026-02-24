@@ -157,6 +157,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
     projectTypeGroups,
     startDate,
     endDate,
+    totalAllocationCosts, 
   } = action.payload;
   try {
     yield put(setCostDataProcessing(true));
@@ -225,7 +226,8 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       location,
       teamResourceObject,
       startDate,
-      endDate
+      endDate,
+      totalAllocationCosts || []
     );
 
     const fullAllocations = injectBlankRows(

@@ -46,6 +46,7 @@ import {
   fetchResourceAllocationsForSaga,
   fetchTeamAllocationsForSaga,
 } from '../services/teamServices';
+import { ProjectTotal, ProjectTotalCost } from '../types/allocationTotalsTypes';
 
 export const formatAllocations = (
   allocationsData: ApiResponse<Allocation[]>,
@@ -536,7 +537,8 @@ export function formatCostAllocations(
   location: Location[],
   teamResources: Record<string, Resource[]>, // UPDATED TYPE
   startDate: string,
-  endDate: string
+  endDate: string,
+  totalAllocationCosts: ProjectTotalCost[]
 ) {
   if (!allocations || allocations.length === 0) {
     return [];
@@ -570,6 +572,15 @@ export function formatCostAllocations(
       ptg => ptg.Id === projectType?.Group
     );
     const resource = resources.find(r => r.Id === alloc.Resource);
+
+    const allTimeTotal = totalAllocationCosts?.find(
+      (t: any) =>
+        t.Project === alloc.Project
+    );
+    const resourceAllTimeTotalCost = allTimeTotal?.ResourceCosts?.find(
+      (r: any) => r.Resource === alloc.Resource
+    );
+ 
     // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
     if (
       resource?.Status &&
@@ -633,7 +644,7 @@ export function formatCostAllocations(
           resource?.ContractorHourlyRateCurrency || null,
         averageWeeklyHours: resource?.AverageWeeklyHours || null,
         resourceStatus: resource?.Status || null,
-        totalEffort: 0,
+        totalEffort: (resourceAllTimeTotalCost?.TotalPlannedCost ?? 0) / 1000,
       };
 
       for (const w of weeks) {
@@ -656,7 +667,7 @@ export function formatCostAllocations(
       value: alloc.Cost,
       period: alloc.Period.split('T')[0],
     };
-    entry.totalCost += alloc.Cost;
+  
   }
 
   return Array.from(grouped.values());
