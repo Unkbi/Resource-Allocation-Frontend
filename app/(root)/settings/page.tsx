@@ -42,7 +42,7 @@ import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import ActualsSettingsAllocationPreference from '@/app/components/Settings/ActualsSettingsAllocationPreference';
-
+import FollowSettings from '@/app/components/Settings/FollowSettings';
 interface MenuItem {
   id: string;
   title: string;
@@ -153,8 +153,9 @@ const SettingsPanel = ({
 
   const hasAnyAccess = {
     'user-profile': true,
+    'projects&teams': true,
     'actuals-settings': true,
-    notification: false,
+    'notification': false,
     'user-management': permissions['User'].r,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
@@ -208,6 +209,14 @@ const SettingsPanel = ({
             icon: '',
             content: '',
             description: 'Manage your user profile',
+          },
+          {
+            id: 'projects&teams',
+            title: 'Projects & Teams',
+            headerText: 'My Projects & Teams',
+            icon: '',
+            content: <FollowSettings />,
+            description: 'Manage your followed projects and teams',
           },
           {
             id: 'actuals-settings',
