@@ -661,24 +661,37 @@ function Project({ permissions, loadingPermissions }) {
                 }
               );
         };
+        const isFollowing = !!followsByObjectId?.[params.row.Id];
         return (
-          <Box
-            sx={{
-              display: 'inline-block',
-              maxWidth: '100%',
-              color: '#152E75',
-              cursor: 'pointer',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              minWidth: 0,
-              '&:hover': {
-                textDecoration: 'underline',
-              },
-            }}
-            onClick={handleNameClick}
-          >
-            <EllipsisNameCell value={params.value} showAvatar={false} />
+          <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0, width: '100%' }}>
+            <Box
+              sx={{
+                flex: '1 1 auto',
+                minWidth: 0,
+                color: '#152E75',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+              onClick={handleNameClick}
+            >
+              <EllipsisNameCell value={params.value} showAvatar={false} />
+            </Box>
+            {isFollowing && (
+              <VisibilityIcon
+                sx={{
+                  fontSize: 16,
+                  color: '#1C2D5F',
+                  flexShrink: 0,
+                  ml: 0.75,
+                  opacity: 0.8,
+                }}
+              />
+            )}
           </Box>
         );
       },

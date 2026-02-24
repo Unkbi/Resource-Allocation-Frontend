@@ -560,12 +560,14 @@ export const getFinalColumns = (
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
+  const { scalarSettings } = useSelector(state => state.allSettings);
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
     endDate,
-    isFormatWithK
+    isFormatWithK,
+    scalarSettings
   );
 
   const handleAddClick = params => {
@@ -1290,8 +1292,8 @@ export const getCellClassName = (
 
       const allocationValue =
         params.rowNode?.groupingField === 'resource'
-          ? Math.round(aggregatedValue * 10) / 10
-          : Math.round((aggregatedValue / totalRows) * 10) / 10;
+          ? Math.round(aggregatedValue * 100) / 100
+          : Math.round((aggregatedValue / totalRows) * 100) / 100;
 
       const sortedTheme = [...allocationTheme].sort(
         (a, b) => parseFloat(a.From) - parseFloat(b.From)
