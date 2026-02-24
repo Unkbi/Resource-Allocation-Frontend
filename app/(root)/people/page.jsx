@@ -661,25 +661,27 @@ function Resources({ permissions, loadingPermissions }) {
               );
         };
 
+        const isFollowing = !!followsByObjectId?.[params.row.Id];
         return (
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'left',
+              alignItems: 'center',
+              minWidth: 0,
+              width: '100%',
             }}
           >
             <Box
               onClick={handleNameClick}
               sx={{
-                display: 'inline-block',
-                width: '100%',
+                flex: '1 1 auto',
+                minWidth: 0,
                 color: '#152E75',
                 cursor: 'pointer',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
                 paddingLeft: '32px',
-
                 '&:hover': {
                   textDecoration: 'underline',
                 },
@@ -687,6 +689,17 @@ function Resources({ permissions, loadingPermissions }) {
             >
               {params.value}
             </Box>
+            {isFollowing && (
+              <VisibilityIcon
+                sx={{
+                  fontSize: 16,
+                  color: '#1C2D5F',
+                  flexShrink: 0,
+                  ml: 0.75,
+                  opacity: 0.8,
+                }}
+              />
+            )}
           </Box>
         );
       },
