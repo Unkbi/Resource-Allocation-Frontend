@@ -185,6 +185,7 @@ import {
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import AddBusinessImpactForm from '../../Forms/AddBusinessImpactForm';
+import FollowForm from '../../Forms/FollowForm';
 import {
   CREATE_BUSINESS_IMPACT,
   UPDATE_BUSINESS_IMPACT,
@@ -467,6 +468,20 @@ const initialValuesMap = {
     Status: '',
     Currency: 'USD',
   },
+  follow_project: {
+    isFollowing: true,
+    weeklyAISummary: true,
+    dailySummary: true,
+    planChanges: true,
+    actualsUpdates: true,
+  },
+  follow_team: {
+    isFollowing: true,
+    weeklyAISummary: true,
+    dailySummary: true,
+    planChanges: false,
+    actualsUpdates: true,
+  },
 };
 
 const AllocationForm = () => {
@@ -490,6 +505,7 @@ const AllocationForm = () => {
   const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
+  const { followsByObjectId } = useSelector(state => state.follows);
   const { startDate, endDate } = calendarDate || {};
   const { allocations } = useSelector(state => state.dataGrid);
   const { rowState } = useSelector(state => state.dataGrid);
@@ -3754,6 +3770,220 @@ const AllocationForm = () => {
         return;
       }
 
+      case 'follow_project':
+        // Determine object type from initialData (can be 'project' or 'team')
+        const objectType = initialData?.objectType || 'PROJECT';
+        const followpostData = {
+          ObjectType: objectType.toUpperCase(),
+          ObjectId: initialData.Id,
+          User: user?.id,
+          WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+          PlanChangesDailySummary: cleanedValues.planChanges,
+          ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+        };
+
+        try {
+          // Check if already following
+          const existingFollow = followsByObjectId?.[initialData.Id];
+
+          // If toggle is OFF (unfollow), trigger unfollow action
+          if (!cleanedValues.isFollowing && existingFollow?.FollowId) {
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UNFOLLOW',
+                payload: {
+                  payload: { FollowId: existingFollow.FollowId },
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `Unfollowed ${objectType.toLowerCase()} successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else if (existingFollow && existingFollow.FollowId) {
+            // Update existing follow preferences
+            const updatePayload = {
+              FollowId: existingFollow.FollowId,
+              WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+              PlanChangesDailySummary: cleanedValues.planChanges,
+              ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+            };
+
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UPDATE_FOLLOW_PREFERENCES',
+                payload: {
+                  payload: updatePayload,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `${objectType === 'PROJECT' ? 'Project' : 'Team'} follow preferences updated successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            // Create new follow
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'CREATE_FOLLOW',
+                payload: {
+                  payload: followpostData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `Now following this ${objectType.toLowerCase()}`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+
+          dispatch(closeDialog());
+          dispatch({type: 'FETCH_FOLLOWS', payload: user?.id});
+          setFormValue({});
+        } catch (error) {
+          console.error('Failed to save follow preferences:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.message || 'Failed to save follow preferences',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+
+      case 'follow_team':
+        const followTeamData = {
+          ObjectType: 'TEAM',
+          ObjectId: initialData.Id,
+          User: user?.id,
+          WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+          PlanChangesDailySummary: cleanedValues.planChanges,
+          ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+        };
+
+        try {
+          // Check if already following
+          const existingTeamFollow = followsByObjectId?.[initialData.Id];
+
+          // If toggle is OFF (unfollow), trigger unfollow action
+          if (!cleanedValues.isFollowing && existingTeamFollow?.FollowId) {
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UNFOLLOW',
+                payload: {
+                  payload: { FollowId: existingTeamFollow.FollowId },
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Unfollowed team successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else if (existingTeamFollow && existingTeamFollow.FollowId) {
+            // Update existing follow preferences
+            const updatePayload = {
+              FollowId: existingTeamFollow.FollowId,
+              WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+              PlanChangesDailySummary: cleanedValues.planChanges,
+              ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+            };
+
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UPDATE_FOLLOW_PREFERENCES',
+                payload: {
+                  payload: updatePayload,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Team follow preferences updated successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            // Create new follow
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'CREATE_FOLLOW',
+                payload: {
+                  payload: followTeamData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Now following this team',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+
+          dispatch(closeDialog());
+          setFormValue({});
+        } catch (error) {
+          console.error('Failed to save team follow preferences:', error);
+          dispatch(closeDialog());
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.message || 'Failed to save team follow preferences',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+
       default:
         return;
     }
@@ -4370,6 +4600,22 @@ const AllocationForm = () => {
           <AddBusinessImpactForm
             formikProps={formikProps}
             setFormValue={setFormValue}
+          />
+        );
+      case 'follow_project':
+        return (
+          <FollowForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+            objectType='project'
+          />
+        );
+      case 'follow_team':
+        return (
+          <FollowForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+            objectType='team'
           />
         );
       default:

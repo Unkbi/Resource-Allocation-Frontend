@@ -163,8 +163,8 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
     
     // Date range
     if (filters.StartDate && filters.EndDate) {
-        const startDate = new Date(filters.StartDate);
-        const endDate = new Date(filters.EndDate);
+        const startDate = parseISO(filters.StartDate);
+        const endDate = parseISO(filters.EndDate);
         const startDay = startDate.getDate();
         const endDay = endDate.getDate();
         const startMonth = startDate.toLocaleDateString('en-US', { month: 'short' });
