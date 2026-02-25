@@ -1281,7 +1281,10 @@ export const getCellClassName = (
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
-
+      
+      const uniqueProjectRows = new Set(
+        projectRows.map(item => item.resourceId)
+      );
       const totalRows =
         params.rowNode?.children?.length || uniqueProjectRows.size;
       const aggregatedValue = projectRows.reduce((sum, row) => {
