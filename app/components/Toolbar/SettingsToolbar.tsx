@@ -3,6 +3,8 @@
 import { Box, Button, Typography, TextField } from '@mui/material';
 import { GridToolbarContainer } from '@mui/x-data-grid-premium';
 import FilterButtonWithCount from './FilterButtonWithCount';
+import React from 'react';
+import { StyledInput } from '../Input';
 
 const commonButtonStyles = {
   backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -66,17 +68,15 @@ export default function SettingsToolbar({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
 
         {setSearch && (
-          <TextField
+         <StyledInput
+            as={TextField}
             size="small"
-            placeholder="Search..."
-            value={search ?? ''}
-            onChange={e => setSearch?.(e.target.value)}
-            sx={{
-              width: 250,
-              '& .MuiOutlinedInput-root': {
-                height: 36,
-              },
-            }}
+            placeholder="Search across columns..."
+             value={search ?? ''}
+            sx={{ width: 230 }}
+            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+              setSearch?.(e.target.value)
+            }
           />
         )}
 

@@ -15,6 +15,8 @@ import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import FilterButtonWithCount from './FilterButtonWithCount';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/app/redux/store';
+import React from 'react';
+import { StyledInput } from '../Input';
 
 interface ProjectToolbarProps {
   setFilterButtonEl?: (el: HTMLElement | null) => void;
@@ -202,21 +204,17 @@ const ProjectToolbar = ({
         </Box>
 
          <Box sx={{ px: 2, py: 1 , mt:0.7 }}>
-                          <TextField
-                            size="small"
-                            placeholder="Search across columns..."
-                            value={search ?? ''}
-                            onChange={e => setSearch?.(e.target.value)}
-                            
-                            sx={{
-                              width: 280,
-                              backgroundColor: '#fff',
-                              '& .MuiOutlinedInput-root': {
-                                height: 37,
-                              },
-                            }}
-                          />
-                </Box>
+          <StyledInput
+            as={TextField}
+            size="small"
+            placeholder="Search across columns..."
+             value={search ?? ''}
+            sx={{ width: 230 }}
+            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+              setSearch?.(e.target.value)
+            }
+          />
+        </Box>
 
         <Box
           sx={{

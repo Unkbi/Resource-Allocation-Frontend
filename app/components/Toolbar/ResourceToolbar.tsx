@@ -10,6 +10,7 @@ import CommonToolbar from './CommonToolbar';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
 import FilterButtonWithCount from './FilterButtonWithCount';
+import { StyledInput } from '../Input';
 
 interface ResourceToolbarProps {
   setFilterButtonEl?: (el: HTMLElement | null) => void;
@@ -212,21 +213,18 @@ const ResourceToolbar = ({
         <Box className="line" sx={{ marginRight: '10px', height: '64px' }}>
           <img src="/images/icons/LinePeople.svg" />
         </Box>
-                <Box sx={{ px: 2, py: 1 , mt:0.7 }}>
-                  <TextField
-                    size="small"
-                    placeholder="Search across columns..."
-                    value={search ?? ''}
-                    onChange={e => setSearch?.(e.target.value)}
-                    
-                    sx={{
-                      width: 280,
-                      backgroundColor: '#fff',
-                      '& .MuiOutlinedInput-root': {
-                        height: 37,
-                      },
-                    }}
-                  />
+
+        <Box sx={{ px: 2, py: 1, mt: 0.7 }}>
+          <StyledInput
+            as={TextField}
+            size="small"
+            placeholder="Search across columns..."
+             value={search ?? ''}
+            sx={{ width: 230 }}
+            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+              setSearch?.(e.target.value)
+            }
+          />
         </Box>
         <Box
           className="filterColBlock"

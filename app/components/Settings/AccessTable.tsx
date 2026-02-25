@@ -567,7 +567,7 @@ export default function AccessTable({
                   as={TextField}
                   name="Location"
                   size="small"
-                  placeholder="Search..."
+                  placeholder="Search across columns..."
                   value={search}
                   sx={{ width: 230 }}
                   onChange={(e: any) => setSearch(e.target.value)}
@@ -578,7 +578,7 @@ export default function AccessTable({
                 as={TextField}
                 name="Location"
                 size="small"
-                placeholder="Search..."
+                placeholder="Search across columns..."
                 value={search}
                 sx={{ width: 230 }}
                 onChange={(e: any) => setSearch(e.target.value)}
