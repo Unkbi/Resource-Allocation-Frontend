@@ -18,6 +18,7 @@ import { bootstrapSaga } from './initBootstrapSaga';
 import { aiSummarySaga } from './aiSummarySaga';
 import { customReportSaga } from './customReportSaga';
 import { userPreferencesSaga } from './userPreferencesSaga';
+import { followSaga } from './followSaga';
 
 // listening for all sagas based on actions
 export default function* rootSaga() {
@@ -41,6 +42,7 @@ export default function* rootSaga() {
     aiSummarySaga(),
     customReportSaga(),
     userPreferencesSaga(),
+    followSaga(),
     // ...add more watchers here
   ]);
 }

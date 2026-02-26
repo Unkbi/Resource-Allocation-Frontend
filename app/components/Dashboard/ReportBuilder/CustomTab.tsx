@@ -4,6 +4,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
+import { parseISO } from 'date-fns/parseISO';
 import { RootState } from '@/app/redux/store';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import { GridColDef } from '@mui/x-data-grid-premium';
@@ -162,8 +163,8 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
     
     // Date range
     if (filters.StartDate && filters.EndDate) {
-        const startDate = new Date(filters.StartDate);
-        const endDate = new Date(filters.EndDate);
+        const startDate = parseISO(filters.StartDate);
+        const endDate = parseISO(filters.EndDate);
         const startDay = startDate.getDate();
         const endDay = endDate.getDate();
         const startMonth = startDate.toLocaleDateString('en-US', { month: 'short' });
@@ -286,7 +287,7 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
                 const [month, day, year] = parts;
                 const periodDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 
-                const startDate = new Date(periodDate);
+                const startDate = parseISO(periodDate);
                 const endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + 6); // Add 6 days to get to Sunday
 
@@ -333,23 +334,23 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
     const columns: GridColDef[] = useMemo(() => {
         return [
             {
-                field: 'reporting_project_type',
-                headerName: 'Reporting Project Type',
-                minWidth: 140,
-                flex: 1,
-                renderCell: (params: any) => (
-                    <Typography sx={{ fontSize: '14px' }}>
-                        {params.value}
-                    </Typography>
-                ),
-            },
-            {
                 field: 'project',
                 headerName: 'Project',
                 minWidth: 160,
                 flex: 1.5,
                 renderCell: (params: any) => (
                     <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>
+                        {params.value}
+                    </Typography>
+                ),
+            },
+            {
+                field: 'reporting_project_type',
+                headerName: 'Reporting Project Type',
+                minWidth: 140,
+                flex: 1,
+                renderCell: (params: any) => (
+                    <Typography sx={{ fontSize: '14px' }}>
                         {params.value}
                     </Typography>
                 ),
@@ -677,7 +678,7 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
                         layouts={persistedLayouts || defaultLayouts}
                         breakpoints={{ lg: 1200, md: 996, sm: 768 }}
                         cols={{ lg: 12, md: 12, sm: 12 }}
-                        rowHeight={130}
+                        rowHeight={135}
                         onLayoutChange={handleLayoutChange}
                         isDraggable
                         isResizable

@@ -1,8 +1,13 @@
+import {
+  formatMin1Max2,
+  normalizeAllocationValue,
+} from '@/app/utils/actualsUtils';
 import { Box, Typography } from '@mui/material';
 
 interface AllocationCellWithActualsProps {
   params: any;
 }
+
 const AllocationCellWithActuals = ({
   params,
 }: AllocationCellWithActualsProps) => {
@@ -10,9 +15,7 @@ const AllocationCellWithActuals = ({
     if (isNaN(value) || isNaN(actuals)) {
       return 'transparent';
     }
-    // if (value === 0 && actuals === 0) {
-    //   return 'transparent';
-    // }
+
     if (value === actuals) {
       return '#F0FFEC';
     } else if (value < actuals) {
@@ -24,19 +27,19 @@ const AllocationCellWithActuals = ({
     }
   };
 
-  // const notes = (parseFloat(params?.formattedValue as string) * 10) % 2;
-  const rawValue = params.value ? parseFloat(params.value) : 0;
-  let rawActuals = params.actuals ? parseFloat(params.actuals) : 0;
-  const notes = (params?.notes as string) || '';
-  if (
-    (params.actuals === null || params.actuals === undefined) &&
-    !isNaN(rawValue)
-  ) {
-    rawActuals = 0;
-  }
+  const rawValue =
+    params.value !== '' && params.value !== null && params.value !== undefined
+      ? normalizeAllocationValue(params.value)
+      : 0;
 
-  const formattedValue = !isNaN(rawValue) ? rawValue.toFixed(1) : '';
-  const formattedActuals = !isNaN(rawActuals) ? rawActuals.toFixed(1) : '';
+  const rawActuals =
+    params.actuals !== '' &&
+    params.actuals !== null &&
+    params.actuals !== undefined
+      ? normalizeAllocationValue(params.actuals)
+      : 0;
+
+  const notes = (params?.notes as string) || '';
 
   return (
     <div>
@@ -50,8 +53,9 @@ const AllocationCellWithActuals = ({
         }}
       >
         <Box sx={{ position: 'relative', top: 0, left: 0, zIndex: 1 }}>
-          <Typography>{formattedValue}</Typography>
+          <Typography>{formatMin1Max2(rawValue)}</Typography>
         </Box>
+
         <Box
           sx={{
             width: '50px',
@@ -69,7 +73,7 @@ const AllocationCellWithActuals = ({
               fontWeight: 600,
             }}
           >
-            {formattedActuals}
+            {formatMin1Max2(rawActuals)}
           </Typography>
         </Box>
       </Box>
