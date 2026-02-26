@@ -300,12 +300,14 @@ export function formatAllAllocations(
             (resourceAllTimeTotal?.TotalAllocationsEntered ?? 0) * 100
           ) / 100,
         totalAllocationsTillDate: {
-          value: Math.round(
-            ((resourceTillDateTotal?.TotalAllocationsEntered ?? 0) * 100) / 100
-          ),
-          actuals: Math.round(
-            ((resourceTillDateTotal?.TotalActualsEntered ?? 0) * 100) / 100
-          ),
+          value:
+            Math.round(
+              (resourceTillDateTotal?.TotalAllocationsEntered ?? 0) * 100
+            ) / 100,
+          actuals:
+            Math.round(
+              (resourceTillDateTotal?.TotalActualsEntered ?? 0) * 100
+            ) / 100,
         },
       };
 
@@ -574,13 +576,12 @@ export function formatCostAllocations(
     const resource = resources.find(r => r.Id === alloc.Resource);
 
     const allTimeTotal = totalAllocationCosts?.find(
-      (t: any) =>
-        t.Project === alloc.Project
+      (t: any) => t.Project === alloc.Project
     );
     const resourceAllTimeTotalCost = allTimeTotal?.ResourceCosts?.find(
       (r: any) => r.Resource === alloc.Resource
     );
- 
+
     // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
     if (
       resource?.Status &&
@@ -667,7 +668,6 @@ export function formatCostAllocations(
       value: alloc.Cost,
       period: alloc.Period.split('T')[0],
     };
-  
   }
 
   return Array.from(grouped.values());

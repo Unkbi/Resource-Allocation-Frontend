@@ -866,8 +866,8 @@ function AllocationGrid({
 
         renderCell: params => {
           const cellData = buildTotalsCellData(params, apiRef);
-          const value = cellData?.value ?? 0;
-          const actuals = cellData?.actuals ?? 0;
+          const value = normalizeAllocationValue(cellData?.value) ?? 0;
+          const actuals = normalizeAllocationValue(cellData?.actuals) ?? 0;
 
           return (
             <Box
