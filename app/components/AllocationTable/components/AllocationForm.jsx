@@ -1819,7 +1819,11 @@ const AllocationForm = () => {
               if (allUpdatedRows?.length > 0) {
                 // Get New Project Totals, for the projects Updated
                 const updatedProjects = [
-                  ...new Set(allUpdatedRows.map(row => row.projectId)),
+                  ...new Set(
+                    allUpdatedRows
+                      .filter(row => row.projectId)
+                      .map(row => row.projectId)
+                  ),
                 ];
                 try {
                   const response = await new Promise((resolve, reject) => {
@@ -3925,7 +3929,7 @@ const AllocationForm = () => {
           }
 
           dispatch(closeDialog());
-          dispatch({type: 'FETCH_FOLLOWS', payload: user?.id});
+          dispatch({ type: 'FETCH_FOLLOWS', payload: user?.id });
           setFormValue({});
         } catch (error) {
           console.error('Failed to save follow preferences:', error);
@@ -4038,7 +4042,8 @@ const AllocationForm = () => {
           dispatch(
             showToast({
               open: true,
-              message: error?.message || 'Failed to save team follow preferences',
+              message:
+                error?.message || 'Failed to save team follow preferences',
               type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -4670,7 +4675,7 @@ const AllocationForm = () => {
           <FollowForm
             formikProps={formikProps}
             setFormValue={setFormValue}
-            objectType='project'
+            objectType="project"
           />
         );
       case 'follow_team':
@@ -4678,7 +4683,7 @@ const AllocationForm = () => {
           <FollowForm
             formikProps={formikProps}
             setFormValue={setFormValue}
-            objectType='team'
+            objectType="team"
           />
         );
       default:
