@@ -1337,16 +1337,50 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       },
     },
     '& .grouping-header': {
-      padding: '3px',
+      padding: '4px 3px 3px 3px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderBottom: '2px solid #DDE1E4',
       '& .MuiDataGrid-columnHeaderTitleContainer': {
         alignItems: 'center',
+        justifyContent: 'center',
         borderBottom: 'none',
+        width: '100%',
         '& .MuiDataGrid-columnHeaderTitle': {
           fontWeight: 'bold',
           fontSize: '12px',
+          textAlign: 'center',
+          width: '100%',
+        },
+        '& .MuiDataGrid-columnHeaderDraggableContainer': {
+          justifyContent: 'center',
+          width: '100%',
         },
       },
     },
+     '& .MuiDataGrid-columnHeader[data-field="totalEffort"], \
+    & .MuiDataGrid-columnHeader[data-field="totalAllocationsTillDate"]': {
+      padding: '3px 12px 3px 12px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    '& .MuiDataGrid-columnHeader[data-field="totalEffort"] .MuiDataGrid-columnHeaderTitle, \
+    & .MuiDataGrid-columnHeader[data-field="totalAllocationsTillDate"] .MuiDataGrid-columnHeaderTitle':
+    {
+        fontFamily: '"Open Sans", sans-serif',
+        fontWeight: 600,
+        fontSize: '10px',
+        lineHeight: '11.25px',
+        letterSpacing: '0px',
+        color: '#313F68',
+        width: '100%',
+        whiteSpace: 'initial',
+        overflow: 'visible',
+        textOverflow: 'unset',
+    },
+    
     '& .current-week-header': {
       backgroundColor: 'rgb(43 102 199 / 72%)',
     },

@@ -1,6 +1,6 @@
 'use client';
 
-import { Dialog, Box, Typography, IconButton, Button, Divider } from '@mui/material';
+import { Dialog, Box, Typography, IconButton, Button, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import { styled } from '@mui/material/styles';
@@ -9,10 +9,12 @@ import { useState } from 'react';
 interface AISummaryDetailDialogProps {
   open: boolean;
   onClose: () => void;
+  loading?: boolean;
   data: {
     projectName?: string;
     projectManager?: string;
     weekNumber?: number;
+    weekLabel?: string;  // e.g., "W4"
     weekDate?: string;
     score?: number;
     alignmentScore?: number;
@@ -39,11 +41,12 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-export default function AISummaryDetailDialog({ open, onClose, data }: AISummaryDetailDialogProps) {
+export default function AISummaryDetailDialog({ open, onClose, loading = false, data }: AISummaryDetailDialogProps) {
   const {
     projectName,
     projectManager,
     weekNumber,
+    weekLabel,
     weekDate,
     score,
     alignmentScore,
@@ -52,6 +55,7 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
     summaryHtml,
   } = data;
   const [isDownloading, setIsDownloading] = useState(false);
+  const displayWeek = weekLabel || (weekNumber != null ? `W${weekNumber}` : 'N');
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -161,7 +165,7 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
         },
         body: JSON.stringify({
           html: fullHtml,
-          filename: `${projectName || 'Project'}_Week${weekNumber || 'N'}_Summary.pdf`,
+          filename: `${projectName || 'Project'}_${displayWeek}_Summary.pdf`,
         }),
       });
 
@@ -174,7 +178,7 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${projectName || 'Project'}_Week${weekNumber || 'N'}_Summary.pdf`;
+      a.download = `${projectName || 'Project'}_${displayWeek}_Summary.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -186,44 +190,6 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
       setIsDownloading(false);
     }
   };
-
-  if (!summaryHtml) {
-    return (
-      <StyledDialog open={open} onClose={onClose} TransitionProps={{ timeout: 400 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#F9FAFB' }}>
-          {/* Header */}
-         <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            px: 2.5,
-            height: '52px',
-            bgcolor: '#1C2D5F',
-            borderBottom: '1px solid #E5E7EB',
-          }}
-        >
-          <Typography sx={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
-            {projectName ? `${projectName} Summary` : 'AI Summary'}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-            <IconButton onClick={onClose} size="small" sx={{ color: '#FFFFFF' }}>
-              <CloseIcon sx={{ fontSize: '14px' }} />
-            </IconButton>
-          </Box>
-        </Box>
-
-
-          {/* No Data Message */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-            <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
-              No summary available for this period
-            </Typography>
-          </Box>
-        </Box>
-      </StyledDialog>
-    );
-  }
 
   return (
     <StyledDialog open={open} onClose={onClose} TransitionProps={{ timeout: 400 }}>
@@ -250,43 +216,54 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
         </Box>
 
         {/* Content */}
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
-          {/* Project Info Card */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end'}}>
-            <Button
-              variant="text"
-              size="small"
-              endIcon={<DownloadIcon sx={{ fontSize: '14px', color:'#5D6979' }} />}
-              onClick={handleDownload}
-              disabled={isDownloading}
-              sx={{
-                textTransform: 'none',
-                color: '#1C2D5F',
-                fontSize: '14px',
-                fontWeight: 400,
-                px: 1,
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
-                },
-                '&:disabled': {
-                  color: '#9CA3AF',
-                },
-              }}
-            >
-              {isDownloading ? 'Generating PDF...' : 'Download AI Summary'}
-            </Button>
-          </Box>
-          <Box
-            sx={{
-              py: 0.5,
-            }}
-          >
-              <Box
-                dangerouslySetInnerHTML={{ __html: summaryHtml }}
-              />
+        <Box sx={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+          {loading ? (
+            /* Loading state while fetching SummaryHtml from API */
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+              <CircularProgress size={32} sx={{ color: '#1C2D5F' }} />
             </Box>
-          </Box>
+          ) : !summaryHtml ? (
+            /* No summary available */
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+              <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>
+                No summary available for this period
+              </Typography>
+            </Box>
+          ) : (
+            /* Summary content */
+            <>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  variant="text"
+                  size="small"
+                  endIcon={<DownloadIcon sx={{ fontSize: '14px', color: '#5D6979' }} />}
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  sx={{
+                    textTransform: 'none',
+                    color: '#1C2D5F',
+                    fontSize: '14px',
+                    fontWeight: 400,
+                    px: 1,
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                    '&:disabled': {
+                      color: '#9CA3AF',
+                    },
+                  }}
+                >
+                  {isDownloading ? 'Generating PDF...' : 'Download AI Summary'}
+                </Button>
+              </Box>
+              <Box sx={{ py: 0.5 }}>
+                <Box dangerouslySetInnerHTML={{ __html: summaryHtml }} />
+              </Box>
+            </>
+          )}
+        </Box>
       </Box>
     </StyledDialog>
   );
 }
+
