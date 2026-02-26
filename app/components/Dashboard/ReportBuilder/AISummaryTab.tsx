@@ -203,8 +203,9 @@ export default function AISummaryTab() {
                   color: getScoreColor(weekData.score),
                   cursor: isClickable ? 'pointer' : 'default',
                   ...(isClickable && {
+                    textDecoration: 'underline',
                     '&:hover': {
-                      textDecoration: 'underline',
+                      
                       opacity: 0.8,
                     },
                   }),
