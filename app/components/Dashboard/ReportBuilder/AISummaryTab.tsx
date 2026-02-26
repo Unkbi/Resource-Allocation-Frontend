@@ -10,6 +10,7 @@ import { StyledDataGrid, ColumnManagementStyles } from '../../AllocationTable/st
 import { formatAISummaryResponse, getScoreColor, WeekColumn, ProjectSummaryTableRow } from '@/app/utils/aiSummaryFormatter';
 import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
 import AISummaryDetailDialog from './AISummaryDetailDialog';
+import { getProjectPeriodDetail } from '@/app/services/aiSummaryServices';
 
 export default function AISummaryTab() {
   const dispatch = useDispatch();
@@ -21,6 +22,7 @@ export default function AISummaryTab() {
   const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSummaryData, setSelectedSummaryData] = useState<any>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   
   // Format the API response for table display
   const formattedData = useMemo(() => {
@@ -40,25 +42,38 @@ export default function AISummaryTab() {
   const { rows, weekColumns } = formattedData;
 
   // Handle click on week score to open summary detail dialog
-  const handleScoreClick = useCallback((row: ProjectSummaryTableRow, weekCol: WeekColumn) => {
+  const handleScoreClick = useCallback(async (row: ProjectSummaryTableRow, weekCol: WeekColumn) => {
     const weekData = row[weekCol.field];
     
-    if (!weekData || weekData.score === null) {
-      return; // Don't open dialog if no data
+    if (!weekData || weekData.score === null || !weekData.aiSummary) {
+      return; // Only open dialog when AISummary === true
     }
 
+    // Open dialog immediately with base data; SummaryHtml fetched from API
     setSelectedSummaryData({
       projectName: row.project_name,
       projectManager: row.project_manager,
+      weekLabel: weekCol.headerName,
       weekNumber: weekCol.weekNumber,
       weekDate: weekCol.date,
       score: weekData.score,
       alignmentScore: weekData.alignmentScore,
       healthScore: weekData.healthScore,
       scoreBand: weekData.scoreBand,
-      summaryHtml: weekData.summaryHtml,
+      summaryHtml: null,
     });
+    setLoadingDetail(true);
     setDialogOpen(true);
+
+    try {
+      const summaryHtml = await getProjectPeriodDetail(weekData.periodId);
+      setSelectedSummaryData((prev: any) => ({ ...prev, summaryHtml }));
+    } catch (error) {
+      console.error('Failed to fetch period detail:', error);
+      setSelectedSummaryData((prev: any) => ({ ...prev, summaryHtml: null }));
+    } finally {
+      setLoadingDetail(false);
+    }
   }, []);
 
   // Build dynamic columns for the data grid
@@ -167,7 +182,6 @@ export default function AISummaryTab() {
             );
           },
         renderCell: (params: any) => {
-          // Access the original week data from the row directly
           const weekData = params.row[weekCol.field];
           if (!weekData || weekData.score === null || weekData.score === undefined) {
             return (
@@ -177,19 +191,24 @@ export default function AISummaryTab() {
             );
           }
 
+          const isClickable = weekData.aiSummary === true;
+
           return (
               <Typography
-                onClick={() => handleScoreClick(params.row, weekCol)}
+                onClick={isClickable ? () => handleScoreClick(params.row, weekCol) : undefined}
                 sx={{
                   fontSize: '16px',
                   textAlign: 'center',
                   fontWeight: 600,
                   color: getScoreColor(weekData.score),
-                  cursor: 'pointer',
-                  '&:hover': {
+                  cursor: isClickable ? 'pointer' : 'default',
+                  ...(isClickable && {
                     textDecoration: 'underline',
-                    opacity: 0.8,
-                  },
+                    '&:hover': {
+                      
+                      opacity: 0.8,
+                    },
+                  }),
                 }}
               >
                 {weekData.score}
@@ -359,6 +378,7 @@ export default function AISummaryTab() {
       <AISummaryDetailDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
+        loading={loadingDetail}
         data={selectedSummaryData || {}}
       />
     </Box>

@@ -18,7 +18,7 @@ import { Organisation } from '@/app/types/organisationTypes';
 import { setResources } from '../reducers/resourcesReducer';
 import { fetchAllTeams } from '../actions/fetchTeamsAction';
 
-interface APIResponsePreFormated {
+export interface APIResponsePreFormated {
   Resource: {
     Resource: Resource | null;
   } | null;

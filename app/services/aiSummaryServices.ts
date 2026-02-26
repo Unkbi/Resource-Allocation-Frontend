@@ -90,3 +90,23 @@ export const buildSummaryPayload = (uiFilters: any) => {
   
   return payload;
 };
+
+/**
+ * Fetch a single Projectperiod record by its UUID to retrieve SummaryHtml
+ * Called when user clicks a hyperlinked score (AISummary === true)
+ * @param id - UUID of the Projectperiod record
+ * @returns SummaryHtml string or null
+ */
+export const getProjectPeriodDetail = async (id: string): Promise<string | null> => {
+  try {
+    const response = await axiosInstance.get('/Resource/Projectperiod', { params: { Id: id } });
+    const data = response.data;
+
+    // Handle both single object and array responses
+    const record = Array.isArray(data) ? data[0] : data;
+    return record?.Projectperiod?.SummaryHtml ?? null;
+  } catch (error: any) {
+    console.error('Error fetching project period detail:', error);
+    throw error;
+  }
+};
