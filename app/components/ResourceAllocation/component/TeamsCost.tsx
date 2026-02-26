@@ -6,7 +6,6 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import {
-  calculateTotalEffort,
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
@@ -21,6 +20,7 @@ import {
   FETCH_PROJECT_TYPE_GROUPS,
   FETCH_PROJECT_TYPES,
 } from '@/app/redux/actions/allSettingsActions';
+import { FETCH_TOTAL_ALLOCATION_COST } from '@/app/redux/actions/allocationTotalsAction';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -64,6 +64,9 @@ const TeamsCost = ({
     (state: RootState) => state.allocationsCost
   );
   const { setRows, ready } = useAllocationGrid('main');
+  
+  const { totalAllocationCosts } = useSelector(
+    (state: RootState) => state.allocationTotals);
 
   useEffect(() => {
     if (projectTypes.length === 0) {
@@ -77,14 +80,22 @@ const TeamsCost = ({
     }
   }, []);
 
+    useEffect(() => {
+      if (totalAllocationCosts.length === 0) {
+        dispatch({
+          type: FETCH_TOTAL_ALLOCATION_COST,
+          payload: {},
+        });
+      }
+    }, []);
+
   useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['AllocationCost'].r && ready && teamsCost) {
       const filteredResources = removeResourcesWithNoTeams(teamsCost || []);
       const formattedResources = filteredResources?.map(allocation => ({
         ...allocation,
-        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+        hasAllocation: (allocation?.totalEffort ?? 0) > 0,
         teamAllocationManager: getAllocationManagerFromPath(
           allocation?.teamAllocationManager,
           _resources || []
@@ -109,10 +120,11 @@ const TeamsCost = ({
           projectTypeGroups: projectTypeGroups,
           startDate: startDate,
           endDate: endDate,
+          totalAllocationCosts: totalAllocationCosts,
         },
       });
     }
-  }, [startDate, endDate, teams, projects, resources, loadingPermissions]);
+  }, [startDate, endDate, teams, projects, resources, loadingPermissions,totalAllocationCosts]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(

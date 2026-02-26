@@ -425,7 +425,7 @@ const FollowForm: React.FC<FollowFormProps> = ({
                   color: '#212121',
                 }}
               >
-                {getProjectTypeName(initialData?.Type) || 'N/A'}
+                {initialData?.Type || 'N/A'}
               </Typography>
             </Box>
 
