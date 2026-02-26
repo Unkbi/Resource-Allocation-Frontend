@@ -127,7 +127,7 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
         //   }
         // };
         // fetchTeamsData();
-    }, [dispatch, follows]);
+    }, [dispatch]);
 
     // Filter followed projects and teams
     const followedProjects = follows.filter((f: any) => f.ObjectType === 'PROJECT');
