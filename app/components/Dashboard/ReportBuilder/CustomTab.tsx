@@ -678,7 +678,7 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
                         layouts={persistedLayouts || defaultLayouts}
                         breakpoints={{ lg: 1200, md: 996, sm: 768 }}
                         cols={{ lg: 12, md: 12, sm: 12 }}
-                        rowHeight={130}
+                        rowHeight={135}
                         onLayoutChange={handleLayoutChange}
                         isDraggable
                         isResizable

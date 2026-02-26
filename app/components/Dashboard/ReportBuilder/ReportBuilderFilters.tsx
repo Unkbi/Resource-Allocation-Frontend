@@ -457,6 +457,7 @@ function ReportBuilderFilters({
     resourceLocations: 'Resource Location',
     resourceWorkLocationGroup: 'Resource Location Group',
     projectStatuses: 'Project Status',
+    show_actuals: 'Show Actuals',
   };
 
   // Get display value for report filters
@@ -507,6 +508,11 @@ function ReportBuilderFilters({
       }).filter((val: string) => val !== '');
       
       return displayValues;
+    }
+
+    // Handle boolean values
+    if (key === 'show_actuals') {
+      return value ? 'Yes' : '';
     }
 
     // Handle single values
@@ -561,6 +567,8 @@ function ReportBuilderFilters({
       handleFilterChange('reportType', 'resourceProjectPeriod');
     } else if (key === 'period') {
       handleFilterChange('period', 'last_week');
+    } else if (key === 'show_actuals') {
+      handleFilterChange('show_actuals', false);
     } else {
       // Reset to empty array for all array-based filters
       handleFilterChange(key as keyof ReportFilters, []);
