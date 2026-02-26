@@ -155,7 +155,7 @@ export default function ReportBuilderDataGridToolbar({
                   color: '#1C2D5F',
                 }}
               >
-                Click the score to view the weekly AI summary.
+                Click the underlined score to view the weekly AI summary.
               </Box>
             </Box>
           )}

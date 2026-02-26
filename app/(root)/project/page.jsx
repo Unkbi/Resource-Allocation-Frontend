@@ -631,7 +631,7 @@ function Project({ permissions, loadingPermissions }) {
     };
 
     handleOpenDialog(
-      existingFollow ? 'Project Follow Preferences' : 'Follow Project',
+      existingFollow ? 'Project Follow Preferences' : 'Project Follow Preferences',
       'follow_project',
       dialogData,
       {

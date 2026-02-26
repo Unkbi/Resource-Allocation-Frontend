@@ -175,17 +175,44 @@ export const generateWeeklyColumns = (
   });
 };
 
-export const generateColumnGroupingModel = (startDate, endDate, allColumns) => {
+export const generateColumnGroupingModel = (
+  startDate,
+  endDate,
+  allColumns,
+  splitView = false
+) => {
   const nonWeeklyColumns = allColumns.filter(column => column.primaryColumn);
   const groups = [];
   let currentGroup = null;
   nonWeeklyColumns.forEach(column => {
-    groups.push({
-      groupId: `empty-group-${column.field}`,
-      headerClassName: 'empty-group-header',
-      headerName: '',
-      children: [{ field: column.field, headerName: '' }],
-    });
+    if (splitView) {
+      groups.push({
+        groupId: `empty-group-${column.field}`,
+        headerClassName: 'empty-group-header',
+        headerName: '',
+        children: [{ field: column.field }],
+      });
+    } else {
+      if (column.field === 'totalAllocationsTillDate') return;
+      if (column.field === 'totalEffort') {
+        groups.push({
+          groupId: 'totalEffort-group',
+          headerName: 'Totals',
+          headerClassName: 'grouping-header',
+          children: [
+            { field: 'totalEffort' },
+            { field: 'totalAllocationsTillDate' },
+          ],
+        });
+      } else {
+        groups.push({
+          groupId: `empty-group-${column.field}`,
+          headerClassName: 'empty-group-header',
+          headerName: '',
+          children: [{ field: column.field }],
+        });
+      }
+    }
   });
 
   // Caculate the weeks difference between start and end dates. For column header grouping ("Apr 2023", "May 2023", etc.)
