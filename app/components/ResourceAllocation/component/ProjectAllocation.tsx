@@ -12,7 +12,6 @@ import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Location } from '@/app/types';
 import {
-  calculateTotalEffort,
   getAllocationManagerFromPath,
   getResourceFromUid,
   getTotalWeeks,
@@ -51,6 +50,7 @@ import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -193,8 +193,7 @@ function ProjectAllocation({
           endDate || ''
         )?.map(allocation => ({
           ...allocation,
-          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          hasAllocation: (allocation?.totalEffort ?? 0) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
             _resources || []
@@ -1029,22 +1028,39 @@ function ProjectAllocation({
     {
       field: 'totalEffort',
       headerName: 'Total Effort',
-      width: 115,
-      minWidth: 115,
+      width: 122,
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,
-      headerClassName: 'secondary-header',
-      // cellClassName: 'secondary-cell',
+      headerClassName: 'totals-header',
       headerAlign: 'left',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const value = Number(params.value);
         const formattedValue =
           !isNaN(value) && value !== null
-            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            ? normalizeAllocationValue(value)
             : null;
-        return <EllipsisNameCell value={formattedValue} />;
+        return <EllipsisNameCell value={`${formattedValue}`} />;
+      },
+    },
+    {
+      field: 'totalAllocationsTillDate',
+      headerName: 'Effort Till Date',
+      width: 122,
+      type: 'number',
+      sortable: true,
+      cellClassName: getCellClassName,
+      headerClassName: 'totals-header',
+      headerAlign: 'left',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const value = Number(params.value);
+        const formattedValue =
+          !isNaN(value) && value !== null
+            ? normalizeAllocationValue(value)
+            : null;
+        return <EllipsisNameCell value={`${formattedValue}`} />;
       },
     },
     {
@@ -1188,6 +1204,7 @@ function ProjectAllocation({
                 projectType: false,
                 projectTypeGroup: false,
                 totalEffort: true,
+                totalAllocationsTillDate: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
                 email: false,
