@@ -25,6 +25,7 @@ import {
   FETCH_PROJECT_TYPES,
 } from '@/app/redux/actions/allSettingsActions';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
+import { FETCH_TOTAL_ALLOCATIONS, FETCH_TOTAL_ALLOCATIONS_TILL_DATE } from '@/app/redux/actions/allocationTotalsAction';
 
 interface TopContentProps {
   startDate: string;
@@ -100,6 +101,9 @@ function AllocationInit({
         : endDate
   );
 
+  const { totalAllocations,
+    totalAllocationsTillDate } = useSelector((state: RootState) => state.allocationTotals);
+
   useEffect(() => {
     if (loadingPermissions) return;
   }, [loadingPermissions]);
@@ -155,6 +159,23 @@ function AllocationInit({
     }
   }, []);
 
+   useEffect(() => {
+    if (totalAllocations.length === 0) {
+      dispatch({
+        type: FETCH_TOTAL_ALLOCATIONS,
+        payload: {},
+      });
+     }
+   }, []);
+  
+   useEffect(() => {
+    if (totalAllocationsTillDate.length === 0) {
+     dispatch({
+         type: FETCH_TOTAL_ALLOCATIONS_TILL_DATE,
+       });
+    }
+   }, []);
+
   useEffect(() => {
     if (loadingPermissions) return;
     if (permissions && permissions['Allocation'].r) {
@@ -163,7 +184,9 @@ function AllocationInit({
         (projects?.length ?? 0) > 0 &&
         (resources?.length ?? 0) > 0 &&
         (allResourcesDetail?.length ?? 0) > 0 &&
-        allAllocations?.length === 0
+        (totalAllocations?.length ?? 0) > 0 &&
+        (totalAllocationsTillDate?.length ?? 0) > 0 &&
+         allAllocations?.length === 0
       ) {
         dispatch(resetAllocations());
         dispatch({
@@ -179,6 +202,8 @@ function AllocationInit({
             projectTypeGroups: projectTypeGroups,
             startDate: currentViewStartDate,
             endDate: currentViewEndDate,
+            totalAllocations: totalAllocations,
+            totalAllocationsTillDate: totalAllocationsTillDate,
           },
         });
       }
@@ -223,6 +248,8 @@ function AllocationInit({
               : currentView?.isFixedRange
                 ? currentView?.EndDate
                 : endDate,
+                totalAllocations: totalAllocations,
+                totalAllocationsTillDate: totalAllocationsTillDate,
           },
         });
 

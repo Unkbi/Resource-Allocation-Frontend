@@ -107,27 +107,9 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
     const teamMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Fetch follows for current user
-        if (follows.length === 0) {
-            dispatch(fetchFollows(userId));
-        }
-        // Fetch all projects
+        dispatch(fetchFollows(userId));
         dispatch(fetchAllProjects());
-
-        // Fetch all teams
-        // const fetchTeamsData = async () => {
-        //   setLoadingTeams(true);
-        //   try {
-        //     const response = await dispatch(getAllTeams()).unwrap();
-        //     setTeams(response || []);
-        //   } catch (error) {
-        //     console.error('Failed to fetch teams:', error);
-        //   } finally {
-        //     setLoadingTeams(false);
-        //   }
-        // };
-        // fetchTeamsData();
-    }, [dispatch, follows]);
+    }, []);
 
     // Filter followed projects and teams
     const followedProjects = follows.filter((f: any) => f.ObjectType === 'PROJECT');
@@ -137,13 +119,13 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
     const followedProjectIds = followedProjects.map((f: any) => f.ObjectId);
     const followedTeamIds = followedTeams.map((f: any) => f.ObjectId);
 
-    const unfollowedProjects = projects?.filter(
-        (p: any) => !followedProjectIds.includes(p.Id)
-    ) || [];
+    const unfollowedProjects = (projects?.filter(
+        (p: any) => !followedProjectIds.includes(p.Id) && (p.Status === 'Active' || p.Status === 'Approved')
+    ) || []).sort((a: any, b: any) => a.Name?.localeCompare(b.Name));
 
-    const unfollowedTeams = teams?.filter(
-        (t: any) => !followedTeamIds.includes(t.Id)
-    ) || [];
+    const unfollowedTeams = (teams?.filter(
+        (t: any) => !followedTeamIds.includes(t.Id) && (t.Status === 'Active')
+    ) || []).sort((a: any, b: any) => a.Name?.localeCompare(b.Name));
 
     // Filter projects based on search
     const filteredProjects = unfollowedProjects.filter((project: any) =>
@@ -437,7 +419,7 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
         }
     };
 
-    if (loading || loadingTeams) {
+    if (loading) {
         return <LoadingScreen />;
     }
 

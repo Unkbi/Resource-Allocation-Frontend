@@ -78,6 +78,7 @@ import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { UPDATE_TOTAL_ALLOCATIONS } from '@/app/redux/actions/allocationTotalsAction';
 import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 function AllocationGrid({
@@ -252,6 +253,7 @@ function AllocationGrid({
 
   const [aggregation, setAggregation] = useState({
     totalEffort: 'sum',
+    totalAllocationsTillDate: 'sum',
     ...aggregationModel(startDate, endDate, type === 'cost'),
   });
 
@@ -479,6 +481,7 @@ function AllocationGrid({
     if (startDate && endDate) {
       setAggregation({
         totalEffort: 'sum',
+        totalAllocationsTillDate: 'sum',
         ...aggregationModel(startDate, endDate, type === 'cost'),
       });
     }
@@ -793,6 +796,53 @@ function AllocationGrid({
     };
   };
 
+  const buildTotalsCellData = (params, apiRef) => {
+    const baseData = params.row[params.field] || {};
+
+    if (params.rowNode?.type !== 'group') {
+      return {
+        value: baseData.value ?? 0,
+        actuals: baseData.actuals ?? 0,
+      };
+    }
+
+    const filterModel = apiRef.current.state.filter.filterModel;
+    const { filteredRowsLookup } = apiRef.current.getFilterState(filterModel);
+
+    const collectVisibleLeafRows = nodeId => {
+      if (filteredRowsLookup?.[nodeId] === false) return [];
+
+      const node = apiRef.current.getRowNode(nodeId);
+      if (!node || node.type !== 'group') {
+        const row = apiRef.current.getRow(nodeId);
+        return row ? [row] : [];
+      }
+
+      let rows = [];
+      (node.children || []).forEach(childId => {
+        rows = rows.concat(collectVisibleLeafRows(childId));
+      });
+      return rows;
+    };
+
+    const visibleLeafRows = (params.rowNode.children || []).flatMap(childId =>
+      collectVisibleLeafRows(childId)
+    );
+
+    const totalValue = visibleLeafRows
+      .map(row => row?.[params.field]?.value || 0)
+      .reduce((sum, x) => sum + x, 0);
+
+    const totalActuals = visibleLeafRows
+      .map(row => row?.[params.field]?.actuals || 0)
+      .reduce((sum, x) => sum + x, 0);
+
+    return {
+      value: totalValue,
+      actuals: totalActuals,
+    };
+  };
+
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
@@ -809,6 +859,45 @@ function AllocationGrid({
       : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
     type === 'cost'
   ).map(column => {
+    if (column.field === 'totalAllocationsTillDate') {
+      return {
+        ...column,
+        valueGetter: params => params?.value?.value ?? 0,
+
+        renderCell: params => {
+          const cellData = buildTotalsCellData(params, apiRef);
+          const value = normalizeAllocationValue(cellData?.value) ?? 0;
+          const actuals = normalizeAllocationValue(cellData?.actuals) ?? 0;
+
+          return (
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'stretch',
+                justifyContent: 'center',
+                position: 'relative',
+              }}
+            >
+              {showActuals ? (
+                <Box sx={{ paddingTop: '3px' }}>
+                  <AllocationCellWithActuals
+                    params={{
+                      value,
+                      actuals,
+                    }}
+                  />
+                </Box>
+              ) : (
+                <span>{value}</span>
+              )}
+            </Box>
+          );
+        },
+      };
+    }
+
     if (isWeekKey(column.field)) {
       return {
         ...column,
@@ -873,7 +962,9 @@ function AllocationGrid({
                 }}
               >
                 {shouldShowActuals ? (
-                  <AllocationCellWithActuals params={cellData} />
+                  <Box sx={{ paddingTop: '1px' }}>
+                    <AllocationCellWithActuals params={cellData} />
+                  </Box>
                 ) : (
                   <span>{value}</span>
                 )}
@@ -1234,12 +1325,71 @@ function AllocationGrid({
         )
       );
       if (allUpdatedRows?.length > 0) {
-        if (viewId === 'topProject') {
-          bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
-        } else if (viewId === 'bottomTeam') {
-          topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
-        }
-        return allUpdatedRows[0];
+        // Get New Project Totals, for the projects Updated
+        const updatedProjects = [
+          ...new Set(allUpdatedRows.map(row => row.projectId)),
+        ];
+
+        return new Promise((resolve, reject) => {
+          dispatch({
+            type: UPDATE_TOTAL_ALLOCATIONS,
+            payload: {
+              updatedProjects: updatedProjects,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(resolve => {
+            allUpdatedRows = allUpdatedRows.map(row => {
+              const updatedProjectTotal =
+                resolve.totalAllocation?.Projects?.find(
+                  p => p.Project === row.projectId
+                );
+              const updatedProjectTotalTillDate =
+                resolve.totalAllocationTillDate?.Projects?.find(
+                  p => p.Project === row.projectId
+                );
+              const updatedResourceTotalTillDate =
+                updatedProjectTotalTillDate?.ResourceTotals?.find(
+                  r => r.Resource === row.resourceId
+                );
+              if (updatedProjectTotal && updatedProjectTotalTillDate) {
+                const updatedRow = {
+                  ...row,
+                  totalEffort:
+                    updatedProjectTotal?.ResourceTotals?.find(
+                      r => r.Resource === row.resourceId
+                    )?.TotalAllocationsEntered || 0,
+                  totalAllocationsTillDate: {
+                    actuals:
+                      updatedResourceTotalTillDate?.TotalActualsEntered || 0,
+                    value:
+                      updatedResourceTotalTillDate?.TotalAllocationsEntered ||
+                      0,
+                  },
+                };
+                return updatedRow;
+              }
+              return row;
+            });
+            if (viewId === 'topProject') {
+              bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
+            } else if (viewId === 'bottomTeam') {
+              topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
+            }
+            return allUpdatedRows[0];
+          })
+          .catch(error => {
+            console.error('Error updating total allocations:', error);
+            dispatch(
+              showToastAction(
+                true,
+                `Error updating total allocations for ${newRow.resource}.`,
+                'error'
+              )
+            );
+          });
       }
     } catch (e) {
       console.error('Error creating allocations:', e);
