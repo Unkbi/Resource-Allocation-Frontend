@@ -12,6 +12,7 @@ import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { filterAllocationsForSelectedProject } from '@/app/utils/allocationUtils';
 import CommonToolbar from '../../Toolbar/CommonToolbar';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 interface TopProjectsViewProps {
   startDate: string | null;
@@ -207,20 +208,15 @@ function TopProjectsView({
       sortable: false,
       cellClassName: getCellClassName,
       headerClassName: 'totals-header',
-      // cellClassName: 'secondary-cell',
       headerAlign: 'left',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const value = Number(params.value);
         const formattedValue =
           !isNaN(value) && value !== null
-            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            ? normalizeAllocationValue(value)
             : null;
-        return (
-          <EllipsisNameCell
-            value={formattedValue === '0.0' ? '' : formattedValue}
-          />
-        );
+        return <EllipsisNameCell value={`${formattedValue}`} />;
       },
     },
     // Sahadev : Not Needed for Split View.
