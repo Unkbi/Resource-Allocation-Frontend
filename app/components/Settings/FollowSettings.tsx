@@ -320,7 +320,7 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
                 Name: project?.Name || '',
                 Status: project?.Status || '',
                 Location: project?.Location || '',
-                Type: project?.Type, //projectTypes?.find((pt: any) => pt.Id === project?.Type)?.Name || '',
+                Type: projectTypes?.find((pt: any) => pt.Id === project?.Type)?.Name || '',
                 StartDate: project?.StartDate || '',
                 EndDate: project?.EndDate || '',
             };
@@ -367,7 +367,7 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
                 Name: project?.Name || '',
                 Status: project?.Status || '',
                 Location: project?.Location || '',
-                Type: project?.Type, //projectTypes?.find((pt: any) => pt.Id === project?.Type)?.Name || '',
+                Type: projectTypes?.find((pt: any) => pt.Id === project?.Type)?.Name || '',
                 StartDate: project?.StartDate || '',
                 EndDate: project?.EndDate || '',
             };
