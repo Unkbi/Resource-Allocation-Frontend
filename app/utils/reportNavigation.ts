@@ -39,7 +39,7 @@ export const buildReportUrl = (
   });
 
   // Add report type
-  if (config.reportType && config.reportType !== 'customProjectAllocation') {
+  if (config.reportType) {
     params.set('reportType', config.reportType);
   }
 
@@ -78,12 +78,11 @@ export const buildReportUrl = (
       }
     });
   }
-
   const encodedParams = compressToEncodedURIComponent(
     params.toString()
   );
 
-  if(config.reportType === 'customProjectAllocation') {
+  if(config.reportType === 'percentageAllocation' || config.reportType === 'allocationCapacity') {
     return `/report?tab=custom&filters=${encodedParams}`;
   }
   return `/report?tab=reports&filters=${encodedParams}`;

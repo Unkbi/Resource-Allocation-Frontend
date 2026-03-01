@@ -46,7 +46,9 @@ export type ReportType =
   | 'projectPeriod'
   | 'resourcePeriod'
   | 'resourceProjectPeriod'
-  | 'resourceProjectPeriodCost';
+  | 'resourceProjectPeriodCost'
+  | 'percentageAllocation'
+  | 'allocationCapacity'
 
 export type SummaryType =
   | 'project'
