@@ -751,7 +751,10 @@ function AllocationGrid({
           userPreferences?.Allocation_Preference === PERCENTAGES
             ? (params.value ?? '')
             : (baseData.value ?? params.formattedValue ?? ''),
-        actuals: baseData.actuals ?? 0,
+        actuals:
+          userPreferences?.Allocation_Preference === PERCENTAGES
+            ? Math.round(baseData.actuals * 100)
+            : (baseData.actuals ?? 0),
         allocationId: baseData.allocationId ?? null,
         notes: baseData.notes ?? null,
         period: baseData.period ?? null,
@@ -797,7 +800,10 @@ function AllocationGrid({
     ) {
       return {
         value: Math.round(params.value / params.rowNode.children.length) ?? '',
-        actuals: aggregatedActuals,
+        actuals:
+          userPreferences?.Allocation_Preference === PERCENTAGES
+            ? Math.round(aggregatedActuals * 100)
+            : aggregatedActuals,
         allocationId: null,
         notes: null,
         period,
@@ -806,7 +812,10 @@ function AllocationGrid({
     // Return aggregated group cell data
     return {
       value: params.formattedValue ?? '',
-      actuals: aggregatedActuals,
+      actuals:
+        userPreferences?.Allocation_Preference === PERCENTAGES
+          ? Math.round(aggregatedActuals * 100)
+          : aggregatedActuals,
       allocationId: null,
       notes: null,
       period,
