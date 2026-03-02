@@ -793,7 +793,7 @@ export default function ExecutiveDashboardPage() {
    * Helper function to navigate to report page with filters
    * Maps chart identifiers to appropriate report types and configurations
    */
-  const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null) => {
+  const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null, weekData = null) => {
     // Special case: Navigate to custom tab for custom allocation chart
     if (chartKey === 'custom_allocation_percentage') {
       navigateToReport(
@@ -812,13 +812,28 @@ export default function ExecutiveDashboardPage() {
     }
 
     if (chartKey === 'weeklyAllocationVsCapacity') {
+      let startDate, endDate;
+      
+      if (weekData && weekData.Period) {
+        const weekStartDate = dayjs(weekData.Period);
+        const weekMonday = weekStartDate.isoWeekday(1);
+        const weekSunday = weekStartDate.isoWeekday(7);
+        startDate = weekMonday.format('YYYY-MM-DD');
+        endDate = weekSunday.format('YYYY-MM-DD');
+      } else {
+        // Default to 13-week range: 4 weeks past + current week + 8 weeks future
+        const currentMonday = dayjs().isoWeekday(1);
+        startDate = currentMonday.subtract(4, 'week').format('YYYY-MM-DD');
+        endDate = currentMonday.add(8, 'week').isoWeekday(7).format('YYYY-MM-DD');
+      }
+      
       navigateToReport(
         advancedFilters,
         {
           reportType: 'allocationCapacity',
           period: 'custom',
-          customStartDate: currentWeekMonday.format('YYYY-MM-DD'),
-          customEndDate: currentWeekSunday.format('YYYY-MM-DD'),
+          customStartDate: startDate,
+          customEndDate: endDate,
         },
         false,
         router
@@ -2824,9 +2839,18 @@ export default function ExecutiveDashboardPage() {
                   }]}
                   yAxis={[{ tickLabelStyle: { color: '#475569' } }]}
                   margin={{ bottom: 40, left: 40, right: 20, top: 20 }}
-                  onAxisClick={(event, axisData)=> {
-                  navigateToReportWithFilters('weeklyAllocationVsCapacity');
-                }}
+                  onAxisClick={(event, axisData) => {
+                    // Find the week data for the clicked axis point
+                    const clickedWeek = axisData?.axisValue;
+                    const weekDataItem = clickedWeek ? dataset.find(d => d.week === clickedWeek) : null;
+                    
+                    // Pass the full week data object which includes the Period
+                    const weekInfo = clickedWeek && weeklyAllocationVsCapacity 
+                      ? weeklyAllocationVsCapacity.find(w => w.Week === clickedWeek || w.Period === clickedWeek)
+                      : null;
+                    
+                    navigateToReportWithFilters('weeklyAllocationVsCapacity', null, weekInfo);
+                  }}
                 >
                   <BarPlot />
                   <LinePlot />
