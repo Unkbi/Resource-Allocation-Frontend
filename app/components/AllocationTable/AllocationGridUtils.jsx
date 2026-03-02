@@ -47,6 +47,7 @@ import {
   projectViewsGrouping,
   teamsViewsGrouping,
 } from '@/app/constants/constants';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -561,13 +562,15 @@ export const getFinalColumns = (
     state => state.allocationView
   );
   const { scalarSettings } = useSelector(state => state.allSettings);
+  const { userPreferences } = useSelector(state => state.userPreferences);
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
     endDate,
     isFormatWithK,
-    scalarSettings
+    scalarSettings,
+    userPreferences
   );
 
   const handleAddClick = params => {
@@ -1237,7 +1240,10 @@ export const getCellClassName = (
   isCellEditable,
   groupBy = ''
 ) => {
-  if (params?.field === 'totalEffort') {
+  if (
+    params?.field === 'totalEffort' ||
+    params?.field === 'totalAllocationsTillDate'
+  ) {
     if (
       type === 'cost' &&
       params.rowNode?.type === 'group' &&
@@ -1277,10 +1283,12 @@ export const getCellClassName = (
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
+
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
-      const totalRows = uniqueProjectRows.size;
+      const totalRows =
+        params.rowNode?.children?.length || uniqueProjectRows.size;
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
         const numericValue =
@@ -1292,8 +1300,8 @@ export const getCellClassName = (
 
       const allocationValue =
         params.rowNode?.groupingField === 'resource'
-          ? Math.round(aggregatedValue * 100) / 100
-          : Math.round((aggregatedValue / totalRows) * 100) / 100;
+          ? normalizeAllocationValue(aggregatedValue)
+          : normalizeAllocationValue(aggregatedValue / totalRows);
 
       const sortedTheme = [...allocationTheme].sort(
         (a, b) => parseFloat(a.From) - parseFloat(b.From)
@@ -1308,11 +1316,6 @@ export const getCellClassName = (
           matchingRange = range;
           break;
         }
-      }
-
-      // If no matching range found and value exceeds max range, use the last theme
-      if (!matchingRange && sortedTheme.length > 0) {
-        matchingRange = sortedTheme[sortedTheme.length - 1];
       }
 
       if (matchingRange) {

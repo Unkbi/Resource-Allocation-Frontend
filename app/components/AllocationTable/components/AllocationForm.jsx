@@ -98,6 +98,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import {
   DATE_FORMAT,
+  PERCENTAGES,
   PORTFOLIO_DISPLAY_NAME,
   PROJECT_ACTIVE_STATUS,
   projectViewsGrouping,
@@ -190,6 +191,7 @@ import {
   CREATE_BUSINESS_IMPACT,
   UPDATE_BUSINESS_IMPACT,
 } from '@/app/redux/actions/businessImpactActions';
+import { UPDATE_TOTAL_ALLOCATIONS } from '@/app/redux/actions/allocationTotalsAction';
 
 const initialValuesMap = {
   add_project: {
@@ -522,6 +524,7 @@ const AllocationForm = () => {
   const privileges = useSelector(state => state.rbac.privileges);
   const { user: allUsers } = useSelector(state => state.rbac);
   const { scalarSettings } = useSelector(state => state.allSettings);
+  const { userPreferences } = useSelector(state => state.userPreferences);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const {
@@ -584,7 +587,7 @@ const AllocationForm = () => {
           initialData?.Email || ''
         );
       case 'add_allocation':
-        return addAllocationValidationSchema(scalarSettings);
+        return addAllocationValidationSchema(scalarSettings, userPreferences);
       case 'assign_allocation':
         return assignAllocationValidationSchema;
       case 'new_view':
@@ -1449,6 +1452,11 @@ const AllocationForm = () => {
         break;
 
       case 'add_allocation':
+        let allocationValue = values.AllocationEntered;
+        if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+          allocationValue = values.AllocationEntered / 100;
+        }
+
         try {
           const allMondays = generateAllMondays(
             values.StartDate || values.startDate,
@@ -1460,12 +1468,12 @@ const AllocationForm = () => {
 
           if (
             filteredProjects.some(p => !p.AllowOvertime) &&
-            values.AllocationEntered > 1.0
+            allocationValue > 1.0
           ) {
             dispatch(
               showToastAction(
                 true,
-                'Allocation cannot exceed 1.0 for projects that do not allow overtime.',
+                `Allocation cannot exceed ${userPreferences?.Allocation_Preference === PERCENTAGES ? '100%' : '1.0'} for projects that do not allow overtime.`,
                 'error',
                 4000
               )
@@ -1492,7 +1500,7 @@ const AllocationForm = () => {
                 );
 
                 // Perform Delete if AllocationEntered is 0
-                if (values?.AllocationEntered === 0) {
+                if (allocationValue === 0) {
                   if (allocation && allocation?.allocationId) {
                     deleteList.push({
                       Id: allocation?.allocationId,
@@ -1534,12 +1542,12 @@ const AllocationForm = () => {
                       ),
                   resource,
                   weekKey,
-                  values.AllocationEntered,
+                  allocationValue,
                   filteredProjects
                 );
                 if (newFinalTotal > Number(max_allocation_error)) {
                   errorMessages.push(
-                    `Total allocation for week ${weekKey} exceeds ${max_allocation_error} (${newFinalTotal.toFixed(2)}). Update skipped.`
+                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? max_allocation_error * 100 + '%' : max_allocation_error} (${userPreferences?.Allocation_Preference === PERCENTAGES ? newFinalTotal.toFixed(2) * 100 : newFinalTotal.toFixed(2)}). Update skipped.`
                   );
                   return null;
                 }
@@ -1549,7 +1557,7 @@ const AllocationForm = () => {
                   newFinalTotal <= Number(max_allocation_error)
                 ) {
                   warningMessages.push(
-                    `Total allocation for week ${weekKey} exceeds ${max_allocation_warning} (${newFinalTotal.toFixed(2)}).`
+                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? max_allocation_warning * 100 + '%' : max_allocation_warning} (${userPreferences?.Allocation_Preference === PERCENTAGES ? newFinalTotal.toFixed(2) * 100 : newFinalTotal.toFixed(2)}).`
                   );
                 }
 
@@ -1558,7 +1566,7 @@ const AllocationForm = () => {
                   allocation?.allocationId &&
                   allocation?.value
                 ) {
-                  if (allocation?.value !== values.AllocationEntered) {
+                  if (allocation?.value !== allocationValue) {
                     // This is for the Bulk Allocation API.
                     updateList.push({
                       Id: allocation?.allocationId,
@@ -1566,7 +1574,7 @@ const AllocationForm = () => {
                       Project: project.Id,
                       ProjectName: project.Name,
                       Period: allocation?.period,
-                      AllocationEntered: values.AllocationEntered,
+                      AllocationEntered: allocationValue,
                     });
                   }
                 } else {
@@ -1576,7 +1584,7 @@ const AllocationForm = () => {
                     Project: project.Id,
                     ProjectName: project.Name,
                     Period: format(monday, DATE_FORMAT),
-                    AllocationEntered: values.AllocationEntered,
+                    AllocationEntered: allocationValue,
                   });
                 }
               });
@@ -1604,7 +1612,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${max_allocation_error}. Please check and try again.`,
+                    `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? max_allocation_error * 100 + '%' : max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
                   )
@@ -1784,7 +1792,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Total allocation for the multiple selected weeks exceeds ${max_allocation_error}. Please check and try again.`,
+                    `Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? max_allocation_error * 100 + '%' : max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
                   )
@@ -1798,7 +1806,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Warning: Total allocation for the multiple selected weeks exceeds ${max_allocation_warning}.`,
+                    `Warning: Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? max_allocation_warning * 100 + '%' : max_allocation_warning}.`,
                     'warning',
                     4000
                   )
@@ -1816,58 +1824,124 @@ const AllocationForm = () => {
                 ...new Set(new_resources.map(resource => resource?.team)),
               ];
               if (allUpdatedRows?.length > 0) {
-                if (splitView) {
-                  let allRowsForTopProjectAllocationGrid =
-                    topProjectAllocationGrid.getAllRows();
-                  // Update Allocation for Top Project Allocation Grid
-                  await updateRowsForView('topProject', [
-                    ...allUpdatedRows,
-                    ...allRowsForTopProjectAllocationGrid
-                      .filter(row => row.id.startsWith(row.projectId))
-                      .map(row => ({
-                        ...row,
-                        _action: 'delete',
-                      })),
-                  ]);
-                  // After completing filter to show only current selected Project
-                  allRowsForTopProjectAllocationGrid =
-                    topProjectAllocationGrid.getAllRows();
-                  topProjectAllocationGrid.setRows(
-                    filterAllocationsForSelectedProject(
-                      allRowsForTopProjectAllocationGrid,
-                      splitViewCurrentProject
-                    )
-                  );
+                // Get New Project Totals, for the projects Updated
+                const updatedProjects = [
+                  ...new Set(
+                    allUpdatedRows
+                      .filter(row => row.projectId)
+                      .map(row => row.projectId)
+                  ),
+                ];
+                try {
+                  const response = await new Promise((resolve, reject) => {
+                    dispatch({
+                      type: UPDATE_TOTAL_ALLOCATIONS,
+                      payload: {
+                        updatedProjects: updatedProjects,
+                        resolve,
+                        reject,
+                      },
+                    });
+                  });
 
-                  // Update Allocation for Bottom Team Allocation Grid
-                  updateRowsForView('bottomTeam', allUpdatedRows);
-                  updateRowsForView('projectAllocation', allUpdatedRows);
-                  updateRowsForView('teamAllocation', allUpdatedRows);
-                } else if (teamsViewsGrouping.includes(currentView?.GroupBy)) {
-                  updateRowsForView('teamAllocation', allUpdatedRows);
-                } else if (
-                  projectViewsGrouping.includes(currentView?.GroupBy)
-                ) {
-                  updateRowsForView('projectAllocation', allUpdatedRows);
-                } else {
+                  allUpdatedRows = allUpdatedRows.map(row => {
+                    const updatedProjectTotal =
+                      response.totalAllocation?.Projects?.find(
+                        p => p.Project === row.projectId
+                      );
+                    const updatedProjectTotalTillDate =
+                      response.totalAllocationTillDate?.Projects?.find(
+                        p => p.Project === row.projectId
+                      );
+                    const updatedResourceTotalTillDate =
+                      updatedProjectTotalTillDate?.ResourceTotals?.find(
+                        r => r.Resource === row.resourceId
+                      );
+                    if (updatedProjectTotal && updatedProjectTotalTillDate) {
+                      const updatedRow = {
+                        ...row,
+                        totalEffort:
+                          updatedProjectTotal?.ResourceTotals?.find(
+                            r => r.Resource === row.resourceId
+                          )?.TotalAllocationsEntered || 0,
+                        totalAllocationsTillDate: {
+                          actuals:
+                            updatedResourceTotalTillDate?.TotalActualsEntered ||
+                            0,
+                          value:
+                            updatedResourceTotalTillDate?.TotalAllocationsEntered ||
+                            0,
+                        },
+                      };
+                      return updatedRow;
+                    }
+                    return row;
+                  });
+
+                  if (splitView) {
+                    let allRowsForTopProjectAllocationGrid =
+                      topProjectAllocationGrid.getAllRows();
+                    // Update Allocation for Top Project Allocation Grid
+                    await updateRowsForView('topProject', [
+                      ...allUpdatedRows,
+                      ...allRowsForTopProjectAllocationGrid
+                        .filter(row => row.id.startsWith(row.projectId))
+                        .map(row => ({
+                          ...row,
+                          _action: 'delete',
+                        })),
+                    ]);
+                    // After completing filter to show only current selected Project
+                    allRowsForTopProjectAllocationGrid =
+                      topProjectAllocationGrid.getAllRows();
+                    topProjectAllocationGrid.setRows(
+                      filterAllocationsForSelectedProject(
+                        allRowsForTopProjectAllocationGrid,
+                        splitViewCurrentProject
+                      )
+                    );
+
+                    // Update Allocation for Bottom Team Allocation Grid
+                    updateRowsForView('bottomTeam', allUpdatedRows);
+                    updateRowsForView('projectAllocation', allUpdatedRows);
+                    updateRowsForView('teamAllocation', allUpdatedRows);
+                  } else if (
+                    teamsViewsGrouping.includes(currentView?.GroupBy)
+                  ) {
+                    updateRowsForView('teamAllocation', allUpdatedRows);
+                  } else if (
+                    projectViewsGrouping.includes(currentView?.GroupBy)
+                  ) {
+                    updateRowsForView('projectAllocation', allUpdatedRows);
+                  } else {
+                    dispatch(
+                      showToastAction(
+                        true,
+                        'Unable to update allocation grid for the current view. View grouping not recognized.',
+                        'error',
+                        4000
+                      )
+                    );
+                    return;
+                  }
+
                   dispatch(
                     showToastAction(
                       true,
-                      'Unable to update allocation grid for the current view. View grouping not recognized.',
-                      'error',
-                      4000
+                      `Successfully updated allocation for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
+                      'success'
                     )
                   );
-                  return;
+                } catch (error) {
+                  console.error('Error updating total allocations:', error);
+                  dispatch(
+                    showToastAction(
+                      true,
+                      `Error updating total allocations for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
+                      'error'
+                    )
+                  );
                 }
-
-                dispatch(
-                  showToastAction(
-                    true,
-                    `Successfully updated allocation for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
-                    'success'
-                  )
-                );
               }
               handleOnAdd(new_resources, filteredProjects);
               handleScrollAndFocus(new_resources, allMondays, filteredProjects);
@@ -3862,7 +3936,7 @@ const AllocationForm = () => {
           }
 
           dispatch(closeDialog());
-          dispatch({type: 'FETCH_FOLLOWS', payload: user?.id});
+          dispatch({ type: 'FETCH_FOLLOWS', payload: user?.id });
           setFormValue({});
         } catch (error) {
           console.error('Failed to save follow preferences:', error);
@@ -3975,7 +4049,8 @@ const AllocationForm = () => {
           dispatch(
             showToast({
               open: true,
-              message: error?.message || 'Failed to save team follow preferences',
+              message:
+                error?.message || 'Failed to save team follow preferences',
               type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -4607,7 +4682,7 @@ const AllocationForm = () => {
           <FollowForm
             formikProps={formikProps}
             setFormValue={setFormValue}
-            objectType='project'
+            objectType="project"
           />
         );
       case 'follow_team':
@@ -4615,7 +4690,7 @@ const AllocationForm = () => {
           <FollowForm
             formikProps={formikProps}
             setFormValue={setFormValue}
-            objectType='team'
+            objectType="team"
           />
         );
       default:

@@ -8,6 +8,7 @@ import {
 import {
   DATE_FORMAT,
   DISPLAY_DATE_FORMAT,
+  PERCENTAGES,
   TOTAL_FUTURE_WEEKS,
 } from '@/app/constants/constants';
 import { showToastAction } from '@/app/redux/actions/toastAction';
@@ -60,7 +61,8 @@ const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
 const createValueHandlers = (
   dispatch,
   isFormatWithK,
-  scalarSettings = null
+  scalarSettings = null,
+  userPreferences = null
 ) => ({
   valueParser: value => {
     const parsed = parseFloat(
@@ -70,6 +72,9 @@ const createValueHandlers = (
   },
 
   valueFormatter: value => {
+    if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+      return Math.round(value);
+    }
     if (value == null || value === '') return '';
 
     const num =
@@ -82,6 +87,9 @@ const createValueHandlers = (
     return isFormatWithK ? `${formatMin1Max2(num)}k` : formatMin1Max2(num);
   },
   valueGetter: params => {
+    if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+      return params?.value != null ? Math.round(params.value * 100) : null;
+    }
     return params?.value ?? null;
   },
 
@@ -110,19 +118,22 @@ const createValueHandlers = (
         className: className.replace('errorCell', '').trim(),
       };
     }
-
-    const formattedValue = normalizeAllocationValue(numericValue);
-    const hasError =
-      formattedValue > Number(scalarSettings?.Max_Allocation_Error || '2.0');
+    let formattedValue = numericValue;
+    let hasError = false;
+    let erroMessage = `Invalid input. Please enter a number between 0 and ${scalarSettings?.Max_Allocation_Error || '2.0'}.`;
+    if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+      hasError =
+        formattedValue >
+        Number(scalarSettings?.Max_Allocation_Error * 100 || '200');
+      erroMessage = `Invalid input. Please enter a number between 0 and ${scalarSettings?.Max_Allocation_Error * 100 || '200'}.`;
+    } else {
+      formattedValue = normalizeAllocationValue(numericValue);
+      hasError =
+        formattedValue > Number(scalarSettings?.Max_Allocation_Error || '2.0');
+    }
 
     if (hasError) {
-      dispatch(
-        showToastAction(
-          true,
-          `Invalid input. Please enter a number between 0 and ${scalarSettings?.Max_Allocation_Error || '2.0'}.`,
-          'error'
-        )
-      );
+      dispatch(showToastAction(true, erroMessage, 'error'));
 
       className = clsx(className, 'errorCell');
     } else {
@@ -142,7 +153,8 @@ export const generateWeeklyColumns = (
   endDate,
   dispatch,
   isFormatWithK,
-  scalarSettings = null
+  scalarSettings = null,
+  userPreferences = null
 ) => {
   const isoStart = parseISO(startDate);
   const isoEnd = parseISO(endDate);
@@ -169,23 +181,55 @@ export const generateWeeklyColumns = (
     return {
       ...createBaseColumnConfig(weekStartDate, isCurrentWeek),
       ...(dispatch
-        ? createValueHandlers(dispatch, isFormatWithK, scalarSettings)
+        ? createValueHandlers(
+            dispatch,
+            isFormatWithK,
+            scalarSettings,
+            userPreferences
+          )
         : {}),
     };
   });
 };
 
-export const generateColumnGroupingModel = (startDate, endDate, allColumns) => {
+export const generateColumnGroupingModel = (
+  startDate,
+  endDate,
+  allColumns,
+  splitView = false
+) => {
   const nonWeeklyColumns = allColumns.filter(column => column.primaryColumn);
   const groups = [];
   let currentGroup = null;
   nonWeeklyColumns.forEach(column => {
-    groups.push({
-      groupId: `empty-group-${column.field}`,
-      headerClassName: 'empty-group-header',
-      headerName: '',
-      children: [{ field: column.field, headerName: '' }],
-    });
+    if (splitView) {
+      groups.push({
+        groupId: `empty-group-${column.field}`,
+        headerClassName: 'empty-group-header',
+        headerName: '',
+        children: [{ field: column.field }],
+      });
+    } else {
+      if (column.field === 'totalAllocationsTillDate') return;
+      if (column.field === 'totalEffort') {
+        groups.push({
+          groupId: 'totalEffort-group',
+          headerName: 'Totals',
+          headerClassName: 'grouping-header',
+          children: [
+            { field: 'totalEffort' },
+            { field: 'totalAllocationsTillDate' },
+          ],
+        });
+      } else {
+        groups.push({
+          groupId: `empty-group-${column.field}`,
+          headerClassName: 'empty-group-header',
+          headerName: '',
+          children: [{ field: column.field }],
+        });
+      }
+    }
   });
 
   // Caculate the weeks difference between start and end dates. For column header grouping ("Apr 2023", "May 2023", etc.)
@@ -242,7 +286,8 @@ export const getAllColumnsWithWeek = (
   startDate,
   endDate,
   isFormatWithK,
-  scalarSettings
+  scalarSettings,
+  userPreferences
 ) => {
   return [
     ...existingColumns,
@@ -251,7 +296,8 @@ export const getAllColumnsWithWeek = (
       endDate,
       dispatch,
       isFormatWithK,
-      scalarSettings
+      scalarSettings,
+      userPreferences
     ),
   ];
 };

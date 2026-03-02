@@ -43,6 +43,7 @@ import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import ActualsSettingsAllocationPreference from '@/app/components/Settings/ActualsSettingsAllocationPreference';
 import FollowSettings from '@/app/components/Settings/FollowSettings';
+import AllocationSettingsAllocationPreference from '@/app/components/Settings/AllocationSettingsAllocationPreference';
 interface MenuItem {
   id: string;
   title: string;
@@ -154,8 +155,9 @@ const SettingsPanel = ({
   const hasAnyAccess = {
     'user-profile': true,
     'projects&teams': true,
+    'allocation-settings': true,
     'actuals-settings': true,
-    'notification': false,
+    notification: false,
     'user-management': permissions['User'].r,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
@@ -217,6 +219,15 @@ const SettingsPanel = ({
             icon: '',
             content: <FollowSettings />,
             description: 'Manage your followed projects and teams',
+          },
+          {
+            id: 'allocation-settings',
+            title: 'Allocation',
+            headerText: 'Allocation',
+            icon: '',
+            content: <AllocationSettingsAllocationPreference />,
+            description:
+              'You can choose how you want to enter your allocations: as hours or fractions.',
           },
           {
             id: 'actuals-settings',

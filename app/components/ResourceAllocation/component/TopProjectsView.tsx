@@ -12,6 +12,7 @@ import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { filterAllocationsForSelectedProject } from '@/app/utils/allocationUtils';
 import CommonToolbar from '../../Toolbar/CommonToolbar';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 interface TopProjectsViewProps {
   startDate: string | null;
@@ -206,23 +207,46 @@ function TopProjectsView({
       type: 'number',
       sortable: false,
       cellClassName: getCellClassName,
-      headerClassName: 'secondary-header',
-      // cellClassName: 'secondary-cell',
+      headerClassName: 'totals-header',
       headerAlign: 'left',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const value = Number(params.value);
         const formattedValue =
           !isNaN(value) && value !== null
-            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            ? normalizeAllocationValue(value)
             : null;
-        return (
-          <EllipsisNameCell
-            value={formattedValue === '0.0' ? '' : formattedValue}
-          />
-        );
+        return <EllipsisNameCell value={`${formattedValue}`} />;
       },
     },
+    // Sahadev : Not Needed for Split View.
+    // {
+    //   field: 'totalAllocationsTillDate',
+    //   headerName: 'Effort Till Date',
+    //   width: 122,
+    //   type: 'number',
+    //   sortable: true,
+    //   cellClassName: getCellClassName,
+    //   headerClassName: 'totals-header',
+    //   headerAlign: 'left',
+    //   primaryColumn: true,
+    //   valueGetter: (params: any) => {
+    //     const allocations = params.row.allocations as any[];
+    //     const total = allocations.reduce((sum, allocation) => {
+    //       const effort = Number(allocation.Effort);
+    //       return sum + (isNaN(effort) ? 0 : effort);
+    //     }, 0);
+    //     return total;
+    //   },
+    //   renderCell: (params: GridCellParams) => {
+    //     const value = Number(params.value);
+    //     const formattedValue =
+    //       !isNaN(value) && value !== null
+    //         ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+    //         : null;
+    //     return <EllipsisNameCell value={formattedValue} />;
+    //   },
+    // },
   ];
 
   return (
@@ -277,6 +301,7 @@ function TopProjectsView({
                 projectType: false,
                 projectTypeGroup: false,
                 totalEffort: true,
+                totalAllocationsTillDate: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
               },

@@ -59,6 +59,7 @@ import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
+  PERCENTAGES,
 } from '@/app/constants/constants';
 // import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
 import CustomToolbar from '../Toolbar/CustomAllocationToolbar';
@@ -78,6 +79,7 @@ import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { UPDATE_TOTAL_ALLOCATIONS } from '@/app/redux/actions/allocationTotalsAction';
 import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 function AllocationGrid({
@@ -149,6 +151,7 @@ function AllocationGrid({
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
+  const { userPreferences } = useSelector(state => state.userPreferences);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
@@ -252,6 +255,7 @@ function AllocationGrid({
 
   const [aggregation, setAggregation] = useState({
     totalEffort: 'sum',
+    totalAllocationsTillDate: 'sum',
     ...aggregationModel(startDate, endDate, type === 'cost'),
   });
 
@@ -479,6 +483,7 @@ function AllocationGrid({
     if (startDate && endDate) {
       setAggregation({
         totalEffort: 'sum',
+        totalAllocationsTillDate: 'sum',
         ...aggregationModel(startDate, endDate, type === 'cost'),
       });
     }
@@ -742,7 +747,10 @@ function AllocationGrid({
     // Return leaf row data
     if (params.rowNode?.type !== 'group') {
       return {
-        value: baseData.value ?? params.formattedValue ?? '',
+        value:
+          userPreferences?.Allocation_Preference === PERCENTAGES
+            ? (params.value ?? '')
+            : (baseData.value ?? params.formattedValue ?? ''),
         actuals: baseData.actuals ?? 0,
         allocationId: baseData.allocationId ?? null,
         notes: baseData.notes ?? null,
@@ -783,6 +791,18 @@ function AllocationGrid({
     const period =
       visibleLeafRows[0]?.[params.field]?.period ?? baseData.period ?? null;
 
+    if (
+      userPreferences?.Allocation_Preference === PERCENTAGES &&
+      params.rowNode?.children[0].startsWith('auto-generated')
+    ) {
+      return {
+        value: Math.round(params.value / params.rowNode.children.length) ?? '',
+        actuals: aggregatedActuals,
+        allocationId: null,
+        notes: null,
+        period,
+      };
+    }
     // Return aggregated group cell data
     return {
       value: params.formattedValue ?? '',
@@ -790,6 +810,53 @@ function AllocationGrid({
       allocationId: null,
       notes: null,
       period,
+    };
+  };
+
+  const buildTotalsCellData = (params, apiRef) => {
+    const baseData = params.row[params.field] || {};
+
+    if (params.rowNode?.type !== 'group') {
+      return {
+        value: baseData.value ?? 0,
+        actuals: baseData.actuals ?? 0,
+      };
+    }
+
+    const filterModel = apiRef.current.state.filter.filterModel;
+    const { filteredRowsLookup } = apiRef.current.getFilterState(filterModel);
+
+    const collectVisibleLeafRows = nodeId => {
+      if (filteredRowsLookup?.[nodeId] === false) return [];
+
+      const node = apiRef.current.getRowNode(nodeId);
+      if (!node || node.type !== 'group') {
+        const row = apiRef.current.getRow(nodeId);
+        return row ? [row] : [];
+      }
+
+      let rows = [];
+      (node.children || []).forEach(childId => {
+        rows = rows.concat(collectVisibleLeafRows(childId));
+      });
+      return rows;
+    };
+
+    const visibleLeafRows = (params.rowNode.children || []).flatMap(childId =>
+      collectVisibleLeafRows(childId)
+    );
+
+    const totalValue = visibleLeafRows
+      .map(row => row?.[params.field]?.value || 0)
+      .reduce((sum, x) => sum + x, 0);
+
+    const totalActuals = visibleLeafRows
+      .map(row => row?.[params.field]?.actuals || 0)
+      .reduce((sum, x) => sum + x, 0);
+
+    return {
+      value: totalValue,
+      actuals: totalActuals,
     };
   };
 
@@ -809,6 +876,45 @@ function AllocationGrid({
       : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
     type === 'cost'
   ).map(column => {
+    if (column.field === 'totalAllocationsTillDate') {
+      return {
+        ...column,
+        valueGetter: params => params?.value?.value ?? 0,
+
+        renderCell: params => {
+          const cellData = buildTotalsCellData(params, apiRef);
+          const value = normalizeAllocationValue(cellData?.value) ?? 0;
+          const actuals = normalizeAllocationValue(cellData?.actuals) ?? 0;
+
+          return (
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'stretch',
+                justifyContent: 'center',
+                position: 'relative',
+              }}
+            >
+              {showActuals ? (
+                <Box sx={{ paddingTop: '3px' }}>
+                  <AllocationCellWithActuals
+                    params={{
+                      value: value,
+                      actuals: actuals,
+                    }}
+                  />
+                </Box>
+              ) : (
+                <span>{value}</span>
+              )}
+            </Box>
+          );
+        },
+      };
+    }
+
     if (isWeekKey(column.field)) {
       return {
         ...column,
@@ -859,7 +965,7 @@ function AllocationGrid({
               );
             }
             if (isFutureWeek) {
-              return <span>{value}</span>;
+              return <span>{cellData?.value ?? 0}</span>;
             }
             return (
               <Box
@@ -873,9 +979,11 @@ function AllocationGrid({
                 }}
               >
                 {shouldShowActuals ? (
-                  <AllocationCellWithActuals params={cellData} />
+                  <Box sx={{ paddingTop: '1px' }}>
+                    <AllocationCellWithActuals params={cellData} />
+                  </Box>
                 ) : (
-                  <span>{value}</span>
+                  <span>{cellData?.value ?? 0}</span>
                 )}
               </Box>
             );
@@ -924,9 +1032,17 @@ function AllocationGrid({
       .map(column => column.field);
 
   const handleCellKeyDown = (params, event) => {
-    // Preventing Key Events for Editing.
-    if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
-      event.preventDefault();
+    if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+      if (
+        ['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown', '.'].includes(event.key)
+      ) {
+        event.preventDefault();
+      }
+    } else {
+      // Preventing Key Events for Editing.
+      if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+      }
     }
 
     // Handling Ctrl+V and Cmd+V (Mac)
@@ -982,11 +1098,23 @@ function AllocationGrid({
   };
 
   const handleCellUpdate = async (newRow, oldRow) => {
+    const formattedNewRow = Object.keys(newRow).reduce((acc, key) => {
+      if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+        acc[key] = isWeekKey(key)
+          ? typeof newRow[key] === 'number' && newRow[key] !== null
+            ? newRow[key] / 100
+            : null
+          : newRow[key];
+      }
+
+      return acc;
+    }, {});
+
     try {
       setCellSelectionModel({});
       // Find the changed week
-      const changedWeeks = Object.keys(newRow).filter(
-        key => isWeekKey(key) && newRow[key] !== oldRow[key]?.value
+      const changedWeeks = Object.keys(formattedNewRow).filter(
+        key => isWeekKey(key) && formattedNewRow[key] !== oldRow[key]?.value
       );
 
       if (!changedWeeks || changedWeeks.length === 0) {
@@ -1001,10 +1129,10 @@ function AllocationGrid({
       keys.map(key => {
         // Handle Delete Case
         if (
-          (newRow[key] === null ||
-            newRow[key] === undefined ||
-            newRow[key] === 0 ||
-            isNaN(newRow[key])) &&
+          (formattedNewRow[key] === null ||
+            formattedNewRow[key] === undefined ||
+            formattedNewRow[key] === 0 ||
+            isNaN(formattedNewRow[key])) &&
           oldRow[key]?.allocationId
         ) {
           deleteList.push({
@@ -1017,8 +1145,8 @@ function AllocationGrid({
           });
         }
 
-        if (!projectOvertimeAllowed && newRow[key] > 1.0) {
-          newRow[key] = oldRow[key]?.value;
+        if (!projectOvertimeAllowed && formattedNewRow[key] > 1.0) {
+          formattedNewRow[key] = oldRow[key]?.value;
           dispatch(
             showToastAction(
               true,
@@ -1031,7 +1159,7 @@ function AllocationGrid({
         }
 
         // Verify Updated Values total allocation for resource is not greater than Max_Allocation_Error
-        let formattedCellValue = normalizeAllocationValue(newRow[key]);
+        let formattedCellValue = normalizeAllocationValue(formattedNewRow[key]);
 
         const period = oldRow[key]?.period;
         const value = formattedCellValue;
@@ -1066,7 +1194,7 @@ function AllocationGrid({
             )
           );
         } else if (totalForWeek > Number(max_allocation_error)) {
-          newRow[key] = oldRow[key]?.value;
+          formattedNewRow[key] = oldRow[key]?.value;
           dispatch(
             showToastAction(
               true,
@@ -1079,8 +1207,11 @@ function AllocationGrid({
         }
 
         // API call to update the data, if any changes are made.
-        if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
-          if (oldRow[key]?.allocationId && newRow[key] !== null) {
+        if (
+          formattedNewRow[key] &&
+          formattedNewRow[key] !== oldRow[key]?.value
+        ) {
+          if (oldRow[key]?.allocationId && formattedNewRow[key] !== null) {
             // Add to update list
             updateList.push({
               Id: oldRow[key]?.allocationId,
@@ -1160,7 +1291,7 @@ function AllocationGrid({
       dispatch(
         showToastAction(
           true,
-          `Updating allocation for ${newRow.resource}...`,
+          `Updating allocation for ${formattedNewRow.resource}...`,
           'info'
         )
       );
@@ -1219,7 +1350,7 @@ function AllocationGrid({
             true,
             error?.response?.data
               ? error?.response?.data
-              : `Error updating allocation for ${newRow.resource}.`,
+              : `Error updating allocation for ${formattedNewRow.resource}.`,
             'error'
           )
         );
@@ -1229,17 +1360,76 @@ function AllocationGrid({
       dispatch(
         showToastAction(
           true,
-          `Successfully updated allocation for ${newRow.resource}...`,
+          `Successfully updated allocation for ${formattedNewRow.resource}...`,
           'success'
         )
       );
       if (allUpdatedRows?.length > 0) {
-        if (viewId === 'topProject') {
-          bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
-        } else if (viewId === 'bottomTeam') {
-          topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
-        }
-        return allUpdatedRows[0];
+        // Get New Project Totals, for the projects Updated
+        const updatedProjects = [
+          ...new Set(allUpdatedRows.map(row => row.projectId)),
+        ];
+
+        return new Promise((resolve, reject) => {
+          dispatch({
+            type: UPDATE_TOTAL_ALLOCATIONS,
+            payload: {
+              updatedProjects: updatedProjects,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(resolve => {
+            allUpdatedRows = allUpdatedRows.map(row => {
+              const updatedProjectTotal =
+                resolve.totalAllocation?.Projects?.find(
+                  p => p.Project === row.projectId
+                );
+              const updatedProjectTotalTillDate =
+                resolve.totalAllocationTillDate?.Projects?.find(
+                  p => p.Project === row.projectId
+                );
+              const updatedResourceTotalTillDate =
+                updatedProjectTotalTillDate?.ResourceTotals?.find(
+                  r => r.Resource === row.resourceId
+                );
+              if (updatedProjectTotal && updatedProjectTotalTillDate) {
+                const updatedRow = {
+                  ...row,
+                  totalEffort:
+                    updatedProjectTotal?.ResourceTotals?.find(
+                      r => r.Resource === row.resourceId
+                    )?.TotalAllocationsEntered || 0,
+                  totalAllocationsTillDate: {
+                    actuals:
+                      updatedResourceTotalTillDate?.TotalActualsEntered || 0,
+                    value:
+                      updatedResourceTotalTillDate?.TotalAllocationsEntered ||
+                      0,
+                  },
+                };
+                return updatedRow;
+              }
+              return row;
+            });
+            if (viewId === 'topProject') {
+              bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
+            } else if (viewId === 'bottomTeam') {
+              topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
+            }
+            return allUpdatedRows[0];
+          })
+          .catch(error => {
+            console.error('Error updating total allocations:', error);
+            dispatch(
+              showToastAction(
+                true,
+                `Error updating total allocations for ${formattedNewRow.resource}.`,
+                'error'
+              )
+            );
+          });
       }
     } catch (e) {
       console.error('Error creating allocations:', e);

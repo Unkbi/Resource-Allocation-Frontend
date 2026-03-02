@@ -163,8 +163,8 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
     
     // Date range
     if (filters.StartDate && filters.EndDate) {
-        const startDate = new Date(filters.StartDate);
-        const endDate = new Date(filters.EndDate);
+        const startDate = parseISO(filters.StartDate);
+        const endDate = parseISO(filters.EndDate);
         const startDay = startDate.getDate();
         const endDay = endDate.getDate();
         const startMonth = startDate.toLocaleDateString('en-US', { month: 'short' });
@@ -267,7 +267,7 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
     const handleClick = (event: React.MouseEvent, params: any) => {
         event.stopPropagation();
 
-        const projectId = params.row?.id;
+        const projectId = params.row?.projectId;
         const period = params.row?.period || ''; // Format: "MM/DD/YYYY"
         const groupId = projectTypeGroups.find(p => p.Name === params.row?.project_type_group)?.Id;
         const projectTypeId = projectTypes.find(p => p.Name === params.row?.project_type)?.Id;
@@ -389,6 +389,17 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
                 ),
             },
             {
+                field: 'yearweek',
+                headerName: 'Year-Week',
+                minWidth: 160,
+                flex: 1.2,
+                renderCell: (params: any) => (
+                    <Typography sx={{ fontSize: '14px' }}>
+                        {params.value}
+                    </Typography>
+                ),
+            },
+            {
                 field: 'plan',
                 headerName: 'Plan',
                 minWidth: 100,
@@ -487,7 +498,10 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
         }
 
         return currentReport.GridData.map((item: any, index: number) => ({
-            id: item.Project?.Id || `row-${index}`,
+            id: item.Project?.Id && item.Metrics?.Period
+                ? `${item.Project.Id}_${item.Metrics.Period}_${index}`
+                : `row-${index}`,
+            projectId: item.Project?.Id || '',
             reporting_project_type: item.Metrics?.ProjectBucket || '',
             project: item.Project?.Name || '',
             project_type_group: item.ProjectTypeGroup?.Name || '',
@@ -496,6 +510,9 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
             actuals: item.Metrics?.TotalActuals || 0,
             actuals_variance: item.Metrics?.Variance || 0,
             period: formatDate(item.Metrics?.Period) || '',
+            yearweek: item.Metrics?.Year && item.Metrics?.Week
+                ? `${item.Metrics.Year}-${item.Metrics.Week}`
+                : '',
             team: item.Team && item.Team.length > 0
                 ? item.Team.map((t: any) => t.Name || '').join(', ')
                 : '',
@@ -678,7 +695,7 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
                         layouts={persistedLayouts || defaultLayouts}
                         breakpoints={{ lg: 1200, md: 996, sm: 768 }}
                         cols={{ lg: 12, md: 12, sm: 12 }}
-                        rowHeight={130}
+                        rowHeight={135}
                         onLayoutChange={handleLayoutChange}
                         isDraggable
                         isResizable
