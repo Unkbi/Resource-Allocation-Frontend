@@ -267,8 +267,8 @@ export const addAllocationValidationSchema = (
           ? scalarSettings?.Max_Allocation_Error * 100 || 200
           : scalarSettings?.Max_Allocation_Error || 2.0,
         userPreferences?.Allocation_Preference === PERCENTAGES
-          ? `Allocation cannot exceed ${scalarSettings?.Max_Allocation_Error * 100 || '200'}.`
-          : `Allocation cannot exceed ${scalarSettings?.Max_Allocation_Error || '2.0'}.`
+          ? `Allocation cannot exceed ${Math.round(scalarSettings?.Max_Allocation_Error * 100) || '200'}.`
+          : `Allocation cannot exceed ${Math.round(scalarSettings?.Max_Allocation_Error) || '2.0'}.`
       ),
   });
 
