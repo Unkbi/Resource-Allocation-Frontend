@@ -27,6 +27,7 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import { getProjectRangeWarnings } from './ValidationSchema';
 import {
   AllocationForm_Status_Filter,
+  PERCENTAGES,
   PROJECT_ACTIVE_STATUS,
 } from '@/app/constants/constants';
 import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
@@ -43,6 +44,7 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
   const [multipleProjectError, setMultipleProjectError] = useState(false);
   const [closeResourceMenu, setCloseResourceMenu] = useState(false);
   const [closeProjectMenu, setCloseProjectMenu] = useState(false);
+  const { userPreferences } = useSelector(state => state.userPreferences);
   const dispatch = useDispatch();
 
   const warnings = getProjectRangeWarnings(values, projects);
@@ -145,6 +147,12 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
   };
 
   const handleKeyPress = e => {
+    if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+        e.preventDefault();
+      }
+      return;
+    }
     if (['e', 'E', '+', '-'].includes(e.key)) {
       e.preventDefault();
     }
@@ -163,9 +171,14 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
   const handleCustomCapacityBlur = e => {
     let formattedValue = e.target.value;
     if (formattedValue && !isNaN(formattedValue)) {
-      const numValue = Number(formattedValue);
-      // Round to 0.05 steps and format to 1-2 decimals
-      formattedValue = normalizeAllocationValue(numValue);
+      if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+        formattedValue =
+          normalizeAllocationValue(Number(formattedValue) / 100) * 100;
+      } else {
+        const numValue = Number(formattedValue);
+        // Round to 0.05 steps and format to 1-2 decimals
+        formattedValue = normalizeAllocationValue(numValue);
+      }
       setCustomCapacity(formattedValue);
       setFieldValue('AllocationEntered', Number(formattedValue));
     }
@@ -398,8 +411,16 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
             sx={{ display: 'flex', alignItems: 'center', gap: '22px' }}
           >
             <StyledRadioButton
-              value="1.0"
-              label="1.0"
+              value={
+                userPreferences?.Allocation_Preference === PERCENTAGES
+                  ? '100'
+                  : '1.0'
+              }
+              label={
+                userPreferences?.Allocation_Preference === PERCENTAGES
+                  ? '100%'
+                  : '1.0'
+              }
               selectedValue={capacityOption}
               onChange={handleCapacityChange}
               backgroundColor="#e6f7e6"
@@ -407,8 +428,16 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
               sx={{ fontWeight: capacityOption === '1.0' ? 'bold' : 'normal' }}
             />
             <StyledRadioButton
-              value="0.5"
-              label="0.5"
+              value={
+                userPreferences?.Allocation_Preference === PERCENTAGES
+                  ? '50'
+                  : '0.5'
+              }
+              label={
+                userPreferences?.Allocation_Preference === PERCENTAGES
+                  ? '50%'
+                  : '0.5'
+              }
               selectedValue={capacityOption}
               onChange={handleCapacityChange}
               backgroundColor="#fff8e6"
@@ -418,8 +447,16 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
               }}
             />
             <StyledRadioButton
-              value="0.2"
-              label="0.2"
+              value={
+                userPreferences?.Allocation_Preference === PERCENTAGES
+                  ? '20'
+                  : '0.2'
+              }
+              label={
+                userPreferences?.Allocation_Preference === PERCENTAGES
+                  ? '20%'
+                  : '0.2'
+              }
               selectedValue={capacityOption}
               onChange={handleCapacityChange}
               backgroundColor="#fde6ef"

@@ -562,13 +562,15 @@ export const getFinalColumns = (
     state => state.allocationView
   );
   const { scalarSettings } = useSelector(state => state.allSettings);
+  const { userPreferences } = useSelector(state => state.userPreferences);
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
     endDate,
     isFormatWithK,
-    scalarSettings
+    scalarSettings,
+    userPreferences
   );
 
   const handleAddClick = params => {
@@ -1281,7 +1283,7 @@ export const getCellClassName = (
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
-      
+
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
@@ -1315,7 +1317,7 @@ export const getCellClassName = (
           break;
         }
       }
-      
+
       if (matchingRange) {
         const base = `allocation-theme-${matchingRange.id}`;
         const groupClass =
