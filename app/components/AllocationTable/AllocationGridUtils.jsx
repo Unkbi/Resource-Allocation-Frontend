@@ -1241,6 +1241,8 @@ export const getCellClassName = (
 ) => {
   const apiRef = useGridApiRef();
   const { resources } = useSelector(state => state.resources);
+  const { removeContractorPT, showActuals } = useSelector(
+    (state) => state.allocationView);
   if (
     params?.field === 'totalEffort' ||
     params?.field === 'totalAllocationsTillDate'
@@ -1291,7 +1293,10 @@ export const getCellClassName = (
     
       const children = params.rowNode?.children ?? [];
 
-      const validResources = children.filter(childId => {
+      let totalRows = uniqueProjectRows.size;
+      
+      if (removeContractorPT) {
+        const validResources = children.filter(childId => {
         const childNode = params.api.getRowNode(childId);
         if (!childNode) return false;
         const resourceName = childNode.groupingKey; 
@@ -1302,12 +1307,11 @@ export const getCellClassName = (
       });
       
 
-      const validResourceCount = validResources.length;
-    
-    
-
-      const totalRows = validResourceCount || uniqueProjectRows.size;
-   
+        const validResourceCount = validResources.length;
+        totalRows = validResourceCount;
+      } else {
+        totalRows = children.length;
+      }
 
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
