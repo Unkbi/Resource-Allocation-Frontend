@@ -1,8 +1,11 @@
+import { PERCENTAGES } from '@/app/constants/constants';
+import { RootState } from '@/app/redux/store';
 import {
   formatMin1Max2,
   normalizeAllocationValue,
 } from '@/app/utils/actualsUtils';
 import { Box, Typography } from '@mui/material';
+import { useSelector } from 'react-redux';
 
 interface AllocationCellWithActualsProps {
   params: any;
@@ -41,6 +44,18 @@ const AllocationCellWithActuals = ({
 
   const notes = (params?.notes as string) || '';
 
+  const { userPreferences } = useSelector(
+    (state: RootState) => state.userPreferences
+  );
+  const formattedRawValue =
+    userPreferences?.Allocation_Preference === PERCENTAGES
+      ? Math.round(rawValue)
+      : formatMin1Max2(rawValue);
+  const formattedRawActuals =
+    userPreferences?.Allocation_Preference === PERCENTAGES
+      ? Math.round(rawActuals)
+      : formatMin1Max2(rawActuals);
+
   return (
     <div>
       <Box
@@ -53,7 +68,7 @@ const AllocationCellWithActuals = ({
         }}
       >
         <Box sx={{ position: 'relative', top: 0, left: 0, zIndex: 1 }}>
-          <Typography>{formatMin1Max2(rawValue)}</Typography>
+          <Typography>{formattedRawValue}</Typography>
         </Box>
 
         <Box
@@ -73,7 +88,7 @@ const AllocationCellWithActuals = ({
               fontWeight: 600,
             }}
           >
-            {formatMin1Max2(rawActuals)}
+            {formattedRawActuals}
           </Typography>
         </Box>
       </Box>
