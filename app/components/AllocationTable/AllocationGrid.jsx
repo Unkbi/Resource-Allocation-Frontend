@@ -1105,8 +1105,9 @@ function AllocationGrid({
             ? newRow[key] / 100
             : null
           : newRow[key];
+        return acc;
       }
-
+      acc[key] = newRow[key];
       return acc;
     }, {});
 
