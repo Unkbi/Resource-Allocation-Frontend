@@ -1420,7 +1420,7 @@ function ActualTable({
           >
             {userPreferences?.Actuals_Allocation_Preference === HOURS
               ? 'Hours per week • 40 hrs = full-time • min 2 hrs'
-              : 'Allocation • 1.0 = full-time • min 0.05 (2 hrs)'}
+              : 'Allocation • 1.0 = full-time (40 hrs) • min 0.05 (2 hrs)'}
           </Typography>
           <Stack direction="row" sx={{ ml: 2, alignItems: 'center' }}>
             <Typography
