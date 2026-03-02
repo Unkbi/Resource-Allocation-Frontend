@@ -125,6 +125,30 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
     ],
     requiresPeriod: false,
   },
+
+  // Percentage allocation specific filters
+  percentageAllocation: {
+    enabledFilters: [
+      'team',
+      'organization',
+      'projectType',
+      'projectTypeGroup',
+      'project',
+    ],
+    requiresPeriod: true,
+  },
+
+  // Allocation capacity specific filters
+  allocationCapacity: {
+    enabledFilters: [
+      'team',
+      'organization',
+      'projectType',
+      'projectTypeGroup',
+      'project',
+    ],
+    requiresPeriod: true,
+  },
 };
 
 /**

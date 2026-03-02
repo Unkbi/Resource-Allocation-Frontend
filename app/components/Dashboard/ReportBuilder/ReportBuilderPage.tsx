@@ -25,7 +25,7 @@ import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import AISummaryTab from './AISummaryTab';
 import CustomTab from './CustomTab';
 import { fetchProjectSummary } from '@/app/redux/actions/aiSummaryAction';
-import { fetchCustomReportRequest } from '@/app/redux/actions/customReportActions';
+import { fetchCustomReportRequest, fetchAllocationCapacityRequest } from '@/app/redux/actions/customReportActions';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import ErrorPage from '../../ErrorPage/ErrorPage';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
@@ -240,7 +240,7 @@ function ReportBuilderPage({
 
   // Separate filter state for Custom tab
   const [customFilters, setCustomFilters] = useState<ReportFilters>({
-    reportType: 'resourceProjectPeriod', // Dummy value
+    reportType: 'percentageAllocation', // Dummy value
     period: 'last_week',
     customDateRange: undefined,
     team: [],
@@ -307,6 +307,7 @@ function ReportBuilderPage({
   const { projects } = useSelector((state: RootState) => state.projects);
 
   const [APIFilters, setAPIFilters] = useState<any>(null);
+  const [customReportType, setCustomReportType] = useState<'percentageAllocation' | 'allocationCapacity'>('percentageAllocation');
 
   // Ref to track if we've already attempted initial sessionStorage load
   const hasAttemptedInitialLoadRef = useRef(false);
@@ -536,7 +537,11 @@ function ReportBuilderPage({
     setAPIFilters(apiFilters);
 
     try {
-      dispatch(fetchCustomReportRequest(apiFilters));
+      if (customReportType === 'allocationCapacity') {
+        dispatch(fetchAllocationCapacityRequest(apiFilters));
+      } else {
+        dispatch(fetchCustomReportRequest(apiFilters));
+      }
       setShowData(true);
     } catch (error) {
       console.error('Error generating custom report:', error);
@@ -557,7 +562,7 @@ function ReportBuilderPage({
 
   const handleResetCustomFilters = () => {
     setCustomFilters({
-      reportType: 'resourceProjectPeriod',
+      reportType: 'percentageAllocation', // Default to percentage allocation for custom tab
       period: 'last_week',
       customDateRange: undefined,
       team: [],
@@ -775,7 +780,7 @@ function ReportBuilderPage({
 
       // Set custom filters from query params
       const customFiltersFromQuery: ReportFilters = {
-        reportType: 'resourceProjectPeriod',
+        reportType: pendingQueryFilters.reportType || 'percentageAllocation',
         period: pendingQueryFilters.period || 'last_week',
         customDateRange:
           pendingQueryFilters.customStartDate && pendingQueryFilters.customEndDate
@@ -804,6 +809,12 @@ function ReportBuilderPage({
 
       setCustomFilters(customFiltersFromQuery);
 
+      // Set custom report type from query params
+      const reportTypeFromQuery = pendingQueryFilters.reportType;
+      if (reportTypeFromQuery === 'allocationCapacity' || reportTypeFromQuery === 'percentageAllocation') {
+        setCustomReportType(reportTypeFromQuery);
+      }
+
       // Prepare API filters for custom report
       const apiFilters: any = {
         Projects: customFiltersFromQuery.project,
@@ -818,8 +829,12 @@ function ReportBuilderPage({
 
       setAPIFilters(apiFilters);
 
-      // Auto-generate custom report
-      dispatch(fetchCustomReportRequest(apiFilters));
+      // Auto-generate custom report based on reportType
+      if (reportTypeFromQuery === 'allocationCapacity') {
+        dispatch(fetchAllocationCapacityRequest(apiFilters));
+      } else {
+        dispatch(fetchCustomReportRequest(apiFilters));
+      }
       setHasAppliedQueryParams(true);
       setFiltersExpanded(false);
       setIsInitializing(false);
@@ -1530,6 +1545,8 @@ function ReportBuilderPage({
             reportType={customFilters.reportType as ReportType}
             tab="custom"
             onGenerateReport={handleGenerateCustomReport}
+            onCustomReportTypeChange={setCustomReportType}
+            customReportType={customReportType}
             onExport={handleExport}
             onShare={handleShare}
             isLoading={customReportState.loading}
@@ -1559,6 +1576,7 @@ function ReportBuilderPage({
             <CustomTab
               showActuals={customFilters.show_actuals || false}
               APIFilters={APIFilters}
+              customReportType={customReportType}
             />
           </Box>
         </>
