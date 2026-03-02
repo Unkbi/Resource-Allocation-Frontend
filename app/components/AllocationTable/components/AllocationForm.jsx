@@ -1746,6 +1746,8 @@ const AllocationForm = () => {
                   projects,
                   resources,
                   location,
+                  projectTypes,
+                  projectTypeGroups,
                   splitView,
                   bottomTeamAllocationGrid, // Update these rows when in spitView
                   teamAllocationGrid, // Update these rows when in teams, organisation, or resources views

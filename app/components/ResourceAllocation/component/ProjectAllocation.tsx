@@ -162,6 +162,8 @@ function ProjectAllocation({
             allTempRows as AllAllocations[],
             projects || [],
             portfolios || [],
+            projectTypes || [],
+            _resources || [],
             startDate || '',
             endDate || ''
           ) || []
@@ -189,6 +191,8 @@ function ProjectAllocation({
           filteredResources as AllAllocations[],
           projects || [],
           portfolios || [],
+          projectTypes || [],
+          _resources || [],
           startDate || '',
           endDate || ''
         )?.map(allocation => ({
