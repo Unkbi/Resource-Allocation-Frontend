@@ -98,6 +98,7 @@ export default function AssignPrivilegeTable({
           }}
           localeText={{
             toolbarFilters: '',
+            toolbarExport: '',
           }}
           sx={{
             border: 'none',

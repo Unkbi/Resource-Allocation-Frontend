@@ -114,6 +114,7 @@ const RatesTable = ({
         localeText={{
           toolbarFilters: '',
           toolbarColumns: '',
+          toolbarExport: '',
         }}
         sx={{
           height: '100vh',

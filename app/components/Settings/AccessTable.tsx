@@ -15,9 +15,11 @@ import { StyledInput } from '../Input/StyledInput';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
   DataGrid,
+  GridCsvExportMenuItem,
   GridRowSelectionModel,
   GridToolbarColumnsButton,
   GridToolbarContainer,
+  GridToolbarExportContainer,
   GridToolbarFilterButton,
 } from '@mui/x-data-grid';
 import {
@@ -25,7 +27,7 @@ import {
   FilterPanelStyles,
 } from '../AllocationTable/styles/StyledDataGrid';
 import SettingsToolbar from '../Toolbar/SettingsToolbar';
-import { DataGridPremium } from '@mui/x-data-grid-premium';
+import { DataGridPremium, GridExcelExportMenuItem } from '@mui/x-data-grid-premium';
 interface AccessTableProps {
   title: string;
   data: any[];
@@ -716,7 +718,27 @@ export default function AccessTable({
                       alt="columns"
                       style={{ width: 20, height: 20 }}
                     />
-                  </IconButton>
+                    </IconButton>
+                    <IconButton
+                      onClick={() =>
+                        apiRef?.current?.exportDataAsCsv({
+                          fileName: `${title}_data`,
+                        })
+                      }
+                      sx={{
+                        width: 40,
+                        height: 38,
+                        borderRadius: '6px',
+                        border: '1px solid #E2E8F0',
+                        boxShadow: '0px 1px 1px rgba(0,0,0,0.25)',
+                      }}
+                    >
+                      <img
+                        src="/images/icons/ExportIcon.svg"
+                        alt="export"
+                        style={{ width: 40, height: 40 }}
+                      />
+                    </IconButton>
                 </Box>
                 {buttonLabel && (
                   <Box

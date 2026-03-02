@@ -102,6 +102,7 @@ export default function AssignRolesTable({
           }}
           localeText={{
             toolbarFilters: '',
+            toolbarExport: '',
           }}
           sx={{
             border: 'none',

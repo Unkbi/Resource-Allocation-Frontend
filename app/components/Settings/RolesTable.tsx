@@ -97,6 +97,7 @@ export default function RolesTable({
           }}
           localeText={{
             toolbarFilters: '',
+            toolbarExport: '',
           }}
           sx={{
             border: 'none',

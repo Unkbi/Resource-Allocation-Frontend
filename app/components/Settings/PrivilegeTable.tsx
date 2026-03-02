@@ -101,6 +101,7 @@ export default function PrivilegeTable({
           }}
           localeText={{
             toolbarFilters: '',
+            toolbarExport: '',
           }}
           sx={{
             border: 'none',
