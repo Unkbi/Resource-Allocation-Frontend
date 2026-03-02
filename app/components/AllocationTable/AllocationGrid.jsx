@@ -146,7 +146,9 @@ function AllocationGrid({
   const { resources } = useSelector(state => state.resources);
   const { location } = useSelector(state => state.allSettings);
   const { projects } = useSelector(state => state.projects);
-  const { projectTypes } = useSelector(state => state.allSettings);
+  const { projectTypes, projectTypeGroups } = useSelector(
+    state => state.allSettings
+  );
   const { portfolios } = useSelector(state => state.portfolios);
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -1343,6 +1345,8 @@ function AllocationGrid({
             projects,
             resources,
             location,
+            projectTypes,
+            projectTypeGroups,
             splitView,
             bottomTeamAllocationGrid,
             teamAllocationGrid,

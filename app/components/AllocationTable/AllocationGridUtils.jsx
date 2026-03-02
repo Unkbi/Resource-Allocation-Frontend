@@ -94,6 +94,12 @@ const CellWithMenu = ({
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allProjects = useSelector(state => state.projects.projects || []);
   const allPortfolios = useSelector(state => state.portfolios.portfolios || []);
+  const projectTypes = useSelector(
+    state => state.allSettings.projectTypes || []
+  );
+  const projectTypeGroups = useSelector(
+    state => state.allSettings.projectTypeGroups || []
+  );
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
@@ -339,6 +345,9 @@ const CellWithMenu = ({
                 : '',
             allPortfolios,
             allProjects,
+            projectTypes,
+            projectTypeGroups,
+            allResources,
             {
               ProjectName: row?.project || '',
               Id: '',

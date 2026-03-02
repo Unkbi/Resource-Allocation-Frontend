@@ -58,6 +58,7 @@ function PortfolioAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const { location } = useSelector((state: RootState) => state.allSettings);
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
@@ -116,6 +117,8 @@ function PortfolioAllocation({
           filteredResources as AllAllocations[],
           projects || [],
           portfolios || [],
+          projectTypes || [],
+          _resources || [],
           startDate || '',
           endDate || ''
         )?.map(allocation => ({
