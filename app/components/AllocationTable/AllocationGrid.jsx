@@ -123,7 +123,6 @@ function AllocationGrid({
     savedViews,
     currentView,
     columns: _columns,
-    removeContractorPT,
   } = useSelector(state => state.allocationView);
 
   const dispatch = useDispatch();
@@ -669,32 +668,6 @@ function AllocationGrid({
     currentView?.WeekPlus,
     currentView?.WeekMinus,
   ]);
-
-  useEffect(() => {
-    if (removeContractorPT) {
-      const updatedModel = {
-        ...filterModel,
-        items: [
-          ...filterModel.items,
-          {
-            id: 'resourceTypeFilter',
-            field: 'resourceType',
-            operator: 'doesNotEqual',
-            value: 'Contractor - PT',
-          },
-        ],
-      };
-      setFilterModel(updatedModel);
-    } else {
-      const updatedModel = {
-        ...filterModel,
-        items: filterModel.items.filter(
-          item => item.id !== 'resourceTypeFilter'
-        ),
-      };
-      setFilterModel(updatedModel);
-    }
-  }, [removeContractorPT]);
 
   const handleAddProject = (e, project, curRow) => {
     const checkEntryExists = (data, resourceId, projectName, projectId) => {
