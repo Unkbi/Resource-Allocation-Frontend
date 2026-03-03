@@ -339,6 +339,7 @@ const projectPeriodColumns: GridColDef[] = [
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'project_manager_email', headerName: 'Project Manager Email', minWidth: 200 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
+  { field: 'yearWeek', headerName: 'Year-Week', minWidth: 120 },
   { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actual_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right'},
@@ -374,6 +375,7 @@ const resourcePeriodColumns: GridColDef[] = [
     renderCell: (params) => getAllocationManagerFromPath(params.value, GetResources())?.FullName || params.value,
   },
   { field: 'period', headerName: 'Period', minWidth: 120 },
+  { field: 'yearWeek', headerName: 'Year-Week', minWidth: 120 },
   {
     field: 'actuals_status', headerName: 'Act. Conf. Status', minWidth: 150,
     renderCell: (params: any) => (
@@ -390,6 +392,8 @@ const resourcePeriodColumns: GridColDef[] = [
   { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 160, renderCell: renderScoreCell },
   { field: 'project_health_score', headerName: 'Health Score', minWidth: 120, renderCell: renderScoreCell },
   { field: 'six_week_plan', headerName: 'Six Week Plan', minWidth: 180 },
+  { field: 'resource_start_date', headerName: 'Resource Start Date', minWidth: 140 },
+  { field: 'resource_end_date', headerName: 'Resource End Date', minWidth: 140 },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
   {
     field: 'created_by', headerName: 'Created By', minWidth: 160,
@@ -429,6 +433,7 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'portfolio_name', headerName: 'Portfolio', minWidth: 140 },
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
+  { field: 'yearWeek', headerName: 'Year-Week', minWidth: 120 },
   {
     field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
     renderCell: (params: any) => (
@@ -443,6 +448,8 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'weighted_percent_variance', headerName: 'Weighted % Variance', minWidth: 170, renderCell: renderScoreCell },
   { field: 'percent_variance', headerName: 'Percent Variance', minWidth: 140, renderCell: renderScoreCell },
   { field: 'comments', headerName: 'Comments / Project updates', minWidth: 200, renderCell: renderCommentCell },
+  { field: 'resource_start_date', headerName: 'Resource Start Date', minWidth: 140 },
+  { field: 'resource_end_date', headerName: 'Resource End Date', minWidth: 140 },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
   {
     field: 'created_by', headerName: 'Created By', minWidth: 160,
@@ -482,6 +489,7 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'portfolio_name', headerName: 'Portfolio', minWidth: 140 },
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
+  { field: 'yearWeek', headerName: 'Year-Week', minWidth: 120 },
   {
     field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
     renderCell: (params: any) => (
@@ -500,6 +508,8 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'actual_cost', headerName: 'Actual Cost', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
   { field: 'planned_cost', headerName: 'Planned Cost', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
   { field: 'comments', headerName: 'Comments / Project updates', minWidth: 200, renderCell: renderCommentCell },
+  { field: 'resource_start_date', headerName: 'Resource Start Date', minWidth: 140 },
+  { field: 'resource_end_date', headerName: 'Resource End Date', minWidth: 140 },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
   {
     field: 'created_by', headerName: 'Created By', minWidth: 160,
