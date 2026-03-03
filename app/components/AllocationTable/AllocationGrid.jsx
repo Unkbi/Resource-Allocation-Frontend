@@ -803,6 +803,9 @@ function AllocationGrid({
         params.rowNode?.children[0].startsWith('auto-generated'))
     ) {
       let value;
+      let actuals = Math.round(
+        (aggregatedActuals / params.rowNode.children.length) * 100
+      );
       if (
         currentView?.GroupBy === 'Portfolio' &&
         params.rowNode?.children[0].startsWith('auto-generated')
@@ -812,27 +815,36 @@ function AllocationGrid({
           const childRow = apiRef.current.getRowNode(child);
           const avg = childRow?.children?.map(grandChild => {
             const grandChildRow = apiRef.current.getRow(grandChild);
-            return grandChildRow?.[params.field]?.value || 0;
+            return {
+              value: grandChildRow?.[params.field]?.value || 0,
+              actuals: grandChildRow?.[params.field]?.actuals || 0,
+            };
           });
-          return avg?.reduce((sum, x) => sum + x, 0) / avg?.length || 0;
+          return {
+            value: avg?.reduce((sum, x) => sum + x.value, 0) / avg?.length || 0,
+            actuals:
+              avg?.reduce((sum, x) => sum + x.actuals, 0) / avg?.length || 0,
+          };
         });
 
         value =
           Math.round(
-            (childAverages.reduce((acc, x) => acc + x, 0) /
+            (childAverages.reduce((acc, x) => acc + x.value, 0) /
               childAverages.length) *
               100 || 0
           ) || 0;
+        actuals = Math.round(
+          (childAverages.reduce((acc, x) => acc + x.actuals, 0) /
+            childAverages.length) *
+            100 || 0
+        );
       } else {
         value = Math.round(params.value / params.rowNode.children.length) ?? '';
       }
 
       return {
         value: value,
-        actuals:
-          userPreferences?.Allocation_Preference === PERCENTAGES
-            ? Math.round(aggregatedActuals * 100)
-            : aggregatedActuals,
+        actuals: actuals,
         allocationId: null,
         notes: null,
         period,
