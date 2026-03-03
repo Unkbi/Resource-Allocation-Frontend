@@ -84,7 +84,6 @@ const initialState: AllocationGridViewState = {
   splitView: false,
   splitViewCurrentProject: null,
   showActuals: false,
-  removeContractorPT: false,
   loading: false,
   error: null,
   expandRowId: [],
@@ -393,9 +392,6 @@ const viewSlice = createSlice({
     setShowActuals: (state, action) => {
       state.showActuals = action.payload;
     },
-    setRemoveContractorPT: (state, action) => {
-      state.removeContractorPT = action.payload;
-    },
     setExpandRowId: (state, action) => {
       state.expandRowId = action.payload;
     },
@@ -607,7 +603,6 @@ export const {
   setSplitView,
   setSplitViewCurrentProject,
   setShowActuals,
-  setRemoveContractorPT,
   setExpandRowId,
   setCellSelectionData,
   setInitialCurrentView,
