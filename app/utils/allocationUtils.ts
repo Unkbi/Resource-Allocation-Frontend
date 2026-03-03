@@ -444,6 +444,8 @@ export function injectBlankProjectRows(
   allocations: AllAllocations[],
   projects: Project[],
   portfolios: Portfolio[],
+  projectTypes: ProjectType[],
+  resources: Resource[],
   StartDate?: string,
   EndDate?: string
 ) {
@@ -464,17 +466,23 @@ export function injectBlankProjectRows(
     const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
     const key = `${project.Name}___`;
 
+    const projectType = projectTypes.find(pt => pt.Id === project?.Type);
+
     if (!existingKeys.has(key)) {
       extraRows.push({
         id: `project/${project.Name}`,
         resourceId: null,
         project: project.Name,
         projectId: project.Id,
-        projectSponsor: project.ProjectSponsor || '',
-        projectManager: project.ProjectManager || '',
+        projectSponsor:
+          getResourceFromUid(project?.ProjectSponsor, resources)?.FullName ||
+          null,
+        projectManager:
+          getResourceFromUid(project?.ProjectManager, resources)?.FullName ||
+          null,
         projectStatus: project.Status || '',
         projectLocation: project.Location || '',
-        projectType: project.Type || '',
+        projectType: projectType?.Name || '',
         projectTypeGroup: '',
         projectOvertimeAllowed: project.AllowOvertime || null,
         projectCost: project.Budget || null,
@@ -700,6 +708,8 @@ export const generateEmptyRow = (
   allResourcesDetail: AllResourceDetail[],
   portfolios: Portfolio[] | null,
   projects: Project[] | null,
+  projectTypes: ProjectType[],
+  projectTypeGroups: ProjectTypeGroup[],
   resources: Resource[],
   location: Location[],
   allocation: Allocation
@@ -719,6 +729,10 @@ export const generateEmptyRow = (
 
   const team = resourceIdToTeam.get(allocation.Resource);
   const project = projects?.find(p => p.Id === allocation.Project);
+  const projectType = projectTypes.find(pt => pt.Id === project?.Type);
+  const projectTypeGroup = projectTypeGroups.find(
+    ptg => ptg.Id === projectType?.Group
+  );
   const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
   const resource = resources.find(r => r.Id === allocation.Resource);
   const locationDetails = location?.find(l => l?.Id === resource?.WorkLocation);
@@ -759,8 +773,8 @@ export const generateEmptyRow = (
       getResourceFromUid(project?.ProjectManager, resources)?.FullName || null,
     projectStatus: project?.Status || null,
     projectLocation: project?.Location || null,
-    projectType: project?.Type || null,
-    projectTypeGroup: null,
+    projectType: projectType?.Name || null,
+    projectTypeGroup: projectTypeGroup?.Name || null,
     projectOvertimeAllowed:
       project?.AllowOvertime === true
         ? 'Yes'
@@ -805,6 +819,9 @@ export const generateEmptyProjectRow = (
   endDate: string,
   portfolios: Portfolio[] | null,
   projects: Project[] | null,
+  projectTypes: ProjectType[],
+  projectTypeGroups: ProjectTypeGroup[],
+  resources: Resource[],
   allocation: Allocation
 ): AllocationGridCell => {
   const weeks = getWeeksInRange(startDate, endDate);
@@ -812,6 +829,11 @@ export const generateEmptyProjectRow = (
   const project = projects?.find(p => p.Id === allocation.Project);
   const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
   const key = `project/${allocation.ProjectName}___`;
+
+  const projectType = projectTypes.find(pt => pt.Id === project?.Type);
+  const projectTypeGroup = projectTypeGroups.find(
+    ptg => ptg.Id === projectType?.Group
+  );
 
   const emptyRow: AllocationGridCell = {
     id: key,
@@ -832,12 +854,14 @@ export const generateEmptyProjectRow = (
     portfolioStatus: portfolio ? portfolio?.Status || null : null,
     project: project?.Name || allocation.ProjectName || null,
     projectId: project?.Id || allocation.Project || null,
-    projectSponsor: null,
-    projectManager: null,
+    projectSponsor:
+      getResourceFromUid(project?.ProjectSponsor, resources)?.FullName || null,
+    projectManager:
+      getResourceFromUid(project?.ProjectManager, resources)?.FullName || null,
     projectStatus: project?.Status || null,
     projectLocation: project?.Location || null,
-    projectType: project?.Type || null,
-    projectTypeGroup: null,
+    projectType: projectType?.Name || null,
+    projectTypeGroup: projectTypeGroup?.Name || null,
     projectOvertimeAllowed:
       project?.AllowOvertime === true
         ? 'Yes'
@@ -903,6 +927,8 @@ export const getFormattedAllocationsForUpdate = (
   projects: Project[],
   resources: Resource[],
   location: Location[],
+  projectTypes: ProjectType[],
+  projectTypeGroups: ProjectTypeGroup[],
   splitView: boolean,
   bottomTeamAllocationGrid: GridApi,
   teamAllocationGrid: GridApi,
@@ -980,6 +1006,8 @@ export const getFormattedAllocationsForUpdate = (
         allResourcesDetail || [],
         portfolios || null,
         projects || [],
+        projectTypes || [],
+        projectTypeGroups || [],
         resources || [],
         location || [],
         allocation

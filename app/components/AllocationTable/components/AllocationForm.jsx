@@ -98,6 +98,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import {
   DATE_FORMAT,
+  PERCENTAGES,
   PORTFOLIO_DISPLAY_NAME,
   PROJECT_ACTIVE_STATUS,
   projectViewsGrouping,
@@ -523,6 +524,7 @@ const AllocationForm = () => {
   const privileges = useSelector(state => state.rbac.privileges);
   const { user: allUsers } = useSelector(state => state.rbac);
   const { scalarSettings } = useSelector(state => state.allSettings);
+  const { userPreferences } = useSelector(state => state.userPreferences);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const {
@@ -585,7 +587,7 @@ const AllocationForm = () => {
           initialData?.Email || ''
         );
       case 'add_allocation':
-        return addAllocationValidationSchema(scalarSettings);
+        return addAllocationValidationSchema(scalarSettings, userPreferences);
       case 'assign_allocation':
         return assignAllocationValidationSchema;
       case 'new_view':
@@ -1450,6 +1452,11 @@ const AllocationForm = () => {
         break;
 
       case 'add_allocation':
+        let allocationValue = values.AllocationEntered;
+        if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+          allocationValue = values.AllocationEntered / 100;
+        }
+
         try {
           const allMondays = generateAllMondays(
             values.StartDate || values.startDate,
@@ -1461,12 +1468,12 @@ const AllocationForm = () => {
 
           if (
             filteredProjects.some(p => !p.AllowOvertime) &&
-            values.AllocationEntered > 1.0
+            allocationValue > 1.0
           ) {
             dispatch(
               showToastAction(
                 true,
-                'Allocation cannot exceed 1.0 for projects that do not allow overtime.',
+                `Allocation cannot exceed ${userPreferences?.Allocation_Preference === PERCENTAGES ? '100%' : '1.0'} for projects that do not allow overtime.`,
                 'error',
                 4000
               )
@@ -1493,7 +1500,7 @@ const AllocationForm = () => {
                 );
 
                 // Perform Delete if AllocationEntered is 0
-                if (values?.AllocationEntered === 0) {
+                if (allocationValue === 0) {
                   if (allocation && allocation?.allocationId) {
                     deleteList.push({
                       Id: allocation?.allocationId,
@@ -1535,12 +1542,12 @@ const AllocationForm = () => {
                       ),
                   resource,
                   weekKey,
-                  values.AllocationEntered,
+                  allocationValue,
                   filteredProjects
                 );
                 if (newFinalTotal > Number(max_allocation_error)) {
                   errorMessages.push(
-                    `Total allocation for week ${weekKey} exceeds ${max_allocation_error} (${newFinalTotal.toFixed(2)}). Update skipped.`
+                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error) * 100 + '%' : max_allocation_error} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(newFinalTotal.toFixed(2) * 100) + '%' : newFinalTotal.toFixed(2)}). Update skipped.`
                   );
                   return null;
                 }
@@ -1550,7 +1557,7 @@ const AllocationForm = () => {
                   newFinalTotal <= Number(max_allocation_error)
                 ) {
                   warningMessages.push(
-                    `Total allocation for week ${weekKey} exceeds ${max_allocation_warning} (${newFinalTotal.toFixed(2)}).`
+                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(newFinalTotal.toFixed(2) * 100) + '%' : newFinalTotal.toFixed(2)}).`
                   );
                 }
 
@@ -1559,7 +1566,7 @@ const AllocationForm = () => {
                   allocation?.allocationId &&
                   allocation?.value
                 ) {
-                  if (allocation?.value !== values.AllocationEntered) {
+                  if (allocation?.value !== allocationValue) {
                     // This is for the Bulk Allocation API.
                     updateList.push({
                       Id: allocation?.allocationId,
@@ -1567,7 +1574,7 @@ const AllocationForm = () => {
                       Project: project.Id,
                       ProjectName: project.Name,
                       Period: allocation?.period,
-                      AllocationEntered: values.AllocationEntered,
+                      AllocationEntered: allocationValue,
                     });
                   }
                 } else {
@@ -1577,7 +1584,7 @@ const AllocationForm = () => {
                     Project: project.Id,
                     ProjectName: project.Name,
                     Period: format(monday, DATE_FORMAT),
-                    AllocationEntered: values.AllocationEntered,
+                    AllocationEntered: allocationValue,
                   });
                 }
               });
@@ -1605,7 +1612,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${max_allocation_error}. Please check and try again.`,
+                    `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
                   )
@@ -1739,6 +1746,8 @@ const AllocationForm = () => {
                   projects,
                   resources,
                   location,
+                  projectTypes,
+                  projectTypeGroups,
                   splitView,
                   bottomTeamAllocationGrid, // Update these rows when in spitView
                   teamAllocationGrid, // Update these rows when in teams, organisation, or resources views
@@ -1785,7 +1794,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Total allocation for the multiple selected weeks exceeds ${max_allocation_error}. Please check and try again.`,
+                    `Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
                   )
@@ -1799,7 +1808,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Warning: Total allocation for the multiple selected weeks exceeds ${max_allocation_warning}.`,
+                    `Warning: Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning}.`,
                     'warning',
                     4000
                   )
@@ -4035,6 +4044,7 @@ const AllocationForm = () => {
           }
 
           dispatch(closeDialog());
+          dispatch({ type: 'FETCH_FOLLOWS', payload: user?.id });
           setFormValue({});
         } catch (error) {
           console.error('Failed to save team follow preferences:', error);
