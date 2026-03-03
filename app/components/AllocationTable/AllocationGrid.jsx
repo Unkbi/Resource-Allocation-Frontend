@@ -954,6 +954,7 @@ function AllocationGrid({
                       value: value,
                       actuals: actuals,
                     }}
+                    totals={true}
                   />
                 </Box>
               ) : (

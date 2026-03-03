@@ -9,10 +9,12 @@ import { useSelector } from 'react-redux';
 
 interface AllocationCellWithActualsProps {
   params: any;
+  totals?: boolean;
 }
 
 const AllocationCellWithActuals = ({
   params,
+  totals = false,
 }: AllocationCellWithActualsProps) => {
   const getBackgroundColor = (value: number, actuals: number) => {
     if (isNaN(value) || isNaN(actuals)) {
@@ -48,11 +50,11 @@ const AllocationCellWithActuals = ({
     (state: RootState) => state.userPreferences
   );
   const formattedRawValue =
-    userPreferences?.Allocation_Preference === PERCENTAGES
+    !totals && userPreferences?.Allocation_Preference === PERCENTAGES
       ? Math.round(rawValue)
       : formatMin1Max2(rawValue);
   const formattedRawActuals =
-    userPreferences?.Allocation_Preference === PERCENTAGES
+    !totals && userPreferences?.Allocation_Preference === PERCENTAGES
       ? Math.round(rawActuals)
       : formatMin1Max2(rawActuals);
 
