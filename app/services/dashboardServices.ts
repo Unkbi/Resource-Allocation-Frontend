@@ -20,6 +20,8 @@ export interface DashboardFilterPayload {
   ResourceLocations?: string[];
   ResourceWorkLocationGroup?: string[];
   ProjectStatuses?: string[];
+  UserStatuses?: string[];
+  UserRoles?: string[];
   StartDate?: string;
   EndDate?: string;
   Bucket?: string;
@@ -85,6 +87,7 @@ export const REPORT_API_MAPPING: Record<string, string> = {
   resourcePeriod: '/Resource/GetAllResourcesWithPeriodActualsStatus',
   resourceProjectPeriod: '/Resource/GetAllocationActualsReport',
   resourceProjectPeriodCost: '/Resource/GetAllocationCostReport',
+  userActivity: '/Resource/GetAllUsersWithDetails',
 };
 
 /**
@@ -353,6 +356,12 @@ export const buildReportPayload = (uiFilters: any): DashboardFilterPayload => {
   }
   if (isFilterEnabled(reportType, 'projectStatuses')) {
     payload.ProjectStatuses = sanitize(uiFilters?.projectStatuses);
+  }
+  if (isFilterEnabled(reportType, 'userStatuses')) {
+    payload.UserStatuses = sanitize(uiFilters?.userStatuses);
+  }
+  if (isFilterEnabled(reportType, 'userRoles')) {
+    payload.UserRoles = sanitize(uiFilters?.userRoles);
   }
   return payload;
 };

@@ -512,6 +512,58 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   },
 ];
 
+const userActivityColumns: GridColDef[] = [
+  { field: 'full_name', headerName: 'User Name', minWidth: 180, flex: 1 },
+  { field: 'first_name', headerName: 'First Name', minWidth: 140 },
+  { field: 'preferred_first_name', headerName: 'Preferred First Name', minWidth: 170 },
+  { field: 'last_name', headerName: 'Last Name', minWidth: 140 },
+  { 
+    field: 'resource_status', 
+    headerName: 'Resource Status', 
+    minWidth: 150,
+    renderCell: (params: any) => (
+      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
+    ),
+  },
+  { 
+    field: 'user_status', 
+    headerName: 'User Status', 
+    minWidth: 140,
+    renderCell: (params: any) => (
+      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
+    ),
+  },
+  { field: 'last_login_time', headerName: 'Last Login Date', minWidth: 150 },
+  { field: 'team_name', headerName: 'Team', minWidth: 160 },
+  { field: 'role', headerName: 'Role', minWidth: 140 },
+  { field: 'manager_name', headerName: 'Manager Name', minWidth: 160 },
+  { field: 'organization', headerName: 'Organization', minWidth: 160 },
+  { field: 'work_location', headerName: 'Work Location', minWidth: 160 },
+  // Additional columns (not shown by default)
+  { field: 'email', headerName: 'Email', minWidth: 200 },
+  { field: 'phone_number', headerName: 'Phone Number', minWidth: 150 },
+  { field: 'department', headerName: 'Department', minWidth: 140 },
+  { field: 'hr_level', headerName: 'HR Level', minWidth: 120 },
+  { field: 'resource_type', headerName: 'Type', minWidth: 120 },
+  { field: 'location_category', headerName: 'Location Category', minWidth: 160 },
+  { field: 'user_id', headerName: 'User ID', minWidth: 120 },
+  // { field: 'resource_id', headerName: 'Resource ID', minWidth: 120 },
+  { field: 'created', headerName: 'Created On', minWidth: 120 },
+  {
+    field: 'created_by', 
+    headerName: 'Created By', 
+    minWidth: 160,
+    renderCell: (params) => GetName(params.value),
+  },
+  { field: 'last_modified', headerName: 'Last Modified On', minWidth: 140 },
+  {
+    field: 'last_modified_by', 
+    headerName: 'Last Modified By', 
+    minWidth: 180,
+    renderCell: (params) => GetName(params.value),
+  },
+];
+
 export const getReportColumns = (reportType: ReportType): GridColDef[] => {
   switch (reportType) {
     case 'projectsOnly':
@@ -526,6 +578,8 @@ export const getReportColumns = (reportType: ReportType): GridColDef[] => {
       return resourceProjectPeriodColumns;
     case 'resourceProjectPeriodCost':
       return resourceProjectPeriodCostColumns;
+    case 'userActivity':
+      return userActivityColumns;
     default:
       return projectsOnlyColumns;
   }
@@ -609,6 +663,23 @@ export const getHiddenColumns = (reportType: ReportType): Record<string, boolean
         currency: false,
         weighted_percent_variance: false,
         percent_variance: false,
+      };
+
+    case 'userActivity':
+      return {
+        ...commonHidden,
+        // Hide additional columns by default
+        first_name: false,
+        preferred_first_name: false,
+        last_name: false,
+        email: false,
+        phone_number: false,
+        department: false,
+        hr_level: false,
+        resource_type: false,
+        location_category: false,
+        user_id: false,
+        resource_id: false,
       };
 
     default:

@@ -162,6 +162,18 @@ const parseQueryParams = (
     filters.projectStatuses = parseArrayParam(projectStatuses);
   }
 
+  const userStatuses =
+    searchParams.get('userStatuses') || searchParams.get('UserStatuses');
+  if (userStatuses) {
+    filters.userStatuses = parseArrayParam(userStatuses);
+  }
+
+  const userRoles =
+    searchParams.get('userRoles') || searchParams.get('UserRoles');
+  if (userRoles) {
+    filters.userRoles = parseArrayParam(userRoles);
+  }
+
   // Parse custom date range
   const customStartDate = searchParams.get('customStartDate');
   const customEndDate = searchParams.get('customEndDate');
@@ -214,6 +226,8 @@ function ReportBuilderPage({
     resourceLocations: [],
     resourceWorkLocationGroup: [],
     projectStatuses: [],
+    userStatuses: [],
+    userRoles: [],
   });
 
   // Separate filter state for AI Summary tab
@@ -236,6 +250,8 @@ function ReportBuilderPage({
     resourceLocations: [],
     resourceWorkLocationGroup: [],
     projectStatuses: [],
+    userStatuses: [],
+    userRoles: [],
   });
 
   // Separate filter state for Custom tab
@@ -257,6 +273,8 @@ function ReportBuilderPage({
     resourceLocations: [],
     resourceWorkLocationGroup: [],
     projectStatuses: [],
+    userStatuses: [],
+    userRoles: [],
     show_actuals: false,
   });
 
@@ -371,6 +389,8 @@ function ReportBuilderPage({
       resourceLocations: filters.resourceLocations,
       resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
       projectStatuses: filters.projectStatuses,
+      userStatuses: filters.userStatuses,
+      userRoles: filters.userRoles,
     };
     const apiPayload = prepareApiPayload(uiFilters);
     try {
@@ -472,6 +492,8 @@ function ReportBuilderPage({
       resourceLocations: [],
       resourceWorkLocationGroup: [],
       projectStatuses: [],
+      userStatuses: [],
+      userRoles: [],
     });
   };
 
@@ -500,6 +522,8 @@ function ReportBuilderPage({
       resourceLocations: [],
       resourceWorkLocationGroup: [],
       projectStatuses: [],
+      userStatuses: [],
+      userRoles: [],
     });
   };
 
@@ -557,7 +581,7 @@ function ReportBuilderPage({
 
   const handleResetCustomFilters = () => {
     setCustomFilters({
-      reportType: 'resourceProjectPeriod',
+      reportType: 'resourceProjectPeriod', // Default to resourceProjectPeriod for custom tab
       period: 'last_week',
       customDateRange: undefined,
       team: [],
@@ -574,6 +598,8 @@ function ReportBuilderPage({
       resourceLocations: [],
       resourceWorkLocationGroup: [],
       projectStatuses: [],
+      userStatuses: [],
+      userRoles: [],
       show_actuals: false,
     });
   };
@@ -799,6 +825,8 @@ function ReportBuilderPage({
         resourceWorkLocationGroup:
           pendingQueryFilters.resourceWorkLocationGroup || [],
         projectStatuses: pendingQueryFilters.projectStatuses || [],
+        userStatuses: pendingQueryFilters.userStatuses || [],
+        userRoles: pendingQueryFilters.userRoles || [],
         show_actuals: pendingQueryFilters.show_actuals || false,
       };
 
@@ -853,6 +881,8 @@ function ReportBuilderPage({
       resourceWorkLocationGroup:
         pendingQueryFilters.resourceWorkLocationGroup || [],
       projectStatuses: pendingQueryFilters.projectStatuses || [],
+      userStatuses: pendingQueryFilters.userStatuses || [],
+      userRoles: pendingQueryFilters.userRoles || [],
     };
     setFilters(mergedFilters);
 
@@ -877,6 +907,8 @@ function ReportBuilderPage({
       resourceLocations: mergedFilters.resourceLocations,
       resourceWorkLocationGroup: mergedFilters.resourceWorkLocationGroup,
       projectStatuses: mergedFilters.projectStatuses,
+      userStatuses: mergedFilters.userStatuses,
+      userRoles: mergedFilters.userRoles,
     };
 
     const apiPayload = prepareApiPayload(uiFilters);
@@ -946,6 +978,8 @@ function ReportBuilderPage({
           resourceLocations: f.resourceLocations || [],
           resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
           projectStatuses: f.projectStatuses || [],
+          userStatuses: f.userStatuses || [],
+          userRoles: f.userRoles || [],
         });
 
         // Fetch the report data
@@ -1037,6 +1071,8 @@ function ReportBuilderPage({
       resourceLocations: filters.resourceLocations,
       resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
       projectStatuses: filters.projectStatuses,
+      userStatuses: filters.userStatuses,
+      userRoles: filters.userRoles,
     };
     const entry = {
       name,
@@ -1075,6 +1111,8 @@ function ReportBuilderPage({
       resourceLocations: f.resourceLocations || [],
       resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
       projectStatuses: f.projectStatuses || [],
+      userStatuses: f.userStatuses || [],
+      userRoles: f.userRoles || [],
     });
     // Dispatch fetch with restored filters
     dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
@@ -1278,6 +1316,8 @@ function ReportBuilderPage({
                 resourceLocations: [],
                 resourceWorkLocationGroup: [],
                 projectStatuses: [],
+                userStatuses: [],
+                userRoles: [],
               });
               setFiltersExpanded(true);
             }}
@@ -1494,6 +1534,8 @@ function ReportBuilderPage({
                 resourceLocations: [],
                 resourceWorkLocationGroup: [],
                 projectStatuses: [],
+                userStatuses: [],
+                userRoles: [],
               });
               setFiltersExpanded(true);
             }}

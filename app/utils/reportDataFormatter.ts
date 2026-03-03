@@ -271,6 +271,38 @@ const formatResourceProjectPeriodCost = (data: any[]): any[] => {
     }));
 };
 
+const formatUserActivity = (data: any[]): any[] => {
+    const formattedData = formatAPIResponse('ResourceWithUserDetails', data);
+
+    return formattedData.map((item: any, index: any) => ({
+        id: index,
+        resource_id: safeGet(item, 'Resource.Id', ''),
+        user_id: safeGet(item, 'Resource.UserId', ''),
+        first_name: safeGet(item, 'Resource.FirstName', ''),
+        preferred_first_name: safeGet(item, 'Resource.PreferredFirstName', ''),
+        last_name: safeGet(item, 'Resource.LastName', ''),
+        full_name: safeGet(item, 'Resource.FullName', ''),
+        email: safeGet(item, 'Resource.Email', ''),
+        phone_number: safeGet(item, 'Resource.PhoneNumber', ''),
+        department: safeGet(item, 'Resource.Department', ''),
+        team_name: safeGet(item, 'Team.Name', ''),
+        role: safeGet(item, 'Resource.Role', ''),
+        hr_level: safeGet(item, 'Resource.HRLevel', ''),
+        resource_type: safeGet(item, 'Resource.Type', ''),
+        manager_name: safeGet(item, 'Manager.FullName', ''),
+        resource_status: safeGet(item, 'Resource.Status', ''),
+        work_location: safeGet(item, 'WorkLocation.Name', ''),
+        location_category: safeGet(item, 'Resource.LocationCategory', ''),
+        organization: safeGet(item, 'Organization.Name', ''),
+        created: formatDate(safeGet(item, 'Resource.__created')),
+        created_by: safeGet(item, 'Resource.__created_by', ''),
+        last_modified: formatDate(safeGet(item, 'Resource.__last_modified')),
+        last_modified_by: safeGet(item, 'Resource.__last_modified_by', ''),
+        last_login_time: formatDate(safeGet(item, 'User.lastLoginTime')),
+        user_status: safeGet(item, 'User.status', ''),
+    }));
+};
+
 export const formatReportData = (
     reportType: ReportType,
     data: any[]
@@ -292,6 +324,8 @@ export const formatReportData = (
             return formatResourceProjectPeriod(data);
         case 'resourceProjectPeriodCost':
             return formatResourceProjectPeriodCost(data);
+        case 'userActivity':
+            return formatUserActivity(data);
         default:
             console.warn(`Unknown report type: ${reportType}`);
             return [];
