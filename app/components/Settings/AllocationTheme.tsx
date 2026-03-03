@@ -521,6 +521,9 @@ function AllocationTheme({
           onChange={e => handleRangeChange(id, 'From', e.target.value)}
           error={error?.From}
         />
+        {userPreferences?.Allocation_Preference === PERCENTAGES && (
+          <span style={{ paddingTop: '4px' }}>%</span>
+        )}
         <Typography variant="body2">TO</Typography>
         <StyledRangeField
           onKeyDown={e => e.stopPropagation()}
@@ -540,6 +543,9 @@ function AllocationTheme({
           onBlur={() => handleToBlur(id)}
           error={error?.To}
         />
+        {userPreferences?.Allocation_Preference === PERCENTAGES && (
+          <span style={{ paddingTop: '4px' }}>%</span>
+        )}
       </RangeInputGroup>
     );
   };

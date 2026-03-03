@@ -1227,7 +1227,7 @@ function AllocationGrid({
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning} (${userPreferences?.Allocation_Preference === PERCENTAGES ? totalForWeek.toFixed(2) * 100 + '%' : totalForWeek.toFixed(2)}).`,
+              `Allocation for ${key} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(totalForWeek.toFixed(2) * 100) + '%' : totalForWeek.toFixed(2)}).`,
               'warning',
               4000
             )
@@ -1237,7 +1237,7 @@ function AllocationGrid({
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error} (${userPreferences?.Allocation_Preference === PERCENTAGES ? totalForWeek.toFixed(2) * 100 + '%' : totalForWeek.toFixed(2)}). Update cancelled.`,
+              `Allocation for ${key} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(totalForWeek.toFixed(2) * 100) + '%' : totalForWeek.toFixed(2)}). Update cancelled.`,
               'error',
               4000
             )
