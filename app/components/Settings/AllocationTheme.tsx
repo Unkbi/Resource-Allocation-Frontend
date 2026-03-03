@@ -60,7 +60,10 @@ import {
   type SettingsData,
 } from '@/app/utils/settingsUtils';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
-import { ALLOCATION_SETTINGS_VALID_TABS } from '@/app/constants/constants';
+import {
+  ALLOCATION_SETTINGS_VALID_TABS,
+  PERCENTAGES,
+} from '@/app/constants/constants';
 
 const baseURLAccessManagement = '/settings?menu=allocation-setting';
 interface ColorPair {
@@ -188,6 +191,9 @@ function AllocationTheme({
   );
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
+  );
+  const { userPreferences } = useSelector(
+    (state: RootState) => state.userPreferences
   );
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -363,9 +369,19 @@ function AllocationTheme({
     ) => {
       if (!isValidDecimal(value)) return;
 
+      // convert display back to internal fraction when showing percentages
+      let internalValue = value;
+      if (
+        userPreferences?.Allocation_Preference === PERCENTAGES &&
+        value !== ''
+      ) {
+        const num = parseFloat(value);
+        internalValue = isNaN(num) ? '' : String(num / 100);
+      }
+
       // Only update state — NO rounding here
       const updatedRanges = allocationRanges.map(row =>
-        row.id === id ? { ...row, [field]: value } : row
+        row.id === id ? { ...row, [field]: internalValue } : row
       );
 
       setAllocationRanges(updatedRanges);
@@ -397,11 +413,8 @@ function AllocationTheme({
         dispatch(
           showToastAction(
             true,
-            `Allocation Range To : ${format2(
-              steppedTo
-            )} must be equal or greater than Allocation Range From : ${
-              currentRow.From
-            }`,
+            `Allocation Range To : ${userPreferences?.Allocation_Preference === PERCENTAGES ? format2(steppedTo * 100) : format2(steppedTo)} 
+            must be equal or greater than Allocation Range From : ${userPreferences?.Allocation_Preference === PERCENTAGES ? format2(fromValue * 100) : format2(fromValue)}`,
             'error',
             4000
           )
@@ -413,7 +426,11 @@ function AllocationTheme({
         dispatch(
           showToastAction(
             true,
-            `Allocation range cannot exceed ${max_allocation_error}.`,
+            `Allocation range cannot exceed ${
+              userPreferences?.Allocation_Preference === PERCENTAGES
+                ? String(Number(max_allocation_error) * 100)
+                : max_allocation_error
+            }.`,
             'error',
             4000
           )
@@ -489,7 +506,13 @@ function AllocationTheme({
         <StyledRangeField
           onKeyDown={e => e.stopPropagation()}
           size="small"
-          value={row.From}
+          value={
+            userPreferences?.Allocation_Preference === PERCENTAGES
+              ? row.From !== ''
+                ? String(Math.round(parseFloat(row.From) * 100))
+                : ''
+              : row.From
+          }
           disabled={
             (row.From === '0.0' && row.To === '0.0') ||
             row.To === max_allocation_error ||
@@ -498,11 +521,20 @@ function AllocationTheme({
           onChange={e => handleRangeChange(id, 'From', e.target.value)}
           error={error?.From}
         />
+        {userPreferences?.Allocation_Preference === PERCENTAGES && (
+          <span style={{ paddingTop: '4px' }}>%</span>
+        )}
         <Typography variant="body2">TO</Typography>
         <StyledRangeField
           onKeyDown={e => e.stopPropagation()}
           size="small"
-          value={row.To}
+          value={
+            userPreferences?.Allocation_Preference === PERCENTAGES
+              ? row.To !== ''
+                ? String(Math.round(parseFloat(row.To) * 100))
+                : ''
+              : row.To
+          }
           disabled={
             !permissions!['AllocationRangeSetting'].u ||
             row.To === max_allocation_error
@@ -511,6 +543,9 @@ function AllocationTheme({
           onBlur={() => handleToBlur(id)}
           error={error?.To}
         />
+        {userPreferences?.Allocation_Preference === PERCENTAGES && (
+          <span style={{ paddingTop: '4px' }}>%</span>
+        )}
       </RangeInputGroup>
     );
   };
@@ -784,7 +819,7 @@ function AllocationTheme({
     {
       field: 'range',
       headerName: 'Range',
-      width: 236,
+      width: 260,
       editable: false,
       renderCell: RangeCell,
       sortable: false,
@@ -1214,56 +1249,97 @@ function AllocationTheme({
                   >
                     Max Allocation Warning
                   </Typography>
-                  <TextField
-                    disabled={
-                      !permissions!['ScalarSetting'].c &&
-                      !permissions!['ScalarSetting'].u
-                    }
-                    type="number"
-                    size="small"
-                    placeholder="0.0"
-                    value={maxAllocationWarning}
-                    onChange={e => {
-                      const val = e.target.value;
-
-                      if (/^\d*\.?\d{0,2}$/.test(val)) {
-                        const num = parseFloat(val);
-
-                        setMaxAllocationWarning(val);
-                        setHasUnsavedChanges(true);
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField
+                      disabled={
+                        !permissions!['ScalarSetting'].c &&
+                        !permissions!['ScalarSetting'].u
                       }
-                    }}
-                    onKeyDown={e => {
-                      if (['e', 'E', '+', '-'].includes(e.key)) {
-                        e.preventDefault();
+                      type="number"
+                      size="small"
+                      placeholder={
+                        userPreferences?.Allocation_Preference === PERCENTAGES
+                          ? '0'
+                          : '0.0'
                       }
-                    }}
-                    onBlur={e => {
-                      const val = e.target.value;
+                      value={
+                        userPreferences?.Allocation_Preference === PERCENTAGES
+                          ? maxAllocationWarning !== ''
+                            ? String(
+                                Math.round(
+                                  parseFloat(maxAllocationWarning) * 100
+                                )
+                              )
+                            : ''
+                          : maxAllocationWarning
+                      }
+                      onChange={e => {
+                        const val = e.target.value;
 
-                      if (!val || isNaN(parseFloat(val))) return;
+                        if (/^\d*\.?\d{0,2}$/.test(val)) {
+                          let newVal = val;
+                          if (
+                            userPreferences?.Allocation_Preference ===
+                            PERCENTAGES
+                          ) {
+                            const num = parseFloat(val);
+                            newVal = isNaN(num) ? '' : String(num / 100);
+                          }
 
-                      const snapped = roundToStep(parseFloat(val));
-                      setMaxAllocationWarning(format2(snapped));
-                    }}
-                    sx={{
-                      background: '#fff',
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '8px',
-                        height: 36,
-                        width: 129,
-                        fontSize: '15px',
-                        '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
-                          {
-                            WebkitAppearance: 'none',
-                            margin: 0,
+                          setMaxAllocationWarning(newVal);
+                          setHasUnsavedChanges(true);
+                        }
+                      }}
+                      onKeyDown={e => {
+                        if (
+                          userPreferences?.Allocation_Preference === PERCENTAGES
+                        ) {
+                          if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                          return;
+                        }
+                        if (['e', 'E', '+', '-'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onBlur={e => {
+                        const val = e.target.value;
+
+                        if (!val || isNaN(parseFloat(val))) return;
+
+                        let num = parseFloat(val);
+                        if (
+                          userPreferences?.Allocation_Preference === PERCENTAGES
+                        ) {
+                          num = num / 100;
+                        }
+
+                        const snapped = roundToStep(num);
+                        setMaxAllocationWarning(format2(snapped));
+                      }}
+                      sx={{
+                        background: '#fff',
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          height: 36,
+                          width: 129,
+                          fontSize: '15px',
+                          '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                            {
+                              WebkitAppearance: 'none',
+                              margin: 0,
+                            },
+                          '& input[type="number"]': {
+                            MozAppearance: 'textfield',
                           },
-                        '& input[type="number"]': {
-                          MozAppearance: 'textfield',
                         },
-                      },
-                    }}
-                  />
+                      }}
+                    />
+                    {userPreferences?.Allocation_Preference === PERCENTAGES && (
+                      <span>%</span>
+                    )}
+                  </Box>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <Box
@@ -1321,56 +1397,95 @@ function AllocationTheme({
                   >
                     Max Allocation Error
                   </Typography>
-                  <TextField
-                    disabled={
-                      !permissions!['ScalarSetting'].c &&
-                      !permissions!['ScalarSetting'].u
-                    }
-                    type="number"
-                    size="small"
-                    placeholder="0.0"
-                    value={maxAllocationError}
-                    onChange={e => {
-                      const val = e.target.value;
-
-                      if (/^\d*\.?\d{0,2}$/.test(val)) {
-                        const num = parseFloat(val);
-
-                        setMaxAllocationError(val);
-                        setHasUnsavedChanges(true);
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField
+                      disabled={
+                        !permissions!['ScalarSetting'].c &&
+                        !permissions!['ScalarSetting'].u
                       }
-                    }}
-                    onKeyDown={e => {
-                      if (['e', 'E', '+', '-'].includes(e.key)) {
-                        e.preventDefault();
+                      type="number"
+                      size="small"
+                      placeholder={
+                        userPreferences?.Allocation_Preference === PERCENTAGES
+                          ? '0'
+                          : '0.0'
                       }
-                    }}
-                    onBlur={e => {
-                      const val = e.target.value;
+                      value={
+                        userPreferences?.Allocation_Preference === PERCENTAGES
+                          ? maxAllocationError !== ''
+                            ? String(
+                                Math.round(parseFloat(maxAllocationError) * 100)
+                              )
+                            : ''
+                          : maxAllocationError
+                      }
+                      onChange={e => {
+                        const val = e.target.value;
 
-                      if (!val || isNaN(parseFloat(val))) return;
+                        if (/^\d*\.?\d{0,2}$/.test(val)) {
+                          let newVal = val;
+                          if (
+                            userPreferences?.Allocation_Preference ===
+                            PERCENTAGES
+                          ) {
+                            const num = parseFloat(val);
+                            newVal = isNaN(num) ? '' : String(num / 100);
+                          }
 
-                      const snapped = roundToStep(parseFloat(val));
-                      setMaxAllocationError(format2(snapped));
-                    }}
-                    sx={{
-                      background: '#fff',
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '8px',
-                        height: 36,
-                        width: 129,
-                        fontSize: '15px',
-                        '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
-                          {
-                            WebkitAppearance: 'none',
-                            margin: 0,
+                          setMaxAllocationError(newVal);
+                          setHasUnsavedChanges(true);
+                        }
+                      }}
+                      onKeyDown={e => {
+                        if (
+                          userPreferences?.Allocation_Preference === PERCENTAGES
+                        ) {
+                          if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                          return;
+                        }
+                        if (['e', 'E', '+', '-'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onBlur={e => {
+                        const val = e.target.value;
+
+                        if (!val || isNaN(parseFloat(val))) return;
+
+                        let num = parseFloat(val);
+                        if (
+                          userPreferences?.Allocation_Preference === PERCENTAGES
+                        ) {
+                          num = num / 100;
+                        }
+
+                        const snapped = roundToStep(num);
+                        setMaxAllocationError(format2(snapped));
+                      }}
+                      sx={{
+                        background: '#fff',
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          height: 36,
+                          width: 129,
+                          fontSize: '15px',
+                          '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                            {
+                              WebkitAppearance: 'none',
+                              margin: 0,
+                            },
+                          '& input[type="number"]': {
+                            MozAppearance: 'textfield',
                           },
-                        '& input[type="number"]': {
-                          MozAppearance: 'textfield',
                         },
-                      },
-                    }}
-                  />
+                      }}
+                    />
+                    {userPreferences?.Allocation_Preference === PERCENTAGES && (
+                      <span>%</span>
+                    )}
+                  </Box>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <Box

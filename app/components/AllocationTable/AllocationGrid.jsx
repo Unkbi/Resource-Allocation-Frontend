@@ -59,6 +59,8 @@ import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
+  PERCENTAGES,
+  projectViewsGrouping,
 } from '@/app/constants/constants';
 // import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
 import CustomToolbar from '../Toolbar/CustomAllocationToolbar';
@@ -145,11 +147,14 @@ function AllocationGrid({
   const { resources } = useSelector(state => state.resources);
   const { location } = useSelector(state => state.allSettings);
   const { projects } = useSelector(state => state.projects);
-  const { projectTypes } = useSelector(state => state.allSettings);
+  const { projectTypes, projectTypeGroups } = useSelector(
+    state => state.allSettings
+  );
   const { portfolios } = useSelector(state => state.portfolios);
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
+  const { userPreferences } = useSelector(state => state.userPreferences);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
@@ -745,8 +750,14 @@ function AllocationGrid({
     // Return leaf row data
     if (params.rowNode?.type !== 'group') {
       return {
-        value: baseData.value ?? params.formattedValue ?? '',
-        actuals: baseData.actuals ?? 0,
+        value:
+          userPreferences?.Allocation_Preference === PERCENTAGES
+            ? (params.value ?? '')
+            : (baseData.value ?? params.formattedValue ?? ''),
+        actuals:
+          userPreferences?.Allocation_Preference === PERCENTAGES
+            ? Math.round(baseData.actuals * 100)
+            : (baseData.actuals ?? 0),
         allocationId: baseData.allocationId ?? null,
         notes: baseData.notes ?? null,
         period: baseData.period ?? null,
@@ -786,10 +797,54 @@ function AllocationGrid({
     const period =
       visibleLeafRows[0]?.[params.field]?.period ?? baseData.period ?? null;
 
+    if (
+      userPreferences?.Allocation_Preference === PERCENTAGES &&
+      (projectViewsGrouping.includes(currentView?.GroupBy) ||
+        params.rowNode?.children[0].startsWith('auto-generated'))
+    ) {
+      let value;
+      if (
+        currentView?.GroupBy === 'Portfolio' &&
+        params.rowNode?.children[0].startsWith('auto-generated')
+      ) {
+        // Custom logic for Portfolio first grouping level with auto-generated nodes
+        const childAverages = params.rowNode.children.map(child => {
+          const childRow = apiRef.current.getRowNode(child);
+          const avg = childRow?.children?.map(grandChild => {
+            const grandChildRow = apiRef.current.getRow(grandChild);
+            return grandChildRow?.[params.field]?.value || 0;
+          });
+          return avg?.reduce((sum, x) => sum + x, 0) / avg?.length || 0;
+        });
+
+        value =
+          Math.round(
+            (childAverages.reduce((acc, x) => acc + x, 0) /
+              childAverages.length) *
+              100 || 0
+          ) || 0;
+      } else {
+        value = Math.round(params.value / params.rowNode.children.length) ?? '';
+      }
+
+      return {
+        value: value,
+        actuals:
+          userPreferences?.Allocation_Preference === PERCENTAGES
+            ? Math.round(aggregatedActuals * 100)
+            : aggregatedActuals,
+        allocationId: null,
+        notes: null,
+        period,
+      };
+    }
     // Return aggregated group cell data
     return {
       value: params.formattedValue ?? '',
-      actuals: aggregatedActuals,
+      actuals:
+        userPreferences?.Allocation_Preference === PERCENTAGES
+          ? Math.round(aggregatedActuals * 100)
+          : aggregatedActuals,
       allocationId: null,
       notes: null,
       period,
@@ -884,8 +939,8 @@ function AllocationGrid({
                 <Box sx={{ paddingTop: '3px' }}>
                   <AllocationCellWithActuals
                     params={{
-                      value,
-                      actuals,
+                      value: value,
+                      actuals: actuals,
                     }}
                   />
                 </Box>
@@ -948,7 +1003,7 @@ function AllocationGrid({
               );
             }
             if (isFutureWeek) {
-              return <span>{value}</span>;
+              return <span>{cellData?.value ?? 0}</span>;
             }
             return (
               <Box
@@ -966,7 +1021,7 @@ function AllocationGrid({
                     <AllocationCellWithActuals params={cellData} />
                   </Box>
                 ) : (
-                  <span>{value}</span>
+                  <span>{cellData?.value ?? 0}</span>
                 )}
               </Box>
             );
@@ -1015,9 +1070,17 @@ function AllocationGrid({
       .map(column => column.field);
 
   const handleCellKeyDown = (params, event) => {
-    // Preventing Key Events for Editing.
-    if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
-      event.preventDefault();
+    if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+      if (
+        ['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown', '.'].includes(event.key)
+      ) {
+        event.preventDefault();
+      }
+    } else {
+      // Preventing Key Events for Editing.
+      if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+      }
     }
 
     // Handling Ctrl+V and Cmd+V (Mac)
@@ -1073,11 +1136,24 @@ function AllocationGrid({
   };
 
   const handleCellUpdate = async (newRow, oldRow) => {
+    const formattedNewRow = Object.keys(newRow).reduce((acc, key) => {
+      if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+        acc[key] = isWeekKey(key)
+          ? typeof newRow[key] === 'number' && newRow[key] !== null
+            ? newRow[key] / 100
+            : null
+          : newRow[key];
+        return acc;
+      }
+      acc[key] = newRow[key];
+      return acc;
+    }, {});
+
     try {
       setCellSelectionModel({});
       // Find the changed week
-      const changedWeeks = Object.keys(newRow).filter(
-        key => isWeekKey(key) && newRow[key] !== oldRow[key]?.value
+      const changedWeeks = Object.keys(formattedNewRow).filter(
+        key => isWeekKey(key) && formattedNewRow[key] !== oldRow[key]?.value
       );
 
       if (!changedWeeks || changedWeeks.length === 0) {
@@ -1092,10 +1168,10 @@ function AllocationGrid({
       keys.map(key => {
         // Handle Delete Case
         if (
-          (newRow[key] === null ||
-            newRow[key] === undefined ||
-            newRow[key] === 0 ||
-            isNaN(newRow[key])) &&
+          (formattedNewRow[key] === null ||
+            formattedNewRow[key] === undefined ||
+            formattedNewRow[key] === 0 ||
+            isNaN(formattedNewRow[key])) &&
           oldRow[key]?.allocationId
         ) {
           deleteList.push({
@@ -1108,8 +1184,8 @@ function AllocationGrid({
           });
         }
 
-        if (!projectOvertimeAllowed && newRow[key] > 1.0) {
-          newRow[key] = oldRow[key]?.value;
+        if (!projectOvertimeAllowed && formattedNewRow[key] > 1.0) {
+          formattedNewRow[key] = oldRow[key]?.value;
           dispatch(
             showToastAction(
               true,
@@ -1122,7 +1198,7 @@ function AllocationGrid({
         }
 
         // Verify Updated Values total allocation for resource is not greater than Max_Allocation_Error
-        let formattedCellValue = normalizeAllocationValue(newRow[key]);
+        let formattedCellValue = normalizeAllocationValue(formattedNewRow[key]);
 
         const period = oldRow[key]?.period;
         const value = formattedCellValue;
@@ -1151,17 +1227,17 @@ function AllocationGrid({
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds ${max_allocation_warning} (${totalForWeek.toFixed(2)}).`,
+              `Allocation for ${key} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(totalForWeek.toFixed(2) * 100) + '%' : totalForWeek.toFixed(2)}).`,
               'warning',
               4000
             )
           );
         } else if (totalForWeek > Number(max_allocation_error)) {
-          newRow[key] = oldRow[key]?.value;
+          formattedNewRow[key] = oldRow[key]?.value;
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds ${max_allocation_error} (${totalForWeek.toFixed(2)}). Update cancelled.`,
+              `Allocation for ${key} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(totalForWeek.toFixed(2) * 100) + '%' : totalForWeek.toFixed(2)}). Update cancelled.`,
               'error',
               4000
             )
@@ -1170,8 +1246,11 @@ function AllocationGrid({
         }
 
         // API call to update the data, if any changes are made.
-        if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
-          if (oldRow[key]?.allocationId && newRow[key] !== null) {
+        if (
+          formattedNewRow[key] &&
+          formattedNewRow[key] !== oldRow[key]?.value
+        ) {
+          if (oldRow[key]?.allocationId && formattedNewRow[key] !== null) {
             // Add to update list
             updateList.push({
               Id: oldRow[key]?.allocationId,
@@ -1251,7 +1330,7 @@ function AllocationGrid({
       dispatch(
         showToastAction(
           true,
-          `Updating allocation for ${newRow.resource}...`,
+          `Updating allocation for ${formattedNewRow.resource}...`,
           'info'
         )
       );
@@ -1293,6 +1372,8 @@ function AllocationGrid({
             projects,
             resources,
             location,
+            projectTypes,
+            projectTypeGroups,
             splitView,
             bottomTeamAllocationGrid,
             teamAllocationGrid,
@@ -1310,7 +1391,7 @@ function AllocationGrid({
             true,
             error?.response?.data
               ? error?.response?.data
-              : `Error updating allocation for ${newRow.resource}.`,
+              : `Error updating allocation for ${formattedNewRow.resource}.`,
             'error'
           )
         );
@@ -1320,7 +1401,7 @@ function AllocationGrid({
       dispatch(
         showToastAction(
           true,
-          `Successfully updated allocation for ${newRow.resource}...`,
+          `Successfully updated allocation for ${formattedNewRow.resource}...`,
           'success'
         )
       );
@@ -1385,7 +1466,7 @@ function AllocationGrid({
             dispatch(
               showToastAction(
                 true,
-                `Error updating total allocations for ${newRow.resource}.`,
+                `Error updating total allocations for ${formattedNewRow.resource}.`,
                 'error'
               )
             );

@@ -10,6 +10,7 @@ import {
     TextField,
     Chip,
     Divider,
+    ClickAwayListener,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useSelector, useDispatch } from 'react-redux';
@@ -552,8 +553,10 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
                 )}
             </Box>
 
-            {/* Teams Section */}
-            <Box>
+            {/* Teams Section 
+           The teams section is currently commented out, but can be enabled by removing the comment tags and ensuring that the necessary data and handlers are in place.
+            */}          
+           {/* <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography
                         sx={{
@@ -596,7 +599,7 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
                     </Button>
                 </Box>
 
-                {/* Teams List */}
+               
                 {followedTeams.length === 0 ? (
                     <Typography sx={{ fontSize: '14px', color: '#999', fontStyle: 'italic', ml: 4 }}>
                         No teams followed yet
@@ -674,7 +677,7 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
                         ))}
                     </Box>
                 )}
-            </Box>
+            </Box> */}
 
             {/* Project Dropdown Menu */}
             <Popper
@@ -683,28 +686,29 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
                 placement="bottom-start"
                 sx={{ zIndex: 1300 }}
             >
-                <Box
-                    sx={{
-                        minWidth: '410px',
-                        maxWidth: '820px',
-                        padding: 1,
-                        backgroundColor: '#fff',
-                        borderRadius: 2,
-                        boxShadow: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                    }}
-                >
-                    <IconButton
-                        onClick={handleProjectClose}
+                <ClickAwayListener onClickAway={handleProjectClose}>
+                    <Box
                         sx={{
-                            width: 24,
-                            height: 24,
-                            padding: 0,
-                            mb: 1,
-                            alignSelf: 'flex-start',
+                            minWidth: '410px',
+                            maxWidth: '820px',
+                            padding: 1,
+                            backgroundColor: '#fff',
+                            borderRadius: 2,
+                            boxShadow: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
                         }}
                     >
+                        <IconButton
+                            onClick={handleProjectClose}
+                            sx={{
+                                width: 24,
+                                height: 24,
+                                padding: 0,
+                                mb: 1,
+                                alignSelf: 'flex-start',
+                            }}
+                        >
                         <Box
                             component="img"
                             src="/images/icons/back-btn.svg"
@@ -828,7 +832,8 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
                     >
                         DONE
                     </Button>
-                </Box>
+                    </Box>
+                </ClickAwayListener>
             </Popper>
 
             {/* Team Dropdown Menu */}
@@ -838,28 +843,29 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
                 placement="bottom-start"
                 sx={{ zIndex: 1300 }}
             >
-                <Box
-                    sx={{
-                        minWidth: '410px',
-                        maxWidth: '820px',
-                        padding: 1,
-                        backgroundColor: '#fff',
-                        borderRadius: 2,
-                        boxShadow: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                    }}
-                >
-                    <IconButton
-                        onClick={handleTeamClose}
+                <ClickAwayListener onClickAway={handleTeamClose}>
+                    <Box
                         sx={{
-                            width: 24,
-                            height: 24,
-                            padding: 0,
-                            mb: 1,
-                            alignSelf: 'flex-start',
+                            minWidth: '410px',
+                            maxWidth: '820px',
+                            padding: 1,
+                            backgroundColor: '#fff',
+                            borderRadius: 2,
+                            boxShadow: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
                         }}
                     >
+                        <IconButton
+                            onClick={handleTeamClose}
+                            sx={{
+                                width: 24,
+                                height: 24,
+                                padding: 0,
+                                mb: 1,
+                                alignSelf: 'flex-start',
+                            }}
+                        >
                         <Box
                             component="img"
                             src="/images/icons/back-btn.svg"
@@ -983,7 +989,8 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
                     >
                         DONE
                     </Button>
-                </Box>
+                    </Box>
+                </ClickAwayListener>
             </Popper>
         </Box>
     );
