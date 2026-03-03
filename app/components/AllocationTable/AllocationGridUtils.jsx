@@ -94,6 +94,12 @@ const CellWithMenu = ({
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allProjects = useSelector(state => state.projects.projects || []);
   const allPortfolios = useSelector(state => state.portfolios.portfolios || []);
+  const projectTypes = useSelector(
+    state => state.allSettings.projectTypes || []
+  );
+  const projectTypeGroups = useSelector(
+    state => state.allSettings.projectTypeGroups || []
+  );
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
@@ -339,6 +345,9 @@ const CellWithMenu = ({
                 : '',
             allPortfolios,
             allProjects,
+            projectTypes,
+            projectTypeGroups,
+            allResources,
             {
               ProjectName: row?.project || '',
               Id: '',
@@ -562,13 +571,15 @@ export const getFinalColumns = (
     state => state.allocationView
   );
   const { scalarSettings } = useSelector(state => state.allSettings);
+  const { userPreferences } = useSelector(state => state.userPreferences);
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
     endDate,
     isFormatWithK,
-    scalarSettings
+    scalarSettings,
+    userPreferences
   );
 
   const handleAddClick = params => {
@@ -1281,7 +1292,7 @@ export const getCellClassName = (
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
-      
+
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
@@ -1315,7 +1326,7 @@ export const getCellClassName = (
           break;
         }
       }
-      
+
       if (matchingRange) {
         const base = `allocation-theme-${matchingRange.id}`;
         const groupClass =

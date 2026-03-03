@@ -689,7 +689,7 @@ function Resources({ permissions, loadingPermissions }) {
             >
               {params.value}
             </Box>
-            {isFollowing && (
+            {/* {isFollowing && (
               <VisibilityIcon
                 sx={{
                   fontSize: 16,
@@ -699,7 +699,7 @@ function Resources({ permissions, loadingPermissions }) {
                   opacity: 0.8,
                 }}
               />
-            )}
+            )} */}
           </Box>
         );
       },
@@ -774,7 +774,7 @@ function Resources({ permissions, loadingPermissions }) {
                         horizontal: 'right',
                       }}
                     >
-                      <MenuItem
+                      {/* <MenuItem
                         sx={{
                           ...menuItemStyle,
                           display: 'flex',
@@ -859,7 +859,7 @@ function Resources({ permissions, loadingPermissions }) {
                             </Typography>
                           </Box>
                       
-                      </MenuItem>
+                      </MenuItem> */}
                       {permissions['Team']?.u && (
                         <MenuItem
                           onClick={() => {

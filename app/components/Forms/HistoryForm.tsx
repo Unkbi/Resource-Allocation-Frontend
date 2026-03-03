@@ -12,6 +12,9 @@ import {
   Button,
   Skeleton,
 } from '@mui/material';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/app/redux/store';
+import { PERCENTAGES } from '@/app/constants/constants';
 
 interface ActivityItem {
   id: string;
@@ -81,6 +84,9 @@ export default function HistoryForm({
   }, [historyData, showAll]);
   const [isLoading, setIsLoading] = useState(true);
   const [showNoHistory, setShowNoHistory] = useState(false);
+  const { userPreferences } = useSelector(
+    (state: RootState) => state.userPreferences
+  );
 
   const hasMoreItems = historyData.length > INITIAL_ITEMS_COUNT;
   const remainingCount = historyData.length - INITIAL_ITEMS_COUNT;
@@ -224,8 +230,22 @@ export default function HistoryForm({
                           {item.fromVersion && item.toVersion && (
                             <span>
                               {' '}
-                              from <strong>{item.fromVersion}</strong> to{' '}
-                              <strong>{item.toVersion}</strong>
+                              from{' '}
+                              <strong>
+                                {userPreferences?.Allocation_Preference ===
+                                PERCENTAGES
+                                  ? Math.round(Number(item.fromVersion) * 100) +
+                                    '%'
+                                  : item.fromVersion}
+                              </strong>{' '}
+                              to{' '}
+                              <strong>
+                                {userPreferences?.Allocation_Preference ===
+                                PERCENTAGES
+                                  ? Math.round(Number(item.toVersion) * 100) +
+                                    '%'
+                                  : item.toVersion}
+                              </strong>
                             </span>
                           )}
                           {item.updatedTo && !item.fromVersion && (
