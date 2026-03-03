@@ -819,7 +819,7 @@ function AllocationTheme({
     {
       field: 'range',
       headerName: 'Range',
-      width: 236,
+      width: 260,
       editable: false,
       renderCell: RangeCell,
       sortable: false,
