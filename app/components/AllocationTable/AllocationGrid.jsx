@@ -60,6 +60,7 @@ import {
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
   PERCENTAGES,
+  projectViewsGrouping,
 } from '@/app/constants/constants';
 // import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
 import CustomToolbar from '../Toolbar/CustomAllocationToolbar';
@@ -798,10 +799,36 @@ function AllocationGrid({
 
     if (
       userPreferences?.Allocation_Preference === PERCENTAGES &&
-      params.rowNode?.children[0].startsWith('auto-generated')
+      (projectViewsGrouping.includes(currentView?.GroupBy) ||
+        params.rowNode?.children[0].startsWith('auto-generated'))
     ) {
+      let value;
+      if (
+        currentView?.GroupBy === 'Portfolio' &&
+        params.rowNode?.children[0].startsWith('auto-generated')
+      ) {
+        // Custom logic for Portfolio first grouping level with auto-generated nodes
+        const childAverages = params.rowNode.children.map(child => {
+          const childRow = apiRef.current.getRowNode(child);
+          const avg = childRow?.children?.map(grandChild => {
+            const grandChildRow = apiRef.current.getRow(grandChild);
+            return grandChildRow?.[params.field]?.value || 0;
+          });
+          return avg?.reduce((sum, x) => sum + x, 0) / avg?.length || 0;
+        });
+
+        value =
+          Math.round(
+            (childAverages.reduce((acc, x) => acc + x, 0) /
+              childAverages.length) *
+              100 || 0
+          ) || 0;
+      } else {
+        value = Math.round(params.value / params.rowNode.children.length) ?? '';
+      }
+
       return {
-        value: Math.round(params.value / params.rowNode.children.length) ?? '',
+        value: value,
         actuals:
           userPreferences?.Allocation_Preference === PERCENTAGES
             ? Math.round(aggregatedActuals * 100)
