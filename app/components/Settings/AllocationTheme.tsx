@@ -1259,7 +1259,11 @@ function AllocationTheme({
                       value={
                         userPreferences?.Allocation_Preference === PERCENTAGES
                           ? maxAllocationWarning !== ''
-                            ? String(parseFloat(maxAllocationWarning) * 100)
+                            ? String(
+                                Math.round(
+                                  parseFloat(maxAllocationWarning) * 100
+                                )
+                              )
                             : ''
                           : maxAllocationWarning
                       }
@@ -1403,7 +1407,9 @@ function AllocationTheme({
                       value={
                         userPreferences?.Allocation_Preference === PERCENTAGES
                           ? maxAllocationError !== ''
-                            ? String(parseFloat(maxAllocationError) * 100)
+                            ? String(
+                                Math.round(parseFloat(maxAllocationError) * 100)
+                              )
                             : ''
                           : maxAllocationError
                       }
@@ -1425,6 +1431,14 @@ function AllocationTheme({
                         }
                       }}
                       onKeyDown={e => {
+                        if (
+                          userPreferences?.Allocation_Preference === PERCENTAGES
+                        ) {
+                          if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                          return;
+                        }
                         if (['e', 'E', '+', '-'].includes(e.key)) {
                           e.preventDefault();
                         }
