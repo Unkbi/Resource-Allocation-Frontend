@@ -15,10 +15,13 @@ import {
 } from '@/app/types/dashboardTypes';
 import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import {
   ColumnManagementStyles,
   StyledDataGrid,
 } from '../../AllocationTable/styles/StyledDataGrid';
+
+dayjs.extend(isoWeek);
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
@@ -1009,6 +1012,26 @@ function ReportBuilderPage({
       }
     }
   }, [aiSummaryState, activeTab, loadingPermissions]);
+
+  useEffect(() => {
+    if (
+      customReportType === 'allocationCapacity' &&
+      !pendingQueryFilters &&
+      !hasAppliedQueryParams &&
+      !customFilters.customDateRange
+    ) {
+      // Calculate 13-week range: 4 weeks past + current week + 8 weeks future
+      const currentMonday = dayjs().isoWeekday(1);
+      const startDate = currentMonday.subtract(4, 'week');
+      const endDate = currentMonday.add(8, 'week').isoWeekday(7);
+      
+      setCustomFilters(prev => ({
+        ...prev,
+        period: 'custom',
+        customDateRange: [startDate, endDate],
+      }));
+    }
+  }, [customReportType, pendingQueryFilters, hasAppliedQueryParams, customFilters.customDateRange]);
 
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
