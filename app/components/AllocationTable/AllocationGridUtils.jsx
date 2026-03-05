@@ -48,6 +48,7 @@ import {
   teamsViewsGrouping,
 } from '@/app/constants/constants';
 import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
+import { useGridApiRef } from '@mui/x-data-grid-premium';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -1249,6 +1250,10 @@ export const getCellClassName = (
   isCellEditable,
   groupBy = ''
 ) => {
+  const apiRef = useGridApiRef();
+  const { resources } = useSelector(state => state.resources);
+  const { removeContractorPT, showActuals } = useSelector(
+    (state) => state.allocationView);
   if (
     params?.field === 'totalEffort' ||
     params?.field === 'totalAllocationsTillDate'
@@ -1296,8 +1301,29 @@ export const getCellClassName = (
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
-      const totalRows =
-        params.rowNode?.children?.length || uniqueProjectRows.size;
+    
+      const children = params.rowNode?.children ?? [];
+
+      let totalRows = uniqueProjectRows.size;
+      
+      if (removeContractorPT) {
+        const validResources = children.filter(childId => {
+        const childNode = params.api.getRowNode(childId);
+        if (!childNode) return false;
+        const resourceName = childNode.groupingKey; 
+
+        const resource = resources.find(r => r.FullName === resourceName);
+
+        return resource && resource.Type !== 'Contractor - PT';
+      });
+      
+
+        const validResourceCount = validResources.length;
+        totalRows = validResourceCount;
+      } else {
+        totalRows = children.length;
+      }
+
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
         const numericValue =
