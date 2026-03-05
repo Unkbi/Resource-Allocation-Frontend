@@ -594,9 +594,10 @@ const FlatIcon = () => <img src="/images/icons/FlatView.svg" alt="flat view" />;
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
-  const { view, savedViews, currentView, showActuals } = useSelector(
+  const { view, savedViews, currentView } = useSelector(
     state => state.allocationView
   );
+  const showActuals = currentView?.showActuals ?? false;
   const removeContractorPT = currentView?.removeContractorPT ?? false;
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { projects, calendarDate: projectsCalendar } = useSelector(

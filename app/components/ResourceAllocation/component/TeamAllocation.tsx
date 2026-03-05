@@ -135,8 +135,8 @@ function TeamAllocation({
     (state: RootState) => state.resources.resources
   );
   const { location } = useSelector((state: RootState) => state.allSettings);
-  const { showActuals } = useSelector(
-    (state: RootState) => state.allocationView
+  const showActuals = useSelector(
+    (state: RootState) => state.allocationView.currentView?.showActuals ?? false
   );
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
@@ -152,7 +152,7 @@ function TeamAllocation({
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
   );
- const { resources } = useSelector((state: RootState) => state.resources);
+  const { resources } = useSelector((state: RootState) => state.resources);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -188,7 +188,7 @@ function TeamAllocation({
 
         const formattedResources = filteredResources?.map(allocation => ({
           ...allocation,
-          // commenting old total effort calculation 
+          // commenting old total effort calculation
           // totalEffort: calculateTotalEffort(normalizeRow(allocation))
           // hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
           hasAllocation: (allocation?.totalEffort ?? 0) > 0,
@@ -357,28 +357,25 @@ function TeamAllocation({
         ) => {
           const r1 = getResource(p1)?.Id;
           const DetailsR1 = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === r1
+            (item: any) => item.Resource?.Id === r1
           );
-          const org1 = DetailsR1?.Organization?.Name
-    
+          const org1 = DetailsR1?.Organization?.Name;
+
           const r2 = getResource(p2)?.Id;
           const DetailsR2 = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === r2
+            (item: any) => item.Resource?.Id === r2
           );
-          const org2 = DetailsR2?.Organization?.Name
+          const org2 = DetailsR2?.Organization?.Name;
           return compareStringEmptyLast(org1, org2, sortDirection);
         };
       },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Id
+          (item: any) => item.Resource?.Id === resource?.Id
         );
         const organizationName = resourceDetails?.Organization?.Name || '';
-      
+
         return <EllipsisNameCell value={organizationName || ''} />;
       },
     },
@@ -689,8 +686,9 @@ function TeamAllocation({
         return (
           <EllipsisNameCell
             value={
-              allocation?.projectOvertimeAllowed ?allocation?.projectOvertimeAllowed 
-                  : ''
+              allocation?.projectOvertimeAllowed
+                ? allocation?.projectOvertimeAllowed
+                : ''
             }
           />
         );
@@ -873,7 +871,7 @@ function TeamAllocation({
     },
     {
       field: 'manager',
-      headerName: 'Manager',  // Resource page manager detail
+      headerName: 'Manager', // Resource page manager detail
       width: 130,
       type: 'string',
       isEditable: false,
@@ -884,12 +882,12 @@ function TeamAllocation({
           p1: GridCellParams,
           p2: GridCellParams
         ) => {
-          const r1 = getResource(p1)?.Manager
-          const m1 = getResourceFromUid(r1, resources)
-          const n1 = m1?.FullName
+          const r1 = getResource(p1)?.Manager;
+          const m1 = getResourceFromUid(r1, resources);
+          const n1 = m1?.FullName;
           const r2 = getResource(p2)?.Manager ?? '';
-          const m2 = getResourceFromUid(r2, resources)
-          const n2 = m2?.FullName
+          const m2 = getResourceFromUid(r2, resources);
+          const n2 = m2?.FullName;
           return compareStringEmptyLast(n1, n2, sortDirection);
         };
       },
@@ -897,8 +895,7 @@ function TeamAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Manager
+          (item: any) => item.Resource?.Id === resource?.Manager
         );
         const Manager = resourceDetails?.Resource?.FullName || '';
         return resource ? <EllipsisNameCell value={Manager || ''} /> : null;
@@ -926,7 +923,9 @@ function TeamAllocation({
       },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return resource ? <EllipsisNameCell value={resource?.Status || ''} /> : null;
+        return resource ? (
+          <EllipsisNameCell value={resource?.Status || ''} />
+        ) : null;
       },
     },
     {
@@ -949,15 +948,16 @@ function TeamAllocation({
           return compareStringEmptyLast(r1, r2, sortDirection);
         };
       },
-      
+
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Id
+          (item: any) => item.Resource?.Id === resource?.Id
         );
         const organizationStatus = resourceDetails?.Organization?.Status || '';
-        return resource ? <EllipsisNameCell value={organizationStatus || ''} /> : null;
+        return resource ? (
+          <EllipsisNameCell value={organizationStatus || ''} />
+        ) : null;
       },
     },
     {
@@ -1034,7 +1034,9 @@ function TeamAllocation({
       },
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.portfolioDescription || ''} />;
+        return (
+          <EllipsisNameCell value={allocation?.portfolioDescription || ''} />
+        );
       },
     },
   ];

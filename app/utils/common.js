@@ -700,6 +700,7 @@ export const getOnlyFilterSettings = view => {
     WeekPlus: view.WeekPlus ?? DEFAULT_PROJECT_WEEK_PLUS,
     WeekMinus: view.WeekMinus ?? DEFAULT_PROJECT_WEEK_MINUS,
     Filters: view.Filters ?? [],
+    showActuals: view.showActuals ?? false,
   };
 };
 

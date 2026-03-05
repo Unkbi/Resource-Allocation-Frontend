@@ -69,8 +69,8 @@ function PortfolioAllocation({
     useAllocationGrid('teamAllocation');
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
-  const { showActuals } = useSelector(
-    (state: RootState) => state.allocationView
+  const showActuals = useSelector(
+    (state: RootState) => state.allocationView.currentView?.showActuals ?? false
   );
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
