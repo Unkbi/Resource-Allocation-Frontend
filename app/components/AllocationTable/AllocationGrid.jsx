@@ -934,7 +934,9 @@ function AllocationGrid({
             getAllRowsForView(viewId),
             allocationTheme,
             type,
+            removeContractorPT,
             projects,
+            resources,
             projectTypes,
             isCellEditable
           );
@@ -1814,7 +1816,9 @@ function AllocationGrid({
           getAllRowsForView(viewId),
           allocationTheme,
           type,
+          removeContractorPT,
           projects,
+          resources,
           projectTypes,
           isCellEditable,
           groupBy

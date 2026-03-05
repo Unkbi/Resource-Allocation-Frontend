@@ -594,9 +594,8 @@ const FlatIcon = () => <img src="/images/icons/FlatView.svg" alt="flat view" />;
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
-  const { view, savedViews, currentView, showActuals,removeContractorPT} = useSelector(
-    state => state.allocationView
-  );
+  const { view, savedViews, currentView, showActuals, removeContractorPT } =
+    useSelector(state => state.allocationView);
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { projects, calendarDate: projectsCalendar } = useSelector(
     state => state.projects
@@ -1118,7 +1117,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
 
   const handleRemoveContractorPTToggle = () => {
     dispatch(setRemoveContractorPT(!removeContractorPT));
-  }
+  };
 
   return (
     <Box className="Toolbar" sx={{ display: 'flex', flexDirection: 'column' }}>
