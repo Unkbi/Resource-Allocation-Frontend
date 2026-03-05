@@ -800,7 +800,8 @@ function AllocationGrid({
     if (
       userPreferences?.Allocation_Preference === PERCENTAGES &&
       (projectViewsGrouping.includes(currentView?.GroupBy) ||
-        params.rowNode?.children[0].startsWith('auto-generated'))
+        params.rowNode?.children[0].startsWith('auto-generated') ||
+        viewId === 'topProject')
     ) {
       let value;
       let actuals = Math.round(
