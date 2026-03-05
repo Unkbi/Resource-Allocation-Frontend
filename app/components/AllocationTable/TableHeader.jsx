@@ -125,7 +125,7 @@ const createValueHandlers = (
       hasError =
         formattedValue >
         Number(scalarSettings?.Max_Allocation_Error * 100 || '200');
-      erroMessage = `Invalid input. Please enter a number between 0 and ${scalarSettings?.Max_Allocation_Error * 100 || '200'}.`;
+      erroMessage = `Invalid input. Please enter a number between 0 and ${Math.round(scalarSettings?.Max_Allocation_Error * 100) || '200'}.`;
     } else {
       formattedValue = normalizeAllocationValue(numericValue);
       hasError =

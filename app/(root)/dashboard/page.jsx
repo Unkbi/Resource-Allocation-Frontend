@@ -864,8 +864,8 @@ export default function ExecutiveDashboardPage() {
       'teamEngagementScore': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'projectScoreByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'unapprovedProjectActualsByTeam': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
-      'weeklyLoggedInUsersByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
-      'userStatusSplitByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'weeklyLoggedInUsersByTeam': { reportType: 'userActivity', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'userStatusSplitByTeam': { reportType: 'userActivity', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'resourceCoverage': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'actualsTrendWeekly': { reportType: 'resourceProjectPeriod', period: 'custom' },
       'underAllocated': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
@@ -3915,14 +3915,22 @@ export default function ExecutiveDashboardPage() {
                   sx={{
                     cursor: 'pointer',
                   }}
-                  onAxisClick={(event, axisData) => {
-                    const { dataIndex, axisValue } = axisData || {};
-                    if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
+                  onItemClick={(event, barItemIdentifier) => {
+                    const { dataIndex, seriesId } = barItemIdentifier  || {};
+                    if(seriesId && dataIndex !== undefined) {
+                      const teamname = sortedLoggedInData[dataIndex]?.team_name;
+                      const teamId = teams.find(t => t.Name === teamname)?.Id;
                       if (teamId) {
-                        navigateToReportWithFilters('weeklyLoggedInUsersByTeam', {
-                          team: teamId
-                        });
+                        if(seriesId === 'totalActiveUsers') {
+                          navigateToReportWithFilters('weeklyLoggedInUsersByTeam', {
+                            team: teamId,
+                            userStatuses: ['Active']
+                          });
+                        } else if(seriesId === 'weeklyLoggedInUsers') {
+                          navigateToReportWithFilters('weeklyLoggedInUsersByTeam', {
+                            team: teamId
+                          });
+                        }
                       }
                     }
                   }}
@@ -4177,7 +4185,7 @@ export default function ExecutiveDashboardPage() {
                       const teamId = teams.find(t => t.Name === teamname)?.Id;
                       if (teamId && seriesId) {
                         navigateToReportWithFilters('userStatusSplitByTeam', {
-                          // resourceStatuses: seriesId,
+                          userStatuses: [seriesId],
                           team: teamId,
                         });
                       }

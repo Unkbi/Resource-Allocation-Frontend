@@ -94,6 +94,12 @@ const CellWithMenu = ({
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allProjects = useSelector(state => state.projects.projects || []);
   const allPortfolios = useSelector(state => state.portfolios.portfolios || []);
+  const projectTypes = useSelector(
+    state => state.allSettings.projectTypes || []
+  );
+  const projectTypeGroups = useSelector(
+    state => state.allSettings.projectTypeGroups || []
+  );
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
@@ -339,6 +345,9 @@ const CellWithMenu = ({
                 : '',
             allPortfolios,
             allProjects,
+            projectTypes,
+            projectTypeGroups,
+            allResources,
             {
               ProjectName: row?.project || '',
               Id: '',
@@ -1235,7 +1244,9 @@ export const getCellClassName = (
   updatedRows,
   allocationTheme = [],
   type = 'allocation',
+  removeContractorPT = false,
   allProjects = [],
+  resources = [],
   projectTypes = [],
   isCellEditable,
   groupBy = ''
@@ -1287,8 +1298,28 @@ export const getCellClassName = (
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
-      const totalRows =
-        params.rowNode?.children?.length || uniqueProjectRows.size;
+
+      const children = params.rowNode?.children ?? [];
+
+      let totalRows = uniqueProjectRows.size;
+
+      if (removeContractorPT) {
+        const validResources = children.filter(childId => {
+          const childNode = params.api.getRowNode(childId);
+          if (!childNode) return false;
+          const resourceName = childNode.groupingKey;
+
+          const resource = resources?.find(r => r.FullName === resourceName);
+
+          return resource && resource.Type !== 'Contractor - PT';
+        });
+
+        const validResourceCount = validResources.length;
+        totalRows = validResourceCount;
+      } else {
+        totalRows = children.length;
+      }
+
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
         const numericValue =

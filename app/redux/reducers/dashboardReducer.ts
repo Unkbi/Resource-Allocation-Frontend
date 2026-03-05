@@ -28,6 +28,7 @@ const initialState: DashboardChartState = {
     resourceProjectPeriodCost: { loading: false, data: [], error: null },
     percentageAllocation: { loading: false, data: [], error: null },
     allocationCapacity: { loading: false, data: [], error: null },
+    userActivity: { loading: false, data: [], error: null },
   },
 };
 

@@ -16,10 +16,12 @@ import {
   getMondayOfWeek,
   getUpdatedFiltersOnMyProjectsAllProjects,
   getUpdatedFiltersOnMyTeamsAllTeams,
+  getUpdatedFiltersOnRemoveContractorPT,
   getWeekNumber,
   isWeekKey,
   isMyProjectsValid,
   isMyTeamsValid,
+  isRemoveContractorPTValid,
   getTeamForResource,
   isCurrentOrPastWeek,
   isCurrentWeek,
@@ -60,6 +62,7 @@ import {
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
   PERCENTAGES,
+  projectViewsGrouping,
 } from '@/app/constants/constants';
 // import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
 import CustomToolbar from '../Toolbar/CustomAllocationToolbar';
@@ -124,6 +127,8 @@ function AllocationGrid({
     columns: _columns,
   } = useSelector(state => state.allocationView);
 
+  const removeContractorPT = currentView?.removeContractorPT ?? false;
+
   const dispatch = useDispatch();
   const { teams, teamsResources, teamAllocations } = useSelector(
     state => state.teams
@@ -146,7 +151,9 @@ function AllocationGrid({
   const { resources } = useSelector(state => state.resources);
   const { location } = useSelector(state => state.allSettings);
   const { projects } = useSelector(state => state.projects);
-  const { projectTypes } = useSelector(state => state.allSettings);
+  const { projectTypes, projectTypeGroups } = useSelector(
+    state => state.allSettings
+  );
   const { portfolios } = useSelector(state => state.portfolios);
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -555,8 +562,20 @@ function AllocationGrid({
           })
         );
       }
+
+      // Check if removeContractorPT is selected, if yes, then check if the filter still exists
+      // If not, then reset removeContractorPT to false
+      if (currentView?.removeContractorPT) {
+        if (!isRemoveContractorPTValid(currentView?.Filters)) {
+          dispatch(
+            updateCurrentView({
+              removeContractorPT: false,
+            })
+          );
+        }
+      }
     }
-  }, [currentView?.Filters, user, email, resources]);
+  }, [currentView?.Filters, user, email, resources, dispatch]);
 
   useEffect(() => {
     if (email && resources) {
@@ -666,6 +685,22 @@ function AllocationGrid({
     currentView?.WeekMinus,
   ]);
 
+  useEffect(() => {
+    const updatedFilters = getUpdatedFiltersOnRemoveContractorPT(
+      currentView?.Filters || [],
+      currentView?.removeContractorPT
+    );
+
+    // Only dispatch if filters actually changed
+    if (updatedFilters !== currentView?.Filters) {
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
+    }
+  }, [currentView?.removeContractorPT, dispatch]);
+
   const handleAddProject = (e, project, curRow) => {
     const checkEntryExists = (data, resourceId, projectName, projectId) => {
       return data.some(
@@ -751,7 +786,10 @@ function AllocationGrid({
           userPreferences?.Allocation_Preference === PERCENTAGES
             ? (params.value ?? '')
             : (baseData.value ?? params.formattedValue ?? ''),
-        actuals: baseData.actuals ?? 0,
+        actuals:
+          userPreferences?.Allocation_Preference === PERCENTAGES
+            ? Math.round(baseData.actuals * 100)
+            : (baseData.actuals ?? 0),
         allocationId: baseData.allocationId ?? null,
         notes: baseData.notes ?? null,
         period: baseData.period ?? null,
@@ -793,11 +831,53 @@ function AllocationGrid({
 
     if (
       userPreferences?.Allocation_Preference === PERCENTAGES &&
-      params.rowNode?.children[0].startsWith('auto-generated')
+      (projectViewsGrouping.includes(currentView?.GroupBy) ||
+        params.rowNode?.children[0].startsWith('auto-generated') ||
+        viewId === 'topProject')
     ) {
+      let value;
+      let actuals = Math.round(
+        (aggregatedActuals / params.rowNode.children.length) * 100
+      );
+      if (
+        currentView?.GroupBy === 'Portfolio' &&
+        params.rowNode?.children[0].startsWith('auto-generated')
+      ) {
+        // Custom logic for Portfolio first grouping level with auto-generated nodes
+        const childAverages = params.rowNode.children.map(child => {
+          const childRow = apiRef.current.getRowNode(child);
+          const avg = childRow?.children?.map(grandChild => {
+            const grandChildRow = apiRef.current.getRow(grandChild);
+            return {
+              value: grandChildRow?.[params.field]?.value || 0,
+              actuals: grandChildRow?.[params.field]?.actuals || 0,
+            };
+          });
+          return {
+            value: avg?.reduce((sum, x) => sum + x.value, 0) / avg?.length || 0,
+            actuals:
+              avg?.reduce((sum, x) => sum + x.actuals, 0) / avg?.length || 0,
+          };
+        });
+
+        value =
+          Math.round(
+            (childAverages.reduce((acc, x) => acc + x.value, 0) /
+              childAverages.length) *
+              100 || 0
+          ) || 0;
+        actuals = Math.round(
+          (childAverages.reduce((acc, x) => acc + x.actuals, 0) /
+            childAverages.length) *
+            100 || 0
+        );
+      } else {
+        value = Math.round(params.value / params.rowNode.children.length) ?? '';
+      }
+
       return {
-        value: Math.round(params.value / params.rowNode.children.length) ?? '',
-        actuals: aggregatedActuals,
+        value: value,
+        actuals: actuals,
         allocationId: null,
         notes: null,
         period,
@@ -806,7 +886,10 @@ function AllocationGrid({
     // Return aggregated group cell data
     return {
       value: params.formattedValue ?? '',
-      actuals: aggregatedActuals,
+      actuals:
+        userPreferences?.Allocation_Preference === PERCENTAGES
+          ? Math.round(aggregatedActuals * 100)
+          : aggregatedActuals,
       allocationId: null,
       notes: null,
       period,
@@ -904,6 +987,7 @@ function AllocationGrid({
                       value: value,
                       actuals: actuals,
                     }}
+                    totals={true}
                   />
                 </Box>
               ) : (
@@ -924,7 +1008,9 @@ function AllocationGrid({
             getAllRowsForView(viewId),
             allocationTheme,
             type,
+            removeContractorPT,
             projects,
+            resources,
             projectTypes,
             isCellEditable
           );
@@ -1105,8 +1191,9 @@ function AllocationGrid({
             ? newRow[key] / 100
             : null
           : newRow[key];
+        return acc;
       }
-
+      acc[key] = newRow[key];
       return acc;
     }, {});
 
@@ -1188,7 +1275,7 @@ function AllocationGrid({
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds ${max_allocation_warning} (${totalForWeek.toFixed(2)}).`,
+              `Allocation for ${key} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(totalForWeek.toFixed(2) * 100) + '%' : totalForWeek.toFixed(2)}).`,
               'warning',
               4000
             )
@@ -1198,7 +1285,7 @@ function AllocationGrid({
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds ${max_allocation_error} (${totalForWeek.toFixed(2)}). Update cancelled.`,
+              `Allocation for ${key} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(totalForWeek.toFixed(2) * 100) + '%' : totalForWeek.toFixed(2)}). Update cancelled.`,
               'error',
               4000
             )
@@ -1333,6 +1420,8 @@ function AllocationGrid({
             projects,
             resources,
             location,
+            projectTypes,
+            projectTypeGroups,
             splitView,
             bottomTeamAllocationGrid,
             teamAllocationGrid,
@@ -1827,7 +1916,9 @@ function AllocationGrid({
           getAllRowsForView(viewId),
           allocationTheme,
           type,
+          removeContractorPT,
           projects,
+          resources,
           projectTypes,
           isCellEditable,
           groupBy

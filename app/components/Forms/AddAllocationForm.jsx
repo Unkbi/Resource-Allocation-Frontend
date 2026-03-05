@@ -469,23 +469,28 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
               value="custom"
               control={<Radio sx={{ display: 'none' }} />}
               label={
-                <StyledInput
-                  as={TextField}
-                  name="AllocationEntered"
-                  type="number"
-                  width="60px"
-                  height="32px"
-                  value={customCapacity}
-                  onChange={handleCustomCapacityChange}
-                  onKeyPress={handleKeyPress}
-                  onBlur={handleCustomCapacityBlur}
-                  onClick={() => setCapacityOption('custom')}
-                  error={
-                    formikProps.touched.AllocationEntered &&
-                    Boolean(formikProps.errors.AllocationEntered)
-                  }
-                  className={capacityOption === 'custom' ? 'bold-input' : ''}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <StyledInput
+                    as={TextField}
+                    name="AllocationEntered"
+                    type="number"
+                    width="60px"
+                    height="32px"
+                    value={customCapacity}
+                    onChange={handleCustomCapacityChange}
+                    onKeyPress={handleKeyPress}
+                    onBlur={handleCustomCapacityBlur}
+                    onClick={() => setCapacityOption('custom')}
+                    error={
+                      formikProps.touched.AllocationEntered &&
+                      Boolean(formikProps.errors.AllocationEntered)
+                    }
+                    className={capacityOption === 'custom' ? 'bold-input' : ''}
+                  />
+                  {userPreferences?.Allocation_Preference === PERCENTAGES && (
+                    <span>%</span>
+                  )}
+                </Box>
               }
               sx={{ margin: 0 }}
             />

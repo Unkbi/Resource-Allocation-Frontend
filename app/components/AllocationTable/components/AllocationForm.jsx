@@ -1547,7 +1547,7 @@ const AllocationForm = () => {
                 );
                 if (newFinalTotal > Number(max_allocation_error)) {
                   errorMessages.push(
-                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? max_allocation_error * 100 + '%' : max_allocation_error} (${userPreferences?.Allocation_Preference === PERCENTAGES ? newFinalTotal.toFixed(2) * 100 : newFinalTotal.toFixed(2)}). Update skipped.`
+                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error) * 100 + '%' : max_allocation_error} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(newFinalTotal.toFixed(2) * 100) + '%' : newFinalTotal.toFixed(2)}). Update skipped.`
                   );
                   return null;
                 }
@@ -1557,7 +1557,7 @@ const AllocationForm = () => {
                   newFinalTotal <= Number(max_allocation_error)
                 ) {
                   warningMessages.push(
-                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? max_allocation_warning * 100 + '%' : max_allocation_warning} (${userPreferences?.Allocation_Preference === PERCENTAGES ? newFinalTotal.toFixed(2) * 100 : newFinalTotal.toFixed(2)}).`
+                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(newFinalTotal.toFixed(2) * 100) + '%' : newFinalTotal.toFixed(2)}).`
                   );
                 }
 
@@ -1612,7 +1612,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? max_allocation_error * 100 + '%' : max_allocation_error}. Please check and try again.`,
+                    `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
                   )
@@ -1746,6 +1746,8 @@ const AllocationForm = () => {
                   projects,
                   resources,
                   location,
+                  projectTypes,
+                  projectTypeGroups,
                   splitView,
                   bottomTeamAllocationGrid, // Update these rows when in spitView
                   teamAllocationGrid, // Update these rows when in teams, organisation, or resources views
@@ -1792,7 +1794,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? max_allocation_error * 100 + '%' : max_allocation_error}. Please check and try again.`,
+                    `Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
                   )
@@ -1806,7 +1808,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Warning: Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? max_allocation_warning * 100 + '%' : max_allocation_warning}.`,
+                    `Warning: Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning}.`,
                     'warning',
                     4000
                   )
@@ -4042,6 +4044,7 @@ const AllocationForm = () => {
           }
 
           dispatch(closeDialog());
+          dispatch({ type: 'FETCH_FOLLOWS', payload: user?.id });
           setFormValue({});
         } catch (error) {
           console.error('Failed to save team follow preferences:', error);
