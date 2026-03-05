@@ -637,11 +637,61 @@ export const isMyProjectsValid = (projectManagerName, filters) => {
   );
 };
 
+export const isRemoveContractorPTValid = filters => {
+  return (
+    filters?.some(
+      filter =>
+        filter.field === 'resourceType' &&
+        filter.operator === 'doesNotEqual' &&
+        filter.value === 'Contractor - PT'
+    ) || false
+  );
+};
+
+export const getUpdatedFiltersOnRemoveContractorPT = (
+  filters,
+  removeContractorPT = false
+) => {
+  let updatedFilters = filters || [];
+
+  if (removeContractorPT) {
+    if (
+      updatedFilters.find(
+        filter =>
+          filter.field === 'resourceType' &&
+          filter.operator === 'doesNotEqual' &&
+          filter.value === 'Contractor - PT'
+      )
+    ) {
+      return updatedFilters;
+    }
+
+    return [
+      ...updatedFilters,
+      {
+        field: 'resourceType',
+        operator: 'doesNotEqual',
+        value: 'Contractor - PT',
+      },
+    ];
+  } else {
+    return updatedFilters.filter(
+      filter =>
+        !(
+          filter.field === 'resourceType' &&
+          filter.operator === 'doesNotEqual' &&
+          filter.value === 'Contractor - PT'
+        )
+    );
+  }
+};
+
 export const getOnlyFilterSettings = view => {
   return {
     GroupBy: view.GroupBy ?? '',
     MyTeam: view.MyTeam ?? false,
     MyProjects: view.MyProjects ?? false,
+    removeContractorPT: view.removeContractorPT ?? false,
     ColumnsVisible: view.ColumnsVisible ?? [],
     StartDate: view.StartDate ?? '',
     EndDate: view.EndDate ?? '',

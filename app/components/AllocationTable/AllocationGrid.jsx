@@ -16,10 +16,12 @@ import {
   getMondayOfWeek,
   getUpdatedFiltersOnMyProjectsAllProjects,
   getUpdatedFiltersOnMyTeamsAllTeams,
+  getUpdatedFiltersOnRemoveContractorPT,
   getWeekNumber,
   isWeekKey,
   isMyProjectsValid,
   isMyTeamsValid,
+  isRemoveContractorPTValid,
   getTeamForResource,
   isCurrentOrPastWeek,
   isCurrentWeek,
@@ -123,8 +125,9 @@ function AllocationGrid({
     savedViews,
     currentView,
     columns: _columns,
-    removeContractorPT,
   } = useSelector(state => state.allocationView);
+
+  const removeContractorPT = currentView?.removeContractorPT ?? false;
 
   const dispatch = useDispatch();
   const { teams, teamsResources, teamAllocations } = useSelector(
@@ -559,8 +562,20 @@ function AllocationGrid({
           })
         );
       }
+
+      // Check if removeContractorPT is selected, if yes, then check if the filter still exists
+      // If not, then reset removeContractorPT to false
+      if (currentView?.removeContractorPT) {
+        if (!isRemoveContractorPTValid(currentView?.Filters)) {
+          dispatch(
+            updateCurrentView({
+              removeContractorPT: false,
+            })
+          );
+        }
+      }
     }
-  }, [currentView?.Filters, user, email, resources]);
+  }, [currentView?.Filters, user, email, resources, dispatch]);
 
   useEffect(() => {
     if (email && resources) {
@@ -671,30 +686,20 @@ function AllocationGrid({
   ]);
 
   useEffect(() => {
-    if (removeContractorPT) {
-      const updatedModel = {
-        ...filterModel,
-        items: [
-          ...filterModel.items,
-          {
-            id: 'resourceTypeFilter',
-            field: 'resourceType',
-            operator: 'doesNotEqual',
-            value: 'Contractor - PT',
-          },
-        ],
-      };
-      setFilterModel(updatedModel);
-    } else {
-      const updatedModel = {
-        ...filterModel,
-        items: filterModel.items.filter(
-          item => item.id !== 'resourceTypeFilter'
-        ),
-      };
-      setFilterModel(updatedModel);
+    const updatedFilters = getUpdatedFiltersOnRemoveContractorPT(
+      currentView?.Filters || [],
+      currentView?.removeContractorPT
+    );
+
+    // Only dispatch if filters actually changed
+    if (updatedFilters !== currentView?.Filters) {
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
     }
-  }, [removeContractorPT]);
+  }, [currentView?.removeContractorPT, dispatch]);
 
   const handleAddProject = (e, project, curRow) => {
     const checkEntryExists = (data, resourceId, projectName, projectId) => {
