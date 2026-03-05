@@ -16,7 +16,9 @@ export type FilterKey =
   | 'resourceStatuses'
   | 'resourceLocations'
   | 'resourceWorkLocationGroup'
-  | 'projectStatuses';
+  | 'projectStatuses'
+  | 'userStatuses'
+  | 'userRoles';
 
 export interface ReportFilterConfig {
   enabledFilters: FilterKey[];
@@ -122,6 +124,23 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
       'portfolio',
       'projectManager',
       'projectStatuses',
+    ],
+    requiresPeriod: false,
+  },
+
+  // User Activity filters, no period
+  userActivity: {
+    enabledFilters: [
+      'resource',
+      'resourceType',
+      'team',
+      'organization',
+      'allocationManager',
+      'resourceStatuses',
+      'resourceLocations',
+      'resourceWorkLocationGroup',
+      'userStatuses',
+      'userRoles',
     ],
     requiresPeriod: false,
   },

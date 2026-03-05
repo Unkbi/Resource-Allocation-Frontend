@@ -244,6 +244,9 @@ function ReportBuilderToolbar({
                   <MenuItem value="projectsOnly" sx={{ pl: 4 }}>
                     Project Roster
                   </MenuItem>
+                  <MenuItem value="userActivity" sx={{ pl: 4 }}>
+                    User Activity Report
+                  </MenuItem>
                 </Select>
               ) : (
                 <Select
