@@ -150,6 +150,7 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
       'project',
     ],
     requiresPeriod: true,
+  },
   // User Activity filters, no period
   userActivity: {
     enabledFilters: [

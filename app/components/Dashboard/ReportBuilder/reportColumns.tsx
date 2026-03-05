@@ -214,6 +214,7 @@ const projectsOnlyColumns: GridColDef[] = [
   { field: 'description', headerName: 'Description', minWidth: 200 },
   {
     field: 'status', headerName: 'Project Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -263,6 +264,7 @@ const projectsOnlyColumns: GridColDef[] = [
   { field: 'portfolio_name', headerName: 'Portfolio', minWidth: 140 },
   {
     field: 'portfolio_status', headerName: 'Portfolio Status', minWidth: 160,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -308,6 +310,7 @@ const resourceOnlyColumns: GridColDef[] = [
   { field: 'end_date', headerName: 'End Date', minWidth: 120 },
   {
     field: 'status', headerName: 'Resource Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -331,6 +334,7 @@ const projectPeriodColumns: GridColDef[] = [
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
   { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
   { field: 'status', headerName: 'Project Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -362,6 +366,7 @@ const resourcePeriodColumns: GridColDef[] = [
   { field: 'resource_name', headerName: 'Resource', minWidth: 180, flex: 1 },
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
   { field: 'status', headerName: 'Resource Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -378,6 +383,7 @@ const resourcePeriodColumns: GridColDef[] = [
   { field: 'yearWeek', headerName: 'Year-Week', minWidth: 120 },
   {
     field: 'actuals_status', headerName: 'Act. Conf. Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -410,6 +416,7 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'resource_name', headerName: 'Resource', minWidth: 180, flex: 1 },
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
   { field: 'resource_status', headerName: 'Resource Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -424,6 +431,7 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   },
   { field: 'project_name', headerName: 'Project', minWidth: 200 },
   { field: 'project_status', headerName: 'Project Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -436,6 +444,7 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'yearWeek', headerName: 'Year-Week', minWidth: 120 },
   {
     field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -466,6 +475,7 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'resource_name', headerName: 'Resource', minWidth: 220, flex: 1 },
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
   { field: 'resource_status', headerName: 'Resource Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -482,6 +492,7 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
   { field: 'project_status', headerName: 'Project Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -492,6 +503,7 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'yearWeek', headerName: 'Year-Week', minWidth: 120 },
   {
     field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -531,6 +543,7 @@ const userActivityColumns: GridColDef[] = [
     field: 'resource_status', 
     headerName: 'Resource Status', 
     minWidth: 150,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -539,6 +552,7 @@ const userActivityColumns: GridColDef[] = [
     field: 'user_status', 
     headerName: 'User Status', 
     minWidth: 140,
+    aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),

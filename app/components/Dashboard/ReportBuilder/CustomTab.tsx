@@ -48,7 +48,7 @@ const AllocCapTooltip = () => {
                 )}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4, mt: 0.5 }}>
                     <Typography sx={{ fontSize: 12, color: '#64748b' }}>Alloc</Typography>
-                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{Number(alloc.toFixed(2))}</Typography>
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{alloc}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
                     <Typography sx={{ fontSize: 12, color: '#64748b' }}>Cap</Typography>
@@ -383,7 +383,7 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
         navigateToReport(
             {}, // No advanced filters from current context
             {
-                reportType: 'resourceProjectPeriod',
+                reportType: params.field === 'total_allocation' ? 'projectPeriod': 'resourceProjectPeriod',
                 period: 'custom',
                 customStartDate,
                 customEndDate,
@@ -475,6 +475,9 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                 type: 'number',
                 headerAlign: 'left',
                 align: 'right',
+                valueFormatter: (value: any) => {
+                    return Number(value).toFixed(2);
+                },
                 renderCell: (params: any) => {
                     return (
                         <Box
@@ -505,6 +508,9 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                 type: 'number',
                 headerAlign: 'left',
                 align: 'right',
+                valueFormatter: (value: any) => {
+                    return Number(value).toFixed(2);
+                },
                 renderCell: (params: any) => {
                     return (
                         <Box
@@ -535,6 +541,9 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                 type: 'number',
                 headerAlign: 'left',
                 align: 'right',
+                valueFormatter: (value: any) => {
+                    return Number(value).toFixed(2);
+                },
                 renderCell: (params: any) => {
                     const value = params.value;
                     return (
@@ -733,6 +742,7 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
         const gridData = allocationCapacityReport?.GridData || [];
         return gridData.map((item: any, index: number) => ({
             id: `${item.Project?.Id}- ${item.Metrics?.Period || ''}-${index}`,
+            projectId: item.Project?.Id || '',
             project: item.Project?.Name || '',
             portfolio: item.Portfolio?.Name || '',
             project_type: item.ProjectType?.Name || '',
@@ -757,7 +767,29 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
         { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160, flex: 1.2, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value}</Typography> },
         { field: 'period', headerName: 'Period', minWidth: 120, flex: 1, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value}</Typography> },
         { field: 'yearweek', headerName: 'Year - Week', minWidth: 80, flex: 0.6, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value}</Typography> },
-        { field: 'total_allocation', headerName: 'Total Allocation', minWidth: 100, flex: 1, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%' }}>{Number(params.value).toFixed(2)}</Typography> },
+        { field: 'total_allocation', headerName: 'Total Allocation', minWidth: 100, flex: 1, type: 'number', headerAlign: 'left', align: 'right', valueFormatter: (value: any) => {
+                return Number(value).toFixed(2);
+            }, renderCell: (params: any) => {
+                    return (
+                        <Box
+                            onClick={(event) => handleClick(event, params)}
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                alignItems: 'center',
+                                width: '100%',
+                                height: '100%',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    opacity: 0.8,
+                                    textDecoration: 'underline',
+                                },
+                            }}
+                        >
+                            {params.value}
+                        </Box>
+                    );
+                }, },
         // { field: 'total_actuals', headerName: 'Total Actuals', minWidth: 120, flex: 1, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%' }}>{Number(params.value).toFixed(2)}</Typography> },
         // { field: 'variance', headerName: 'Variance', minWidth: 110, flex: 0.9, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%', color: params.value < 0 ? '#ef4444' : params.value > 0 ? '#10b981' : 'inherit' }}>{Number(params.value).toFixed(2)}</Typography> },
         // { field: 'allocation_percentage', headerName: 'Allocation %', minWidth: 120, flex: 1, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%' }}>{Number(params.value).toFixed(2)}%</Typography> },

@@ -33,7 +33,7 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
     maxHeight: '100%',
     height: '100vh',
     maxWidth: '60%',
-    minWidth: '30%',
+    minWidth: '53%',
     borderRadius: 0,
     position: 'fixed',
     right: 0,
