@@ -594,8 +594,11 @@ const FlatIcon = () => <img src="/images/icons/FlatView.svg" alt="flat view" />;
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
-  const { view, savedViews, currentView, showActuals, removeContractorPT } =
-    useSelector(state => state.allocationView);
+  const { view, savedViews, currentView } = useSelector(
+    state => state.allocationView
+  );
+  const showActuals = currentView?.showActuals ?? false;
+  const removeContractorPT = currentView?.removeContractorPT ?? false;
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { projects, calendarDate: projectsCalendar } = useSelector(
     state => state.projects
@@ -1935,6 +1938,29 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       </Typography>
                     }
                   />
+                  <Tooltip
+                    placement="right"
+                    title={
+                      <Box>
+                        <Typography variant="body2">
+                          Includes part-time resources in capacity and
+                          availability calculations. When enabled, part-time
+                          resources contribute to the team’s headcount and may
+                          impact capacity indicators
+                        </Typography>
+                      </Box>
+                    }
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <img src="/images/icons/InfoRounded.svg" alt="info" />
+                    </Box>
+                  </Tooltip>
                 </Box>
               )}
             </>
