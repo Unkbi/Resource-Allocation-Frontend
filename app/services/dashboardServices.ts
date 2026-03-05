@@ -64,6 +64,9 @@ const CHART_API_MAPPING: Record<string, string> = {
   //Group 6: Actuals Trend Analytics
   actualsTrendWeekly: '/Resource/ExecuteActualsTrendWeeklyQuery',
 
+  //Group 10: Weekly Allocation vs Capacity
+  weeklyAllocationVsCapacity: '/Resource/GetWeeklyProjectsAllocationsCapacityByType',
+
   //Group 7: Team Engagement Analytics
   teamEngagementScore: '/Resource/ExecuteTeamEngagementScoreQuery',
 
@@ -285,6 +288,20 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       ...baseFilters,
     },
 
+    // Group 10: Weekly Allocation vs Capacity
+    weeklyAllocationVsCapacity: {
+      Teams: filters.Teams || [],
+      Projects: filters.Projects || [],
+      Portfolios: filters.Portfolios || [],
+      ProjectTypes: filters.ProjectTypes || [],
+      ProjectTypeGroups: filters.ProjectTypeGroups || [],
+      ProjectManagers: filters.ProjectManagers || [],
+      Organizations: filters.Orgs || [],
+      ProjectStatuses: ['Active'],
+      StartDate: filters.StartDate,
+      EndDate: filters.EndDate,
+    },
+
   };
   return payloadConfigs[chartKey] || baseFilters;
 };
@@ -404,6 +421,10 @@ const extractChartData = (chartKey: string, apiResponse: any): any[] => {
     case 'totalHeadcount':
       return responseData.total_head_breakdown || [];
     
+    case 'weeklyAllocationVsCapacity':
+      // New API returns { WeeklyData: [...] } — unwrap it
+      return apiResponse?.WeeklyData || (Array.isArray(apiResponse) ? apiResponse : []);
+
     default:
       // For non-grouped charts, return the full response
       return apiResponse;

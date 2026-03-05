@@ -38,6 +38,8 @@ import {
   ChartsYAxis,
   ChartsLegend,
   ChartsTooltip,
+  useAxisTooltip,
+  ChartsTooltipContainer,
 } from '@mui/x-charts';
 import DashboardWidget from '../../components/Dashboard/DashboardWidget';
 import DashboardToolbar from '../../components/Toolbar/DashboardToolbar';
@@ -123,6 +125,67 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
   });
 };
 
+// Custom tooltip for Weekly Allocation vs Capacity chart
+const WeeklyAllocCapTooltip = () => {
+  const tooltipData = useAxisTooltip();
+  if (!tooltipData) return null;
+
+  const { axisValue, seriesItems } = tooltipData;
+  const capacityItem = seriesItems?.find(s => s.label === 'Capacity');
+  const cap = capacityItem ? Number(capacityItem.value ?? 0) : 0;
+  const alloc = seriesItems
+    ?.filter(s => s.label !== 'Capacity')
+    .reduce((sum, s) => sum + Number(s.value ?? 0), 0) ?? 0;
+  const avail = Math.round(cap - alloc);
+
+  return (
+    <Box
+      sx={{
+        bgcolor: 'rgba(255,255,255,0.97)',
+        border: '1px solid #e2e8f0',
+        borderRadius: 1.5,
+        boxShadow: 4,
+        p: 1.5,
+        minWidth: 160,
+        pointerEvents: 'none',
+      }}
+    >
+      <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 0.5, color: '#0f172a' }}>
+        {axisValue}
+      </Typography>
+      {avail >= 0 && (
+        <Typography
+          sx={{
+            color: '#16a34a',
+            fontWeight: 600,
+            fontSize: 12,
+            mb: 0.75,
+            bgcolor: '#dcfce7',
+            px: 1,
+            py: 0.25,
+            borderRadius: 1,
+            display: 'inline-block',
+          }}
+        >
+          {avail} avail
+        </Typography>
+      )}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4, mt: 0.5 }}>
+        <Typography sx={{ fontSize: 12, color: '#64748b' }}>Alloc</Typography>
+        <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+          {Number(alloc.toFixed(2))}
+        </Typography>
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
+        <Typography sx={{ fontSize: 12, color: '#64748b' }}>Cap</Typography>
+        <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+          {cap}
+        </Typography>
+      </Box>
+    </Box>
+  );
+};
+
 // Define chart sequence for each tab - EASY TO CUSTOMIZE
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
@@ -131,6 +194,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'plan_vs_actual_variance',
   'top_projects_by_variance',
   'projectFTE',
+  'weeklyAllocationVsCapacity',
   'activeProjectsByType',
   'totalHeadcount',
   'allocation_by_project_type_group',
@@ -232,6 +296,7 @@ export default function ExecutiveDashboardPage() {
     allocationPercentage = [],
     allocation_by_project_type_group = [],
     custom_allocation_percentage = [],
+    weeklyAllocationVsCapacity = [],
     top_projects_by_variance = [],
     actuals_confirmation_status = [],
     actualsTrendWeekly = [],
@@ -469,6 +534,7 @@ export default function ExecutiveDashboardPage() {
         'projectScoreByPM',
         'projectHealthOverview',
         'engagementScoreOverview',
+        'weeklyAllocationVsCapacity',
       ];
 
       // Set loading state at the start of data fetch only on initial load or when filters change
@@ -727,13 +793,13 @@ export default function ExecutiveDashboardPage() {
    * Helper function to navigate to report page with filters
    * Maps chart identifiers to appropriate report types and configurations
    */
-  const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null) => {
+  const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null, weekData = null) => {
     // Special case: Navigate to custom tab for custom allocation chart
     if (chartKey === 'custom_allocation_percentage') {
       navigateToReport(
         advancedFilters,
         {
-          reportType: 'customProjectAllocation', // Dummy value for custom tab
+          reportType: 'percentageAllocation', // Dummy value for custom tab
           period: 'custom',
           customStartDate: currentWeekMonday.format('YYYY-MM-DD'),
           customEndDate: currentWeekSunday.format('YYYY-MM-DD'),
@@ -744,6 +810,37 @@ export default function ExecutiveDashboardPage() {
       );
       return ;
     }
+
+    if (chartKey === 'weeklyAllocationVsCapacity') {
+      let startDate, endDate;
+      
+      if (weekData && weekData.Period) {
+        const weekStartDate = dayjs(weekData.Period);
+        const weekMonday = weekStartDate.isoWeekday(1);
+        const weekSunday = weekStartDate.isoWeekday(7);
+        startDate = weekMonday.format('YYYY-MM-DD');
+        endDate = weekSunday.format('YYYY-MM-DD');
+      } else {
+        // Default to 13-week range: 4 weeks past + current week + 8 weeks future
+        const currentMonday = dayjs().isoWeekday(1);
+        startDate = currentMonday.subtract(4, 'week').format('YYYY-MM-DD');
+        endDate = currentMonday.add(8, 'week').isoWeekday(7).format('YYYY-MM-DD');
+      }
+      
+      navigateToReport(
+        advancedFilters,
+        {
+          reportType: 'allocationCapacity',
+          period: 'custom',
+          customStartDate: startDate,
+          customEndDate: endDate,
+        },
+        false,
+        router
+      );
+      return ;
+    }
+
     // Map chart keys to report types
     const chartToReportMap = {
       // Overview charts
@@ -754,6 +851,7 @@ export default function ExecutiveDashboardPage() {
       'activeProjectsByType': { reportType: 'projectsOnly', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'totalHeadcount': { reportType: 'resourceOnly' },
       'allocation_by_project_type_group': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD'), },
+      'weeklyAllocationVsCapacity': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       //actuals by category
       'unapprovedProjectAllocation': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'actuals_confirmation_status': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
@@ -2652,6 +2750,185 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
+
+    weeklyAllocationVsCapacity: (() => {
+      // Derive all unique project types across all periods (new API: ProjectTypeAllocations[].ProjectType.Name)
+      const allProjectTypes = [
+        ...new Set(
+          (weeklyAllocationVsCapacity || []).flatMap(period =>
+            (period.ProjectTypeAllocations || []).map(d => d.ProjectType?.Name).filter(Boolean)
+          )
+        ),
+      ];
+
+      // X-axis labels: week labels (W4, W5, ...) from new API field Week or Period
+      const weekLabels = (weeklyAllocationVsCapacity || []).map(p => p.Week || p.Period);
+
+      // Build dataset: one entry per period, with TotalAllocation per project type + TotalCapacity
+      const dataset = (weeklyAllocationVsCapacity || []).map(period => {
+        const entry = { week: period.Week || period.Period, capacity: Number(period.TotalCapacity || 0) };
+        allProjectTypes.forEach(pt => {
+          const match = (period.ProjectTypeAllocations || []).find(d => d.ProjectType?.Name === pt);
+          entry[pt] = Number(match?.TotalAllocation || 0);
+        });
+        return entry;
+      });
+
+       const barColors = [
+        '#4D79FF', '#7BBCB1', '#8B5CF694', '#F6C260',
+        '#E97E7E', '#A9D18E', '#FFD700', ,
+      ];
+
+      const allZero =
+        !weeklyAllocationVsCapacity ||
+        weeklyAllocationVsCapacity.length === 0 ||
+        weeklyAllocationVsCapacity.every(p =>
+          Number(p.TotalCapacity || 0) === 0 &&
+          (p.ProjectTypeAllocations || []).every(d => Number(d.TotalAllocation || 0) === 0)
+        );
+
+      return (
+        <DashboardWidget
+          minWidth={320}
+          minHeight={320}
+          showNoData={allZero}
+          noDataMessage="No weekly allocation vs capacity data available"
+        >
+          {dimensions => {
+            const config = useResponsiveChart(dimensions, 'bar');
+            const chartWidth = Math.max(config.width, 400);
+            const chartHeight = Math.max(config.height, 300);
+
+            const series = [
+              // One stacked bar series per project type
+              ...allProjectTypes.map((pt, idx) => ({
+                type: 'bar',
+                dataKey: pt,
+                label: pt,
+                stack: 'allocation',
+                color: barColors[idx % barColors.length],
+              })),
+              // Capacity line series
+              {
+                type: 'line',
+                dataKey: 'capacity',
+                label: 'Capacity',
+                color: '#F97316',
+                curve: 'linear',
+                showMark: true,
+              },
+            ];
+
+            return (
+              <Box sx={{ pt: 1, px: 1 }}>
+                <Typography
+                  sx={{ fontSize: '18px', fontWeight: 600, color: '#000000DE', mb: 1 }}
+                >
+                  Weekly Allocation vs. Capacity
+                </Typography>
+                <ChartContainer
+                  width={chartWidth}
+                  height={chartHeight}
+                  dataset={dataset}
+                  series={series}
+                  xAxis={[{
+                    scaleType: 'band',
+                    dataKey: 'week',
+                    categoryGapRatio: 0.3,
+                    tickLabelStyle: { color: '#475569', fontSize: 12 },
+                  }]}
+                  yAxis={[{ tickLabelStyle: { color: '#475569' } }]}
+                  margin={{ bottom: 40, left: 40, right: 20, top: 20 }}
+                  onAxisClick={(event, axisData) => {
+                    // Find the week data for the clicked axis point
+                    const clickedWeek = axisData?.axisValue;
+                    const weekDataItem = clickedWeek ? dataset.find(d => d.week === clickedWeek) : null;
+                    
+                    // Pass the full week data object which includes the Period
+                    const weekInfo = clickedWeek && weeklyAllocationVsCapacity 
+                      ? weeklyAllocationVsCapacity.find(w => w.Week === clickedWeek || w.Period === clickedWeek)
+                      : null;
+                    
+                    navigateToReportWithFilters('weeklyAllocationVsCapacity', null, weekInfo);
+                  }}
+                >
+                  <BarPlot />
+                  <LinePlot />
+                  <MarkPlot />
+                  <ChartsXAxis />
+                  <ChartsYAxis />
+                  <ChartsTooltip
+                    trigger="axis"
+                    slots={{ axisContent: WeeklyAllocCapTooltip }}
+                  />
+                </ChartContainer>
+                {/* Custom legend so it's always visible */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 1.5,
+                    alignItems: 'center',
+                    justifyContent: chartWidth < 400 ? 'flex-start' : 'center',
+                  }}
+                >
+                  {allProjectTypes.map((pt, idx) => (
+                    <Box
+                      key={pt}
+                      sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
+                    >
+                      <Box
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: 0.5,
+                          bgcolor: barColors[idx % barColors.length],
+                        }}
+                      />
+                      <Typography sx={{ fontSize: 12, color: '#475569' }}>
+                        {pt}
+                      </Typography>
+                    </Box>
+                  ))}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.75,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        width: 22,
+                        height: 2,
+                        bgcolor: '#F97316',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          right: -3,
+                          top: -3,
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: '#F97316',
+                        }}
+                      />
+                    </Box>
+                    <Typography sx={{ fontSize: 12, color: '#475569' }}>
+                      Capacity
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            );
+          }}
+        </DashboardWidget>
+      );
+    })(),
 
     custom_allocation_percentage: (
       <DashboardWidget

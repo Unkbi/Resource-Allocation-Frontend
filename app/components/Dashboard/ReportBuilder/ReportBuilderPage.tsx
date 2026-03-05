@@ -15,17 +15,20 @@ import {
 } from '@/app/types/dashboardTypes';
 import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import {
   ColumnManagementStyles,
   StyledDataGrid,
 } from '../../AllocationTable/styles/StyledDataGrid';
+
+dayjs.extend(isoWeek);
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import AISummaryTab from './AISummaryTab';
 import CustomTab from './CustomTab';
 import { fetchProjectSummary } from '@/app/redux/actions/aiSummaryAction';
-import { fetchCustomReportRequest } from '@/app/redux/actions/customReportActions';
+import { fetchCustomReportRequest, fetchAllocationCapacityRequest } from '@/app/redux/actions/customReportActions';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import ErrorPage from '../../ErrorPage/ErrorPage';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
@@ -256,7 +259,7 @@ function ReportBuilderPage({
 
   // Separate filter state for Custom tab
   const [customFilters, setCustomFilters] = useState<ReportFilters>({
-    reportType: 'resourceProjectPeriod', // Dummy value
+    reportType: 'percentageAllocation', // Dummy value
     period: 'last_week',
     customDateRange: undefined,
     team: [],
@@ -325,6 +328,7 @@ function ReportBuilderPage({
   const { projects } = useSelector((state: RootState) => state.projects);
 
   const [APIFilters, setAPIFilters] = useState<any>(null);
+  const [customReportType, setCustomReportType] = useState<'percentageAllocation' | 'allocationCapacity'>('percentageAllocation');
 
   // Ref to track if we've already attempted initial sessionStorage load
   const hasAttemptedInitialLoadRef = useRef(false);
@@ -560,7 +564,11 @@ function ReportBuilderPage({
     setAPIFilters(apiFilters);
 
     try {
-      dispatch(fetchCustomReportRequest(apiFilters));
+      if (customReportType === 'allocationCapacity') {
+        dispatch(fetchAllocationCapacityRequest(apiFilters));
+      } else {
+        dispatch(fetchCustomReportRequest(apiFilters));
+      }
       setShowData(true);
     } catch (error) {
       console.error('Error generating custom report:', error);
@@ -801,7 +809,7 @@ function ReportBuilderPage({
 
       // Set custom filters from query params
       const customFiltersFromQuery: ReportFilters = {
-        reportType: 'resourceProjectPeriod',
+        reportType: pendingQueryFilters.reportType || 'percentageAllocation',
         period: pendingQueryFilters.period || 'last_week',
         customDateRange:
           pendingQueryFilters.customStartDate && pendingQueryFilters.customEndDate
@@ -832,6 +840,12 @@ function ReportBuilderPage({
 
       setCustomFilters(customFiltersFromQuery);
 
+      // Set custom report type from query params
+      const reportTypeFromQuery = pendingQueryFilters.reportType;
+      if (reportTypeFromQuery === 'allocationCapacity' || reportTypeFromQuery === 'percentageAllocation') {
+        setCustomReportType(reportTypeFromQuery);
+      }
+
       // Prepare API filters for custom report
       const apiFilters: any = {
         Projects: customFiltersFromQuery.project,
@@ -846,8 +860,12 @@ function ReportBuilderPage({
 
       setAPIFilters(apiFilters);
 
-      // Auto-generate custom report
-      dispatch(fetchCustomReportRequest(apiFilters));
+      // Auto-generate custom report based on reportType
+      if (reportTypeFromQuery === 'allocationCapacity') {
+        dispatch(fetchAllocationCapacityRequest(apiFilters));
+      } else {
+        dispatch(fetchCustomReportRequest(apiFilters));
+      }
       setHasAppliedQueryParams(true);
       setFiltersExpanded(false);
       setIsInitializing(false);
@@ -1028,6 +1046,26 @@ function ReportBuilderPage({
       }
     }
   }, [aiSummaryState, activeTab, loadingPermissions]);
+
+  useEffect(() => {
+    if (
+      customReportType === 'allocationCapacity' &&
+      !pendingQueryFilters &&
+      !hasAppliedQueryParams &&
+      !customFilters.customDateRange
+    ) {
+      // Calculate 13-week range: 4 weeks past + current week + 8 weeks future
+      const currentMonday = dayjs().isoWeekday(1);
+      const startDate = currentMonday.subtract(4, 'week');
+      const endDate = currentMonday.add(8, 'week').isoWeekday(7);
+      
+      setCustomFilters(prev => ({
+        ...prev,
+        period: 'custom',
+        customDateRange: [startDate, endDate],
+      }));
+    }
+  }, [customReportType, pendingQueryFilters, hasAppliedQueryParams, customFilters.customDateRange]);
 
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
@@ -1572,6 +1610,8 @@ function ReportBuilderPage({
             reportType={customFilters.reportType as ReportType}
             tab="custom"
             onGenerateReport={handleGenerateCustomReport}
+            onCustomReportTypeChange={setCustomReportType}
+            customReportType={customReportType}
             onExport={handleExport}
             onShare={handleShare}
             isLoading={customReportState.loading}
@@ -1601,6 +1641,7 @@ function ReportBuilderPage({
             <CustomTab
               showActuals={customFilters.show_actuals || false}
               APIFilters={APIFilters}
+              customReportType={customReportType}
             />
           </Box>
         </>
