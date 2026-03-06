@@ -135,6 +135,8 @@ export interface GetUsersSavedViewsResponse {
   Filters: string[] | null;
   WeekMinus: number | null;
   __parent__: boolean | null;
+  RemoveContractorPT: boolean | null;
+  ShowActuals: boolean | null;
 }
 
 export interface AllAllocations {
