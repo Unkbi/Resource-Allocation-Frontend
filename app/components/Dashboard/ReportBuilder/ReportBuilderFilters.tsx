@@ -621,7 +621,7 @@ function ReportBuilderFilters({
       if (!value || 
           (Array.isArray(value) && value.length === 0) ||
           (typeof value === 'string' && value === 'resourceProjectPeriod' && key === 'reportType') || key === 'summaryType' ||
-          (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'))) {
+          (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'|| filters.reportType === 'userActivity'))) {
         return;
       }
       
