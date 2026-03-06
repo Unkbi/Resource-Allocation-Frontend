@@ -281,6 +281,8 @@ const initialValuesMap = {
     showColumns: ['teams', 'resource', 'project', 'resourceType'],
     filters: [{ filed: 'teams', operator: 'contains', value: '' }],
     calendarBy: 'week',
+    showActuals: false,
+    removeContractorPT: false,
   },
   new_view: {
     groupBy: 'project',
@@ -291,6 +293,8 @@ const initialValuesMap = {
     showColumns: ['teams', 'resource', 'project', 'resourceType'],
     filters: [{ filed: 'teams', operator: 'contains', value: '' }],
     calendarBy: 'week',
+    showActuals: false,
+    removeContractorPT: false,
   },
   name_view: {
     groupBy: '',
@@ -304,6 +308,8 @@ const initialValuesMap = {
     name: '',
     description: '',
     isDefault: false,
+    showActuals: false,
+    removeContractorPT: false,
   },
   clone_resource: {
     Project: [],
@@ -2044,6 +2050,8 @@ const AllocationForm = () => {
               ...(values?.filters !== undefined && {
                 Filters: values.filters,
               }),
+              RemoveContractorPT: initialData?.removeContractorPT ?? values.removeContractorPT ?? false,
+              ShowActuals: initialData?.showActuals ?? values.showActuals ?? false,
             };
 
             // PUT request.
@@ -2097,6 +2105,8 @@ const AllocationForm = () => {
               Description: values.description,
               Filters: values.filters,
               UserId: userId,
+              RemoveContractorPT: initialData?.removeContractorPT ?? values.removeContractorPT ?? false,
+              ShowActuals: initialData?.showActuals ?? values.showActuals ?? false,
             };
 
             // POST request to save the view.
@@ -2149,6 +2159,8 @@ const AllocationForm = () => {
               Columns: values.showColumns,
               ShowBy: values.showBy,
               Filters: values.filters,
+              RemoveContractorPT: values.removeContractorPT ?? false,
+              ShowActuals: values.showActuals ?? false,
             };
 
             // PUT request to update the view
