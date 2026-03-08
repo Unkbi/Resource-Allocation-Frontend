@@ -16,7 +16,9 @@ export type FilterKey =
   | 'resourceStatuses'
   | 'resourceLocations'
   | 'resourceWorkLocationGroup'
-  | 'projectStatuses';
+  | 'projectStatuses'
+  | 'userStatuses'
+  | 'userRoles';
 
 export interface ReportFilterConfig {
   enabledFilters: FilterKey[];
@@ -122,6 +124,45 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
       'portfolio',
       'projectManager',
       'projectStatuses',
+    ],
+    requiresPeriod: false,
+  },
+
+  // Percentage allocation specific filters
+  percentageAllocation: {
+    enabledFilters: [
+      'team',
+      'organization',
+      'projectType',
+      'projectTypeGroup',
+      'project',
+    ],
+    requiresPeriod: true,
+  },
+
+  // Allocation capacity specific filters
+  allocationCapacity: {
+    enabledFilters: [
+      'team',
+      'organization',
+      'projectType',
+      'projectTypeGroup',
+      'project',
+    ],
+    requiresPeriod: true,
+  // User Activity filters, no period
+  userActivity: {
+    enabledFilters: [
+      'resource',
+      'resourceType',
+      'team',
+      'organization',
+      'allocationManager',
+      'resourceStatuses',
+      'resourceLocations',
+      'resourceWorkLocationGroup',
+      'userStatuses',
+      'userRoles',
     ],
     requiresPeriod: false,
   },

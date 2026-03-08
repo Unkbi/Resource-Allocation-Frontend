@@ -1,5 +1,6 @@
-import { getWeekNumber as getWeekNumberFromCommon, parseWeekKeyToMonday, isWeekKey } from './common';
-import { format } from 'date-fns';
+import { getWeekNumber as getWeekNumberFromCommon } from './common';
+import { format} from 'date-fns';
+import { parseISO } from 'date-fns/parseISO';
 
 /**
  * Parse week key (W52-2026) to extract week number and year
@@ -21,7 +22,7 @@ const parseWeekKey = (weekKey: string): { week: number; year: number } | null =>
 export const getWeekKey = (dateString: string): string | null => {
   if (!dateString) return null;
   try {
-    const date = new Date(dateString);
+    const date = parseISO(dateString);
     return getWeekNumberFromCommon(date);
   } catch (error) {
     console.error('Error parsing date:', dateString, error);
@@ -34,7 +35,7 @@ export const getWeekKey = (dateString: string): string | null => {
  */
 export const formatWeekDate = (dateString: string): string => {
   try {
-    const date = new Date(dateString);
+    const date = parseISO(dateString);
     return format(date, 'MMM d');
   } catch (error) {
     console.error('Error formatting date:', dateString, error);
@@ -53,15 +54,29 @@ export interface ProjectSummaryTableRow {
   project_category: string;
   portfolio: string;
   project_sponsor: string;
-  [key: string]: any; // Dynamic week columns like week_52, week_51, etc.
+  [key: string]: any; // Dynamic week columns like "W4-2026"
 }
 
 export interface WeekColumn {
-  field: string;
-  headerName: string;
-  weekNumber: number;
-  date: string;
+  field: string;       // e.g., "W4-2026"
+  headerName: string;  // e.g., "W4"
+  weekNumber: number;  // e.g., 4
+  year: number;        // e.g., 2026
+  date: string;        // formatted StartDate, e.g., "Jan 19"
+  dateTo: string;      // formatted EndDate, e.g., "Jan 25"
+  period: string;      // ISO StartDate
+}
+
+export interface ProjectPeriodCellData {
+  score: number | null;
+  alignmentScore: number | null;
+  healthScore: number | null;
+  scoreBand: string | null;
+  summary: string | null;
+  summaryHtml: string | null;
   period: string;
+  aiSummary: boolean;  // Whether this period has an AI summary (clickable)
+  periodId: string;    // UUID of the Projectperiod record for the detail API
 }
 
 /**
@@ -76,45 +91,69 @@ export const formatAISummaryResponse = (apiResponse: any[]): {
     return { rows: [], weekColumns: [] };
   }
 
-  // Extract all unique periods across all projects and sort them
-  const allPeriodsSet = new Set<string>();
-  apiResponse.forEach((item: any, index: number) => {
-    
+  // Collect all unique periods keyed by "W4-2026" (Week-Year)
+  // Use a Map to deduplicate; prefer the first occurrence of each unique week+year
+  const allPeriodsMap = new Map<string, {
+    week: string;
+    year: number;
+    startDate: string;
+    endDate: string;
+    period: string;
+  }>();
+
+  apiResponse.forEach((item: any) => {
     if (item.Projectperiod && Array.isArray(item.Projectperiod)) {
-      item.Projectperiod.forEach((pp: any, ppIndex: number) => {
-        if (pp.Period) {
-          allPeriodsSet.add(pp.Period);
+      item.Projectperiod.forEach((pp: any) => {
+        // Prefer direct Week/Year fields; fall back to computing from Period date
+        let fieldKey: string | null = null;
+        let weekLabel: string;
+        let year: number;
+
+        if (pp.Week && pp.Year) {
+          fieldKey = `${pp.Week}-${pp.Year}`;
+          weekLabel = pp.Week;
+          year = pp.Year;
+        } else if (pp.Period) {
+          const wk = getWeekKey(pp.Period);
+          if (wk) {
+            fieldKey = wk;
+            const parsed = parseWeekKey(wk);
+            weekLabel = parsed ? `W${parsed.week}` : wk;
+            year = parsed?.year ?? new Date().getFullYear();
+          }
+        }
+
+        if (fieldKey && !allPeriodsMap.has(fieldKey)) {
+          allPeriodsMap.set(fieldKey, {
+            week: weekLabel!,
+            year: year!,
+            startDate: pp.StartDate || pp.Period || '',
+            endDate: pp.EndDate || pp.Period || '',
+            period: pp.Period || pp.StartDate || '',
+          });
         }
       });
-    } else {
-      console.warn(`Item ${index} does not have Projectperiod array`);
     }
   });
 
-  const sortedPeriods = Array.from(allPeriodsSet).sort((a, b) => {
-    const dateA = new Date(a);
-    const dateB = new Date(b);
-    return dateB.getTime() - dateA.getTime(); // Most recent first
+  // Sort by StartDate descending (most recent first)
+  const sortedPeriods = Array.from(allPeriodsMap.entries()).sort(([, a], [, b]) => {
+    return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
   });
 
-  // Generate week columns from sorted periods
-  const weekColumns: WeekColumn[] = sortedPeriods.map((period) => {
-    const weekKey = getWeekKey(period);
-    if (!weekKey) return null;
-    
-    const parsed = parseWeekKey(weekKey);
-    if (!parsed) return null;
-    
-    const displayDate = formatWeekDate(period);
-    
+  // Generate week columns
+  const weekColumns: WeekColumn[] = sortedPeriods.map(([fieldKey, data]) => {
+    const weekNum = parseInt(data.week.replace('W', ''), 10);
     return {
-      field: weekKey, // Use canonical week key like "W4-2026"
-      headerName: `Week ${parsed.week}`,
-      weekNumber: parsed.week,
-      date: displayDate,
-      period: period,
+      field: fieldKey,
+      headerName: data.week,        // "W4" directly from API
+      weekNumber: isNaN(weekNum) ? 0 : weekNum,
+      year: data.year,
+      date: formatWeekDate(data.startDate),
+      dateTo: formatWeekDate(data.endDate),
+      period: data.startDate,
     };
-  }).filter((col): col is WeekColumn => col !== null);
+  });
 
   // Transform each project to a table row
   const rows: ProjectSummaryTableRow[] = apiResponse.map((item: any, index: number) => {
@@ -131,25 +170,30 @@ export const formatAISummaryResponse = (apiResponse: any[]): {
       project_sponsor: item.ProjectSponsor || '',
     };
 
-    // Map period data to week columns
+    // Map each Projectperiod entry to the correct week column cell
     if (item.Projectperiod && Array.isArray(item.Projectperiod)) {
-      item.Projectperiod.forEach((pp: any, ppIdx: number) => {
-        if (pp.Period) {
-          const weekKey = getWeekKey(pp.Period);
-          if (!weekKey) {
-            console.warn(`Invalid period date: ${pp.Period}`);
-            return;
-          }
-                    
-          row[weekKey] = {
-            score: pp.ProjectScore,
-            alignmentScore: pp.AlignmentScore,
-            healthScore: pp.ProjectHealthScore,
-            scoreBand: pp.ProjectScoreBand,
-            summary: pp.Summary,
-            summaryHtml: pp.SummaryHtml,
-            period: pp.Period,
+      item.Projectperiod.forEach((pp: any) => {
+        let fieldKey: string | null = null;
+
+        if (pp.Week && pp.Year) {
+          fieldKey = `${pp.Week}-${pp.Year}`;
+        } else if (pp.Period) {
+          fieldKey = getWeekKey(pp.Period);
+        }
+
+        if (fieldKey) {
+          const cellData: ProjectPeriodCellData = {
+            score: pp.ProjectScore ?? null,
+            alignmentScore: pp.AlignmentScore ?? null,
+            healthScore: pp.ProjectHealthScore ?? null,
+            scoreBand: pp.ProjectScoreBand ?? null,
+            summary: pp.Summary ?? null,
+            summaryHtml: pp.SummaryHtml ?? null,
+            period: pp.Period || pp.StartDate || '',
+            aiSummary: pp.AISummary === true,
+            periodId: pp.Id || '',
           };
+          row[fieldKey] = cellData;
         }
       });
     }

@@ -12,7 +12,6 @@ import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Location } from '@/app/types';
 import {
-  calculateTotalEffort,
   getAllocationManagerFromPath,
   getResourceFromUid,
   getTotalWeeks,
@@ -21,7 +20,11 @@ import {
   formatDateMMDDYYYY,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { getFirstChild, normalizeRow } from '@/app/utils/allocationUtils';
+import {
+  getFirstChild,
+  injectBlankProjectRows,
+  normalizeRow,
+} from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import Typography from '@mui/material/Typography';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -47,6 +50,7 @@ import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -119,6 +123,7 @@ function ProjectAllocation({
   const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { portfolios } = useSelector((state: RootState) => state.portfolios);
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
   );
@@ -132,8 +137,8 @@ function ProjectAllocation({
   } = useAllocationGrid('projectAllocation');
   const { getAllRows: getAllTeamViewRows } =
     useAllocationGrid('teamAllocation');
-  const { showActuals } = useSelector(
-    (state: RootState) => state.allocationView
+  const showActuals = useSelector(
+    (state: RootState) => state.allocationView.currentView?.showActuals ?? false
   );
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
   const { allResourcesDetail } = useSelector(
@@ -145,14 +150,24 @@ function ProjectAllocation({
       dispatch({ type: FETCH_PROJECT_TYPES });
     }
   }, []);
-  
+
   useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['Allocation'].r && ready) {
       let filteredResources;
       const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
-        setRows(allTempRows || []);
+        setRows(
+          injectBlankProjectRows(
+            allTempRows as AllAllocations[],
+            projects || [],
+            portfolios || [],
+            projectTypes || [],
+            _resources || [],
+            startDate || '',
+            endDate || ''
+          ) || []
+        );
         setRowsForView('projectAllocationtemp', []);
       } else {
         const teamsViewRows = getAllTeamViewRows();
@@ -172,16 +187,22 @@ function ProjectAllocation({
           dispatch(setLoading(false));
         }
 
-        const formattedResources = filteredResources?.map(allocation => ({
+        const formattedResources = injectBlankProjectRows(
+          filteredResources as AllAllocations[],
+          projects || [],
+          portfolios || [],
+          projectTypes || [],
+          _resources || [],
+          startDate || '',
+          endDate || ''
+        )?.map(allocation => ({
           ...allocation,
-          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          hasAllocation: (allocation?.totalEffort ?? 0) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
             _resources || []
           )?.FullName,
         }));
-
         setRows(formattedResources || []);
       }
       // Sahadev : Reset temp View for Teams Related Views, Currently Team, Organisation, Resource and Flat Views.
@@ -347,7 +368,10 @@ function ProjectAllocation({
           };
 
           if (isGridTreeNode && rowNode.children) {
-            const resource_count = rowNode?.children?.length || null;
+            // Filter Empty Rows.
+            const resource_count = rowNode?.children.filter(
+              (child: any) => !child.includes('project/')
+            )?.length;
             return (
               <>
                 <EllipsisNameCell
@@ -498,11 +522,10 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Id
+          (item: any) => item.Resource?.Id === resource?.Id
         );
         const organizationName = resourceDetails?.Organization?.Name || '';
-      
+
         return <EllipsisNameCell value={organizationName || ''} />;
       },
     },
@@ -1009,24 +1032,41 @@ function ProjectAllocation({
     {
       field: 'totalEffort',
       headerName: 'Total Effort',
-      width: 115,
-      minWidth: 115,
+      width: 122,
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,
-      headerClassName: 'secondary-header',
-      // cellClassName: 'secondary-cell',
+      headerClassName: 'totals-header',
       headerAlign: 'left',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const value = Number(params.value);
         const formattedValue =
           !isNaN(value) && value !== null
-            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            ? normalizeAllocationValue(value)
             : null;
-        return <EllipsisNameCell value={formattedValue} />;
+        return <EllipsisNameCell value={`${formattedValue}`} />;
       },
-    }, 
+    },
+    {
+      field: 'totalAllocationsTillDate',
+      headerName: 'Effort Till Date',
+      width: 122,
+      type: 'number',
+      sortable: true,
+      cellClassName: getCellClassName,
+      headerClassName: 'totals-header',
+      headerAlign: 'left',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const value = Number(params.value);
+        const formattedValue =
+          !isNaN(value) && value !== null
+            ? normalizeAllocationValue(value)
+            : null;
+        return <EllipsisNameCell value={`${formattedValue}`} />;
+      },
+    },
     {
       field: 'department',
       headerName: 'Department',
@@ -1042,7 +1082,7 @@ function ProjectAllocation({
     },
     {
       field: 'manager',
-      headerName: 'Manager',  // Resource page manager detail
+      headerName: 'Manager', // Resource page manager detail
       width: 130,
       type: 'string',
       isEditable: false,
@@ -1050,8 +1090,7 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Manager
+          (item: any) => item.Resource?.Id === resource?.Manager
         );
         const Manager = resourceDetails?.Resource?.FullName || '';
         return resource ? <EllipsisNameCell value={Manager || ''} /> : null;
@@ -1068,11 +1107,12 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Id
+          (item: any) => item.Resource?.Id === resource?.Id
         );
         const organizationStatus = resourceDetails?.Organization?.Status || '';
-        return resource ? <EllipsisNameCell value={organizationStatus || ''} /> : null;
+        return resource ? (
+          <EllipsisNameCell value={organizationStatus || ''} />
+        ) : null;
       },
     },
     {
@@ -1085,7 +1125,9 @@ function ProjectAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
-        return <EllipsisNameCell value={firstChild?.portfolioDescription|| ''}/>;
+        return (
+          <EllipsisNameCell value={firstChild?.portfolioDescription || ''} />
+        );
       },
     },
     {
@@ -1098,7 +1140,7 @@ function ProjectAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
-        return <EllipsisNameCell value={firstChild?.portfolioStatus|| ''}/>;
+        return <EllipsisNameCell value={firstChild?.portfolioStatus || ''} />;
       },
     },
     {
@@ -1110,7 +1152,7 @@ function ProjectAllocation({
       sortable: true,
       primaryColumn: true,
     },
-     {
+    {
       field: 'teamStatus',
       headerName: 'Team Status',
       width: 130,
@@ -1127,12 +1169,8 @@ function ProjectAllocation({
       cellClassName: 'prime-cell',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-      const { rowNode, api, value = '' } = params;
-        return (
-          <EllipsisNameCell
-            value={value as string}
-          />
-        );
+        const { rowNode, api, value = '' } = params;
+        return <EllipsisNameCell value={value as string} />;
       },
     },
   ];
@@ -1170,6 +1208,7 @@ function ProjectAllocation({
                 projectType: false,
                 projectTypeGroup: false,
                 totalEffort: true,
+                totalAllocationsTillDate: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
                 email: false,
@@ -1189,9 +1228,9 @@ function ProjectAllocation({
                 organisationName: false,
                 manager: false,
                 organisationStatus: false,
-                portfolioDescription:false,
+                portfolioDescription: false,
                 portfolioStatus: false,
-                teamAllocationManager:false,
+                teamAllocationManager: false,
                 teamStatus: false,
                 teams: false,
               },

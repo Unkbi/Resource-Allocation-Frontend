@@ -46,7 +46,10 @@ export type ReportType =
   | 'projectPeriod'
   | 'resourcePeriod'
   | 'resourceProjectPeriod'
-  | 'resourceProjectPeriodCost';
+  | 'resourceProjectPeriodCost'
+  | 'percentageAllocation'
+  | 'allocationCapacity'
+  | 'userActivity';
 
 export type SummaryType =
   | 'project'
@@ -71,6 +74,8 @@ export interface ReportUIFilters {
   resourceLocations?: string[];
   resourceWorkLocationGroup?: string[];
   projectStatuses?: string[];
+  userStatuses?: string[];
+  userRoles?: string[];
 }
 
 export interface ReportEntry {

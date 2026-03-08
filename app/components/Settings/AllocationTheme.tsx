@@ -60,7 +60,10 @@ import {
   type SettingsData,
 } from '@/app/utils/settingsUtils';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
-import { ALLOCATION_SETTINGS_VALID_TABS } from '@/app/constants/constants';
+import {
+  ALLOCATION_SETTINGS_VALID_TABS,
+  PERCENTAGES,
+} from '@/app/constants/constants';
 
 const baseURLAccessManagement = '/settings?menu=allocation-setting';
 interface ColorPair {
@@ -152,10 +155,9 @@ function AllocationTheme({
   const [activeColorRow, setActiveColorRow] = React.useState<string | null>(
     null
   );
-  const [maxAllocationWarning, setMaxAllocationWarning] =
-    React.useState<number>(0.0);
-  const [maxAllocationError, setMaxAllocationError] =
-    React.useState<number>(0.0);
+  const [maxAllocationWarning, setMaxAllocationWarning] = useState<string>('');
+  const [maxAllocationError, setMaxAllocationError] = useState<string>('');
+
   // Retention durations (1-9 months)
   const [allocationHistoryDuration, setAllocationHistoryDuration] =
     React.useState<string>('');
@@ -163,9 +165,12 @@ function AllocationTheme({
     React.useState<string>('');
 
   // Track original values for change detection
-  const [originalAlertSettings, setOriginalAlertSettings] = React.useState({
-    maxAllocationWarning: 0.0,
-    maxAllocationError: 0.0,
+  const [originalAlertSettings, setOriginalAlertSettings] = React.useState<{
+    maxAllocationWarning: string;
+    maxAllocationError: string;
+  }>({
+    maxAllocationWarning: '',
+    maxAllocationError: '',
   });
 
   const [originalHistorySettings, setOriginalHistorySettings] = React.useState({
@@ -187,14 +192,29 @@ function AllocationTheme({
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
   );
+  const { userPreferences } = useSelector(
+    (state: RootState) => state.userPreferences
+  );
   const searchParams = useSearchParams();
   const router = useRouter();
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
 
   useEffect(() => {
-    setAllocationRanges(allocationTheme);
-    setOriginalAllocationRanges(allocationTheme);
+    const normalized = allocationTheme.map(row => ({
+      ...row,
+      From:
+        row.From !== '' && !isNaN(parseFloat(row.From))
+          ? format2(parseFloat(row.From))
+          : row.From,
+      To:
+        row.To !== '' && !isNaN(parseFloat(row.To))
+          ? format2(parseFloat(row.To))
+          : row.To,
+    }));
+
+    setAllocationRanges(normalized);
+    setOriginalAllocationRanges(normalized);
   }, [allocationTheme]);
 
   useEffect(() => {
@@ -212,21 +232,21 @@ function AllocationTheme({
       }
       if (scalarSettings['Max_Allocation_Warning'] !== undefined) {
         setMaxAllocationWarning(
-          Number(Number(scalarSettings['Max_Allocation_Warning']).toFixed(1))
+          format2(roundToStep(Number(scalarSettings['Max_Allocation_Warning'])))
         );
       }
       if (scalarSettings['Max_Allocation_Error'] !== undefined) {
         setMaxAllocationError(
-          Number(Number(scalarSettings['Max_Allocation_Error']).toFixed(1))
+          format2(roundToStep(Number(scalarSettings['Max_Allocation_Error'])))
         );
       }
       // Update original values for change tracking
       setOriginalAlertSettings({
-        maxAllocationWarning: Number(
-          scalarSettings['Max_Allocation_Warning'] || 0.0
+        maxAllocationWarning: format2(
+          roundToStep(Number(scalarSettings['Max_Allocation_Warning'] || 0.0))
         ),
-        maxAllocationError: Number(
-          scalarSettings['Max_Allocation_Error'] || 0.0
+        maxAllocationError: format2(
+          roundToStep(Number(scalarSettings['Max_Allocation_Error'] || 0.0))
         ),
       });
 
@@ -322,121 +342,136 @@ function AllocationTheme({
   React.useEffect(() => {
     dispatch(fetchAllocationTheme());
   }, []);
+
+  // rounds value to nearest step (0.05)
+  const roundToStep = (value: number, step = 0.05) => {
+    return Math.round(value / step) * step;
+  };
+
+  // formats with 2 decimals
+  const format2 = (num: number) => num.toFixed(2);
+
   // Update the handleRangeChange function in the RangeCell component
   const RangeCell = (params: GridRenderCellParams) => {
-    const { id, field, value } = params;
+    const { id } = params;
     const row = params.row;
     const rowId = id as number;
     const error = validationErrors[rowId];
 
+    const isValidDecimal = (value: string) => {
+      return /^\d*\.?\d{0,2}$/.test(value); // allow up to 2 decimals
+    };
+
     const handleRangeChange = (
-      Id: number | string,
+      id: number | string,
       field: 'From' | 'To',
       value: string
     ) => {
-      function isFloatLike(value: string) {
-        const regex = /^(\d+)?(\.)?(\d*)?$/;
-        return regex.test(value);
+      if (!isValidDecimal(value)) return;
+
+      // convert display back to internal fraction when showing percentages
+      let internalValue = value;
+      if (
+        userPreferences?.Allocation_Preference === PERCENTAGES &&
+        value !== ''
+      ) {
+        const num = parseFloat(value);
+        internalValue = isNaN(num) ? '' : String(num / 100);
       }
 
-      function isInvalidInput(value: string) {
-        const regex = /[^0-9\.\s]/;
-        return regex.test(value);
-      }
-
-      function isDecimalDots(value: string) {
-        const regex = /^\s*\.+$/;
-        return regex.test(value);
-      }
-
-      let updatedRanges = allocationRanges.map(row =>
-        row.id === id ? { ...row, [field]: value } : row
+      // Only update state — NO rounding here
+      const updatedRanges = allocationRanges.map(row =>
+        row.id === id ? { ...row, [field]: internalValue } : row
       );
 
-      if (field === 'To') {
-        const currentRow = updatedRanges.find(row => row.id === id);
-        if (currentRow && currentRow.To !== max_allocation_error) {
-          let currentTo = isDecimalDots(value)
-            ? parseFloat('0.0')
-            : parseFloat(value);
-          if (!isNaN(currentTo)) {
-            // Check if the value is a valid decimal number
-            if (isInvalidInput(value) || isFloatLike(value) === false) {
-              dispatch(
-                showToastAction(
-                  true,
-                  `Invalid input. Please enter a valid number.`,
-                  'error',
-                  4000
-                )
-              );
-              return;
-            }
+      setAllocationRanges(updatedRanges);
 
-            if (
-              value !== '0' &&
-              value !== '0.' &&
-              value !== '1' &&
-              value !== '1.' &&
-              value !== '.' &&
-              currentTo < parseFloat(currentRow.From)
-            ) {
-              dispatch(
-                showToastAction(
-                  true,
-                  `Allocation Range To : ${value} must be equal or greater than Allocation Range From : ${currentRow.From}`,
-                  'error',
-                  4000
-                )
-              );
-              return;
-            }
-            if (parseFloat(value) >= Number(max_allocation_error)) {
-              // updatedRanges = allocationRanges;
+      const newErrors = validateRanges(updatedRanges);
+      setValidationErrors(newErrors);
 
-              dispatch(
-                showToastAction(
-                  true,
-                  `Allocation range cannot exceed ${max_allocation_error}.`,
-                  'error',
-                  4000
-                )
-              );
-              return;
-            }
-            // Update subsequent rows in sequence
-            const currentIndex = updatedRanges.findIndex(row => row.id === id);
-            let nextIndex = currentIndex + 1;
+      setHasUnsavedChanges(true);
+    };
 
-            while (nextIndex < updatedRanges.length) {
-              const newFromValue = (currentTo + 0.1).toFixed(1);
+    const handleToBlur = (id: number | string) => {
+      let updatedRanges = [...allocationRanges];
 
-              updatedRanges = updatedRanges.map((row, index) =>
-                index === nextIndex
-                  ? {
-                      ...row,
-                      From: newFromValue,
-                      To: row.To === max_allocation_error ? row.To : '', // Clear subsequent to values
-                    }
-                  : row
-              );
+      const currentIndex = updatedRanges.findIndex(r => r.id === id);
+      const currentRow = updatedRanges[currentIndex];
 
-              currentTo = parseFloat(newFromValue);
-              nextIndex++;
-            }
-          } else {
-            updatedRanges = updatedRanges.map(row =>
-              row.id === id ? { ...row, To: '' } : row
-            );
-            setAllocationRanges(updatedRanges);
-            const newErrors = validateRanges(updatedRanges);
-            setValidationErrors(newErrors);
-            setHasUnsavedChanges(true);
-          }
-        }
+      if (!currentRow?.To) return;
+
+      const inputValue = parseFloat(currentRow.To);
+      const fromValue = parseFloat(currentRow.From);
+
+      if (isNaN(inputValue)) return;
+
+      // STEP SNAP (0.05)
+      const steppedTo = roundToStep(inputValue);
+
+      // Validation
+      if (steppedTo < fromValue) {
+        dispatch(
+          showToastAction(
+            true,
+            `Allocation Range To : ${userPreferences?.Allocation_Preference === PERCENTAGES ? format2(steppedTo * 100) : format2(steppedTo)} 
+            must be equal or greater than Allocation Range From : ${userPreferences?.Allocation_Preference === PERCENTAGES ? format2(fromValue * 100) : format2(fromValue)}`,
+            'error',
+            4000
+          )
+        );
+        return;
       }
 
-      // Update base row based on max to value from all rows
+      if (steppedTo >= Number(max_allocation_error)) {
+        dispatch(
+          showToastAction(
+            true,
+            `Allocation range cannot exceed ${
+              userPreferences?.Allocation_Preference === PERCENTAGES
+                ? String(Number(max_allocation_error) * 100)
+                : max_allocation_error
+            }.`,
+            'error',
+            4000
+          )
+        );
+        return;
+      }
+
+      // Apply snapped value
+      updatedRanges[currentIndex] = {
+        ...currentRow,
+        To: format2(steppedTo),
+      };
+
+      // ======================
+      // AUTO CHAIN NEXT ROWS
+      // ======================
+
+      let nextIndex = currentIndex + 1;
+      let nextFrom = steppedTo + 0.05;
+
+      while (nextIndex < updatedRanges.length) {
+        const nextRow = updatedRanges[nextIndex];
+        const chainedFrom = roundToStep(nextFrom);
+
+        const isBaseRow =
+          parseFloat(nextRow.To) === parseFloat(max_allocation_error as string);
+
+        updatedRanges[nextIndex] = {
+          ...nextRow,
+          From: format2(chainedFrom),
+          To: isBaseRow ? nextRow.To : '', // ✅ clear only non-base rows
+        };
+
+        nextFrom = chainedFrom + 0.05;
+        nextIndex++;
+      }
+
+      // ======================
+      // BASE ROW FIX
+      // ======================
+
       const baseRow = updatedRanges.find(
         row => row.To === max_allocation_error
       );
@@ -450,18 +485,12 @@ function AllocationTheme({
 
         if (toValues.length > 0) {
           const maxTo = Math.max(...toValues);
-          const newBaseFrom = (maxTo + 0.1).toFixed(1);
 
-          updatedRanges = updatedRanges.map(row =>
-            row.To === max_allocation_error
-              ? { ...row, From: newBaseFrom }
-              : row
-          );
-        } else {
-          // Reset base row if no valid ranges
-          updatedRanges = updatedRanges.map(row =>
-            row.To === max_allocation_error ? { ...row, From: '0.0' } : row
-          );
+          // updatedRanges = updatedRanges.map(row =>
+          //   row.To === max_allocation_error
+          //     ? { ...row, From: format2(roundToStep(maxTo)) }
+          //     : row
+          // );
         }
       }
 
@@ -475,11 +504,15 @@ function AllocationTheme({
       <RangeInputGroup>
         <Typography variant="body2">FROM</Typography>
         <StyledRangeField
-          onKeyDown={e => {
-            e.stopPropagation();
-          }}
+          onKeyDown={e => e.stopPropagation()}
           size="small"
-          value={row.From}
+          value={
+            userPreferences?.Allocation_Preference === PERCENTAGES
+              ? row.From !== ''
+                ? String(Math.round(parseFloat(row.From) * 100))
+                : ''
+              : row.From
+          }
           disabled={
             (row.From === '0.0' && row.To === '0.0') ||
             row.To === max_allocation_error ||
@@ -488,21 +521,31 @@ function AllocationTheme({
           onChange={e => handleRangeChange(id, 'From', e.target.value)}
           error={error?.From}
         />
+        {userPreferences?.Allocation_Preference === PERCENTAGES && (
+          <span style={{ paddingTop: '4px' }}>%</span>
+        )}
         <Typography variant="body2">TO</Typography>
         <StyledRangeField
-          onKeyDown={e => {
-            e.stopPropagation();
-          }}
+          onKeyDown={e => e.stopPropagation()}
           size="small"
-          value={row.To}
+          value={
+            userPreferences?.Allocation_Preference === PERCENTAGES
+              ? row.To !== ''
+                ? String(Math.round(parseFloat(row.To) * 100))
+                : ''
+              : row.To
+          }
           disabled={
             !permissions!['AllocationRangeSetting'].u ||
             row.To === max_allocation_error
           }
           onChange={e => handleRangeChange(id, 'To', e.target.value)}
-          onBlur={e => formatValues(e, row)}
+          onBlur={() => handleToBlur(id)}
           error={error?.To}
         />
+        {userPreferences?.Allocation_Preference === PERCENTAGES && (
+          <span style={{ paddingTop: '4px' }}>%</span>
+        )}
       </RangeInputGroup>
     );
   };
@@ -623,7 +666,7 @@ function AllocationTheme({
         return {
           ...row,
           id: newId,
-          From: (parseFloat(previousRowTo) + 0.1).toString(),
+          From: format2(roundToStep(parseFloat(previousRowTo) + 0.05)),
         };
       }
       return {
@@ -693,7 +736,7 @@ function AllocationTheme({
     if (hasBaseRow) {
       const previousRow = allocationRanges[allocationRanges.length - 2];
       newFrom = previousRow?.To
-        ? `${(parseFloat(previousRow.To) + 0.1).toFixed(1)}`
+        ? format2(roundToStep(parseFloat(previousRow.To) + 0.05))
         : baseRow.From;
       // newTo = baseRow.From;
     } else {
@@ -776,7 +819,7 @@ function AllocationTheme({
     {
       field: 'range',
       headerName: 'Range',
-      width: 236,
+      width: 260,
       editable: false,
       renderCell: RangeCell,
       sortable: false,
@@ -889,16 +932,27 @@ function AllocationTheme({
 
         // Prepare current settings data
         const currentSettings: SettingsData = {
-          Max_Allocation_Warning: maxAllocationWarning.toFixed(1),
-          Max_Allocation_Error: maxAllocationError.toFixed(1),
+          Max_Allocation_Warning: format2(
+            roundToStep(parseFloat(maxAllocationWarning || '0'))
+          ),
+
+          Max_Allocation_Error: format2(
+            roundToStep(parseFloat(maxAllocationError || '0'))
+          ),
         };
 
         // Prepare original settings data for comparison
         const originalSettings: Record<string, any> = {
-          Max_Allocation_Warning:
-            originalAlertSettings.maxAllocationWarning.toFixed(1),
-          Max_Allocation_Error:
-            originalAlertSettings.maxAllocationError.toFixed(1),
+          Max_Allocation_Warning: format2(
+            roundToStep(
+              parseFloat(originalAlertSettings.maxAllocationWarning || '0')
+            )
+          ),
+          Max_Allocation_Error: format2(
+            roundToStep(
+              parseFloat(originalAlertSettings.maxAllocationError || '0')
+            )
+          ),
         };
 
         const result = await handleOptimizedSettingsSave(
@@ -917,8 +971,12 @@ function AllocationTheme({
         if (result.changedCount > 0) {
           // Update original values after successful save
           setOriginalAlertSettings({
-            maxAllocationWarning,
-            maxAllocationError,
+            maxAllocationWarning: format2(
+              roundToStep(parseFloat(maxAllocationWarning || '0'))
+            ),
+            maxAllocationError: format2(
+              roundToStep(parseFloat(maxAllocationError || '0'))
+            ),
           });
 
           dispatch(
@@ -1191,59 +1249,97 @@ function AllocationTheme({
                   >
                     Max Allocation Warning
                   </Typography>
-                  <TextField
-                    disabled={
-                      !permissions!['ScalarSetting'].c &&
-                      !permissions!['ScalarSetting'].u
-                    }
-                    type="number"
-                    size="small"
-                    placeholder="0.0"
-                    value={
-                      maxAllocationWarning === 0 ? '' : maxAllocationWarning
-                    }
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (/^\d*\.?\d{0,1}$/.test(val)) {
-                        const numValue = parseFloat(val);
-                        setMaxAllocationWarning(
-                          Number.isNaN(numValue)
-                            ? 0.0
-                            : parseFloat(numValue.toFixed(1))
-                        );
-                        setHasUnsavedChanges(true);
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField
+                      disabled={
+                        !permissions!['ScalarSetting'].c &&
+                        !permissions!['ScalarSetting'].u
                       }
-                    }}
-                    onKeyDown={e => {
-                      if (['e', 'E', '+', '-'].includes(e.key)) {
-                        e.preventDefault();
+                      type="number"
+                      size="small"
+                      placeholder={
+                        userPreferences?.Allocation_Preference === PERCENTAGES
+                          ? '0'
+                          : '0.0'
                       }
-                    }}
-                    onBlur={e => {
-                      const val = e.target.value;
-                      if (val && !isNaN(parseFloat(val))) {
-                        const formattedValue = parseFloat(val).toFixed(1);
-                        setMaxAllocationWarning(parseFloat(formattedValue));
+                      value={
+                        userPreferences?.Allocation_Preference === PERCENTAGES
+                          ? maxAllocationWarning !== ''
+                            ? String(
+                                Math.round(
+                                  parseFloat(maxAllocationWarning) * 100
+                                )
+                              )
+                            : ''
+                          : maxAllocationWarning
                       }
-                    }}
-                    sx={{
-                      background: '#fff',
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '8px',
-                        height: 36,
-                        width: 129,
-                        fontSize: '15px',
-                        '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
-                          {
-                            WebkitAppearance: 'none',
-                            margin: 0,
+                      onChange={e => {
+                        const val = e.target.value;
+
+                        if (/^\d*\.?\d{0,2}$/.test(val)) {
+                          let newVal = val;
+                          if (
+                            userPreferences?.Allocation_Preference ===
+                            PERCENTAGES
+                          ) {
+                            const num = parseFloat(val);
+                            newVal = isNaN(num) ? '' : String(num / 100);
+                          }
+
+                          setMaxAllocationWarning(newVal);
+                          setHasUnsavedChanges(true);
+                        }
+                      }}
+                      onKeyDown={e => {
+                        if (
+                          userPreferences?.Allocation_Preference === PERCENTAGES
+                        ) {
+                          if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                          return;
+                        }
+                        if (['e', 'E', '+', '-'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onBlur={e => {
+                        const val = e.target.value;
+
+                        if (!val || isNaN(parseFloat(val))) return;
+
+                        let num = parseFloat(val);
+                        if (
+                          userPreferences?.Allocation_Preference === PERCENTAGES
+                        ) {
+                          num = num / 100;
+                        }
+
+                        const snapped = roundToStep(num);
+                        setMaxAllocationWarning(format2(snapped));
+                      }}
+                      sx={{
+                        background: '#fff',
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          height: 36,
+                          width: 129,
+                          fontSize: '15px',
+                          '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                            {
+                              WebkitAppearance: 'none',
+                              margin: 0,
+                            },
+                          '& input[type="number"]': {
+                            MozAppearance: 'textfield',
                           },
-                        '& input[type="number"]': {
-                          MozAppearance: 'textfield',
                         },
-                      },
-                    }}
-                  />
+                      }}
+                    />
+                    {userPreferences?.Allocation_Preference === PERCENTAGES && (
+                      <span>%</span>
+                    )}
+                  </Box>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <Box
@@ -1301,57 +1397,95 @@ function AllocationTheme({
                   >
                     Max Allocation Error
                   </Typography>
-                  <TextField
-                    disabled={
-                      !permissions!['ScalarSetting'].c &&
-                      !permissions!['ScalarSetting'].u
-                    }
-                    type="number"
-                    size="small"
-                    placeholder="0.0"
-                    value={maxAllocationError === 0 ? '' : maxAllocationError}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (/^\d*\.?\d{0,1}$/.test(val)) {
-                        const numValue = parseFloat(val);
-                        setMaxAllocationError(
-                          Number.isNaN(numValue)
-                            ? 0.0
-                            : parseFloat(numValue.toFixed(1))
-                        );
-                        setHasUnsavedChanges(true);
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField
+                      disabled={
+                        !permissions!['ScalarSetting'].c &&
+                        !permissions!['ScalarSetting'].u
                       }
-                    }}
-                    onKeyDown={e => {
-                      if (['e', 'E', '+', '-'].includes(e.key)) {
-                        e.preventDefault();
+                      type="number"
+                      size="small"
+                      placeholder={
+                        userPreferences?.Allocation_Preference === PERCENTAGES
+                          ? '0'
+                          : '0.0'
                       }
-                    }}
-                    onBlur={e => {
-                      const val = e.target.value;
-                      if (val && !isNaN(parseFloat(val))) {
-                        const formattedValue = parseFloat(val).toFixed(1);
-                        setMaxAllocationError(parseFloat(formattedValue));
+                      value={
+                        userPreferences?.Allocation_Preference === PERCENTAGES
+                          ? maxAllocationError !== ''
+                            ? String(
+                                Math.round(parseFloat(maxAllocationError) * 100)
+                              )
+                            : ''
+                          : maxAllocationError
                       }
-                    }}
-                    sx={{
-                      background: '#fff',
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '8px',
-                        height: 36,
-                        width: 129,
-                        fontSize: '15px',
-                        '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
-                          {
-                            WebkitAppearance: 'none',
-                            margin: 0,
+                      onChange={e => {
+                        const val = e.target.value;
+
+                        if (/^\d*\.?\d{0,2}$/.test(val)) {
+                          let newVal = val;
+                          if (
+                            userPreferences?.Allocation_Preference ===
+                            PERCENTAGES
+                          ) {
+                            const num = parseFloat(val);
+                            newVal = isNaN(num) ? '' : String(num / 100);
+                          }
+
+                          setMaxAllocationError(newVal);
+                          setHasUnsavedChanges(true);
+                        }
+                      }}
+                      onKeyDown={e => {
+                        if (
+                          userPreferences?.Allocation_Preference === PERCENTAGES
+                        ) {
+                          if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                          return;
+                        }
+                        if (['e', 'E', '+', '-'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onBlur={e => {
+                        const val = e.target.value;
+
+                        if (!val || isNaN(parseFloat(val))) return;
+
+                        let num = parseFloat(val);
+                        if (
+                          userPreferences?.Allocation_Preference === PERCENTAGES
+                        ) {
+                          num = num / 100;
+                        }
+
+                        const snapped = roundToStep(num);
+                        setMaxAllocationError(format2(snapped));
+                      }}
+                      sx={{
+                        background: '#fff',
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '8px',
+                          height: 36,
+                          width: 129,
+                          fontSize: '15px',
+                          '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                            {
+                              WebkitAppearance: 'none',
+                              margin: 0,
+                            },
+                          '& input[type="number"]': {
+                            MozAppearance: 'textfield',
                           },
-                        '& input[type="number"]': {
-                          MozAppearance: 'textfield',
                         },
-                      },
-                    }}
-                  />
+                      }}
+                    />
+                    {userPreferences?.Allocation_Preference === PERCENTAGES && (
+                      <span>%</span>
+                    )}
+                  </Box>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                   <Box

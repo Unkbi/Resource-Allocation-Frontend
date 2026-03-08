@@ -1,4 +1,4 @@
-import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { PERCENTAGES, PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { ScalarSettings } from '@/app/types';
 import * as Yup from 'yup';
 
@@ -244,7 +244,10 @@ export const editResourceValidationSchema = (
   });
 };
 
-export const addAllocationValidationSchema = (scalarSettings: any) =>
+export const addAllocationValidationSchema = (
+  scalarSettings: any,
+  userPreferences: any
+) =>
   Yup.object({
     Resource: Yup.array()
       .of(Yup.string())
@@ -265,8 +268,12 @@ export const addAllocationValidationSchema = (scalarSettings: any) =>
       .required('Allocation is required')
       .min(0, 'Allocation must be a positive number')
       .max(
-        scalarSettings?.Max_Allocation_Error || '2.0',
-        `Allocation cannot exceed ${scalarSettings?.Max_Allocation_Error || '2.0'}.`
+        userPreferences?.Allocation_Preference === PERCENTAGES
+          ? scalarSettings?.Max_Allocation_Error * 100 || 200
+          : scalarSettings?.Max_Allocation_Error || 2.0,
+        userPreferences?.Allocation_Preference === PERCENTAGES
+          ? `Allocation cannot exceed ${Math.round(scalarSettings?.Max_Allocation_Error * 100) || '200'}.`
+          : `Allocation cannot exceed ${Math.round(scalarSettings?.Max_Allocation_Error) || '2.0'}.`
       ),
   });
 

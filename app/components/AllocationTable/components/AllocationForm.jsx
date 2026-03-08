@@ -99,6 +99,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import {
   DATE_FORMAT,
+  PERCENTAGES,
   PORTFOLIO_DISPLAY_NAME,
   PROJECT_ACTIVE_STATUS,
   projectViewsGrouping,
@@ -187,11 +188,13 @@ import {
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import AddBusinessImpactForm from '../../Forms/AddBusinessImpactForm';
+import FollowForm from '../../Forms/FollowForm';
 import {
   CREATE_BUSINESS_IMPACT,
   UPDATE_BUSINESS_IMPACT,
 } from '@/app/redux/actions/businessImpactActions';
 import { SAVE_REPORTS } from '@/app/redux/actions/savedReportsActions';
+import { UPDATE_TOTAL_ALLOCATIONS } from '@/app/redux/actions/allocationTotalsAction';
 
 const initialValuesMap = {
   add_project: {
@@ -478,6 +481,20 @@ const initialValuesMap = {
     Name: '',
     Description: '',
   },
+  follow_project: {
+    isFollowing: true,
+    weeklyAISummary: true,
+    dailySummary: true,
+    planChanges: true,
+    actualsUpdates: true,
+  },
+  follow_team: {
+    isFollowing: true,
+    weeklyAISummary: true,
+    dailySummary: true,
+    planChanges: false,
+    actualsUpdates: true,
+  },
 };
 
 const AllocationForm = () => {
@@ -501,6 +518,7 @@ const AllocationForm = () => {
   const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
+  const { followsByObjectId } = useSelector(state => state.follows);
   const { startDate, endDate } = calendarDate || {};
   const { allocations } = useSelector(state => state.dataGrid);
   const { rowState } = useSelector(state => state.dataGrid);
@@ -517,6 +535,7 @@ const AllocationForm = () => {
   const privileges = useSelector(state => state.rbac.privileges);
   const { user: allUsers } = useSelector(state => state.rbac);
   const { scalarSettings } = useSelector(state => state.allSettings);
+  const { userPreferences } = useSelector(state => state.userPreferences);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const {
@@ -579,7 +598,7 @@ const AllocationForm = () => {
           initialData?.Email || ''
         );
       case 'add_allocation':
-        return addAllocationValidationSchema(scalarSettings);
+        return addAllocationValidationSchema(scalarSettings, userPreferences);
       case 'assign_allocation':
         return assignAllocationValidationSchema;
       case 'new_view':
@@ -1448,6 +1467,11 @@ const AllocationForm = () => {
         break;
 
       case 'add_allocation':
+        let allocationValue = values.AllocationEntered;
+        if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+          allocationValue = values.AllocationEntered / 100;
+        }
+
         try {
           const allMondays = generateAllMondays(
             values.StartDate || values.startDate,
@@ -1459,12 +1483,12 @@ const AllocationForm = () => {
 
           if (
             filteredProjects.some(p => !p.AllowOvertime) &&
-            values.AllocationEntered > 1.0
+            allocationValue > 1.0
           ) {
             dispatch(
               showToastAction(
                 true,
-                'Allocation cannot exceed 1.0 for projects that do not allow overtime.',
+                `Allocation cannot exceed ${userPreferences?.Allocation_Preference === PERCENTAGES ? '100%' : '1.0'} for projects that do not allow overtime.`,
                 'error',
                 4000
               )
@@ -1491,7 +1515,7 @@ const AllocationForm = () => {
                 );
 
                 // Perform Delete if AllocationEntered is 0
-                if (values?.AllocationEntered === 0) {
+                if (allocationValue === 0) {
                   if (allocation && allocation?.allocationId) {
                     deleteList.push({
                       Id: allocation?.allocationId,
@@ -1533,12 +1557,12 @@ const AllocationForm = () => {
                       ),
                   resource,
                   weekKey,
-                  values.AllocationEntered,
+                  allocationValue,
                   filteredProjects
                 );
                 if (newFinalTotal > Number(max_allocation_error)) {
                   errorMessages.push(
-                    `Total allocation for week ${weekKey} exceeds ${max_allocation_error} (${newFinalTotal.toFixed(2)}). Update skipped.`
+                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error) * 100 + '%' : max_allocation_error} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(newFinalTotal.toFixed(2) * 100) + '%' : newFinalTotal.toFixed(2)}). Update skipped.`
                   );
                   return null;
                 }
@@ -1548,7 +1572,7 @@ const AllocationForm = () => {
                   newFinalTotal <= Number(max_allocation_error)
                 ) {
                   warningMessages.push(
-                    `Total allocation for week ${weekKey} exceeds ${max_allocation_warning} (${newFinalTotal.toFixed(2)}).`
+                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(newFinalTotal.toFixed(2) * 100) + '%' : newFinalTotal.toFixed(2)}).`
                   );
                 }
 
@@ -1557,7 +1581,7 @@ const AllocationForm = () => {
                   allocation?.allocationId &&
                   allocation?.value
                 ) {
-                  if (allocation?.value !== values.AllocationEntered) {
+                  if (allocation?.value !== allocationValue) {
                     // This is for the Bulk Allocation API.
                     updateList.push({
                       Id: allocation?.allocationId,
@@ -1565,7 +1589,7 @@ const AllocationForm = () => {
                       Project: project.Id,
                       ProjectName: project.Name,
                       Period: allocation?.period,
-                      AllocationEntered: values.AllocationEntered,
+                      AllocationEntered: allocationValue,
                     });
                   }
                 } else {
@@ -1575,7 +1599,7 @@ const AllocationForm = () => {
                     Project: project.Id,
                     ProjectName: project.Name,
                     Period: format(monday, DATE_FORMAT),
-                    AllocationEntered: values.AllocationEntered,
+                    AllocationEntered: allocationValue,
                   });
                 }
               });
@@ -1603,7 +1627,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${max_allocation_error}. Please check and try again.`,
+                    `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
                   )
@@ -1737,6 +1761,8 @@ const AllocationForm = () => {
                   projects,
                   resources,
                   location,
+                  projectTypes,
+                  projectTypeGroups,
                   splitView,
                   bottomTeamAllocationGrid, // Update these rows when in spitView
                   teamAllocationGrid, // Update these rows when in teams, organisation, or resources views
@@ -1753,17 +1779,22 @@ const AllocationForm = () => {
                       ? currentView?.EndDate
                       : endDate
                 );
-
                 const blankRowsToBeRemoved = Object.values(formateUpdate).map(
                   row =>
                     getAllRowsForView(
-                      splitView ? 'bottomTeam' : 'teamAllocation'
+                      splitView
+                        ? 'bottomTeam'
+                        : teamsViewsGrouping.includes(currentView?.GroupBy)
+                          ? 'teamAllocation'
+                          : 'projectAllocation'
                     ).find(
                       r =>
-                        r.id.includes(row.teams) && r.id.includes(row.resource)
+                        (projectViewsGrouping.includes(currentView?.GroupBy) &&
+                          r.id.includes(row.project)) ||
+                        (r.id.includes(row.teams) &&
+                          r.id.includes(row.resource))
                     )
                 );
-
                 allUpdatedRows = [
                   ...Object.values(formateUpdate),
                   ...blankRowsToBeRemoved
@@ -1778,7 +1809,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Total allocation for the multiple selected weeks exceeds ${max_allocation_error}. Please check and try again.`,
+                    `Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
                   )
@@ -1792,7 +1823,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Warning: Total allocation for the multiple selected weeks exceeds ${max_allocation_warning}.`,
+                    `Warning: Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning}.`,
                     'warning',
                     4000
                   )
@@ -1810,58 +1841,124 @@ const AllocationForm = () => {
                 ...new Set(new_resources.map(resource => resource?.team)),
               ];
               if (allUpdatedRows?.length > 0) {
-                if (splitView) {
-                  let allRowsForTopProjectAllocationGrid =
-                    topProjectAllocationGrid.getAllRows();
-                  // Update Allocation for Top Project Allocation Grid
-                  await updateRowsForView('topProject', [
-                    ...allUpdatedRows,
-                    ...allRowsForTopProjectAllocationGrid
-                      .filter(row => row.id.startsWith(row.projectId))
-                      .map(row => ({
-                        ...row,
-                        _action: 'delete',
-                      })),
-                  ]);
-                  // After completing filter to show only current selected Project
-                  allRowsForTopProjectAllocationGrid =
-                    topProjectAllocationGrid.getAllRows();
-                  topProjectAllocationGrid.setRows(
-                    filterAllocationsForSelectedProject(
-                      allRowsForTopProjectAllocationGrid,
-                      splitViewCurrentProject
-                    )
-                  );
+                // Get New Project Totals, for the projects Updated
+                const updatedProjects = [
+                  ...new Set(
+                    allUpdatedRows
+                      .filter(row => row.projectId)
+                      .map(row => row.projectId)
+                  ),
+                ];
+                try {
+                  const response = await new Promise((resolve, reject) => {
+                    dispatch({
+                      type: UPDATE_TOTAL_ALLOCATIONS,
+                      payload: {
+                        updatedProjects: updatedProjects,
+                        resolve,
+                        reject,
+                      },
+                    });
+                  });
 
-                  // Update Allocation for Bottom Team Allocation Grid
-                  updateRowsForView('bottomTeam', allUpdatedRows);
-                  updateRowsForView('projectAllocation', allUpdatedRows);
-                  updateRowsForView('teamAllocation', allUpdatedRows);
-                } else if (teamsViewsGrouping.includes(currentView?.GroupBy)) {
-                  updateRowsForView('teamAllocation', allUpdatedRows);
-                } else if (
-                  projectViewsGrouping.includes(currentView?.GroupBy)
-                ) {
-                  updateRowsForView('projectAllocation', allUpdatedRows);
-                } else {
+                  allUpdatedRows = allUpdatedRows.map(row => {
+                    const updatedProjectTotal =
+                      response.totalAllocation?.Projects?.find(
+                        p => p.Project === row.projectId
+                      );
+                    const updatedProjectTotalTillDate =
+                      response.totalAllocationTillDate?.Projects?.find(
+                        p => p.Project === row.projectId
+                      );
+                    const updatedResourceTotalTillDate =
+                      updatedProjectTotalTillDate?.ResourceTotals?.find(
+                        r => r.Resource === row.resourceId
+                      );
+                    if (updatedProjectTotal && updatedProjectTotalTillDate) {
+                      const updatedRow = {
+                        ...row,
+                        totalEffort:
+                          updatedProjectTotal?.ResourceTotals?.find(
+                            r => r.Resource === row.resourceId
+                          )?.TotalAllocationsEntered || 0,
+                        totalAllocationsTillDate: {
+                          actuals:
+                            updatedResourceTotalTillDate?.TotalActualsEntered ||
+                            0,
+                          value:
+                            updatedResourceTotalTillDate?.TotalAllocationsEntered ||
+                            0,
+                        },
+                      };
+                      return updatedRow;
+                    }
+                    return row;
+                  });
+
+                  if (splitView) {
+                    let allRowsForTopProjectAllocationGrid =
+                      topProjectAllocationGrid.getAllRows();
+                    // Update Allocation for Top Project Allocation Grid
+                    await updateRowsForView('topProject', [
+                      ...allUpdatedRows,
+                      ...allRowsForTopProjectAllocationGrid
+                        .filter(row => row.id.startsWith(row.projectId))
+                        .map(row => ({
+                          ...row,
+                          _action: 'delete',
+                        })),
+                    ]);
+                    // After completing filter to show only current selected Project
+                    allRowsForTopProjectAllocationGrid =
+                      topProjectAllocationGrid.getAllRows();
+                    topProjectAllocationGrid.setRows(
+                      filterAllocationsForSelectedProject(
+                        allRowsForTopProjectAllocationGrid,
+                        splitViewCurrentProject
+                      )
+                    );
+
+                    // Update Allocation for Bottom Team Allocation Grid
+                    updateRowsForView('bottomTeam', allUpdatedRows);
+                    updateRowsForView('projectAllocation', allUpdatedRows);
+                    updateRowsForView('teamAllocation', allUpdatedRows);
+                  } else if (
+                    teamsViewsGrouping.includes(currentView?.GroupBy)
+                  ) {
+                    updateRowsForView('teamAllocation', allUpdatedRows);
+                  } else if (
+                    projectViewsGrouping.includes(currentView?.GroupBy)
+                  ) {
+                    updateRowsForView('projectAllocation', allUpdatedRows);
+                  } else {
+                    dispatch(
+                      showToastAction(
+                        true,
+                        'Unable to update allocation grid for the current view. View grouping not recognized.',
+                        'error',
+                        4000
+                      )
+                    );
+                    return;
+                  }
+
                   dispatch(
                     showToastAction(
                       true,
-                      'Unable to update allocation grid for the current view. View grouping not recognized.',
-                      'error',
-                      4000
+                      `Successfully updated allocation for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
+                      'success'
                     )
                   );
-                  return;
+                } catch (error) {
+                  console.error('Error updating total allocations:', error);
+                  dispatch(
+                    showToastAction(
+                      true,
+                      `Error updating total allocations for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
+                      'error'
+                    )
+                  );
                 }
-
-                dispatch(
-                  showToastAction(
-                    true,
-                    `Successfully updated allocation for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
-                    'success'
-                  )
-                );
               }
               handleOnAdd(new_resources, filteredProjects);
               handleScrollAndFocus(new_resources, allMondays, filteredProjects);
@@ -2409,7 +2506,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            dispatch(setHighlightedRowId(response.Id));
+            dispatch(setHighlightedRowId(response.Portfolio.Id));
           })
           .catch(error => {
             console.error('Failed to add portfolio:', error);
@@ -3420,7 +3517,7 @@ const AllocationForm = () => {
           const postData = {
             users: [userItem],
           };
-          
+
           dispatch(
             showToast({
               open: true,
@@ -3430,7 +3527,7 @@ const AllocationForm = () => {
               autoHideTimer: 5000,
             })
           );
-          
+
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: SEND_INVITATION,
@@ -3506,7 +3603,7 @@ const AllocationForm = () => {
           const postData = {
             users: [...finalData],
           };
-          
+
           dispatch(
             showToast({
               open: true,
@@ -3516,7 +3613,7 @@ const AllocationForm = () => {
               autoHideTimer: 8000,
             })
           );
-          
+
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: SEND_INVITATION,
@@ -3592,15 +3689,15 @@ const AllocationForm = () => {
         };
 
         dispatch(
-            showToast({
-              open: true,
-              message: `Updating the changes for ${initialData.Name} `,
-              type: 'info',
-              position: 'bottom-left',
-              autoHideTimer: 5000,
-            })
+          showToast({
+            open: true,
+            message: `Updating the changes for ${initialData.Name} `,
+            type: 'info',
+            position: 'bottom-left',
+            autoHideTimer: 5000,
+          })
         );
-        
+
         try {
           const result = await new Promise((resolve, reject) => {
             dispatch({
@@ -3855,6 +3952,222 @@ const AllocationForm = () => {
         break;
       }
 
+      case 'follow_project':
+        // Determine object type from initialData (can be 'project' or 'team')
+        const objectType = initialData?.objectType || 'PROJECT';
+        const followpostData = {
+          ObjectType: objectType.toUpperCase(),
+          ObjectId: initialData.Id,
+          User: user?.id,
+          WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+          PlanChangesDailySummary: cleanedValues.planChanges,
+          ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+        };
+
+        try {
+          // Check if already following
+          const existingFollow = followsByObjectId?.[initialData.Id];
+
+          // If toggle is OFF (unfollow), trigger unfollow action
+          if (!cleanedValues.isFollowing && existingFollow?.FollowId) {
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UNFOLLOW',
+                payload: {
+                  payload: { FollowId: existingFollow.FollowId },
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `Unfollowed ${objectType.toLowerCase()} successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else if (existingFollow && existingFollow.FollowId) {
+            // Update existing follow preferences
+            const updatePayload = {
+              FollowId: existingFollow.FollowId,
+              WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+              PlanChangesDailySummary: cleanedValues.planChanges,
+              ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+            };
+
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UPDATE_FOLLOW_PREFERENCES',
+                payload: {
+                  payload: updatePayload,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `${objectType === 'PROJECT' ? 'Project' : 'Team'} follow preferences updated successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            // Create new follow
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'CREATE_FOLLOW',
+                payload: {
+                  payload: followpostData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `Now following this ${objectType.toLowerCase()}`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+
+          dispatch(closeDialog());
+          dispatch({ type: 'FETCH_FOLLOWS', payload: user?.id });
+          setFormValue({});
+        } catch (error) {
+          console.error('Failed to save follow preferences:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.message || 'Failed to save follow preferences',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+
+      case 'follow_team':
+        const followTeamData = {
+          ObjectType: 'TEAM',
+          ObjectId: initialData.Id,
+          User: user?.id,
+          WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+          PlanChangesDailySummary: cleanedValues.planChanges,
+          ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+        };
+
+        try {
+          // Check if already following
+          const existingTeamFollow = followsByObjectId?.[initialData.Id];
+
+          // If toggle is OFF (unfollow), trigger unfollow action
+          if (!cleanedValues.isFollowing && existingTeamFollow?.FollowId) {
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UNFOLLOW',
+                payload: {
+                  payload: { FollowId: existingTeamFollow.FollowId },
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Unfollowed team successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else if (existingTeamFollow && existingTeamFollow.FollowId) {
+            // Update existing follow preferences
+            const updatePayload = {
+              FollowId: existingTeamFollow.FollowId,
+              WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+              PlanChangesDailySummary: cleanedValues.planChanges,
+              ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+            };
+
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UPDATE_FOLLOW_PREFERENCES',
+                payload: {
+                  payload: updatePayload,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Team follow preferences updated successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            // Create new follow
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'CREATE_FOLLOW',
+                payload: {
+                  payload: followTeamData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Now following this team',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+
+          dispatch(closeDialog());
+          dispatch({ type: 'FETCH_FOLLOWS', payload: user?.id });
+          setFormValue({});
+        } catch (error) {
+          console.error('Failed to save team follow preferences:', error);
+          dispatch(closeDialog());
+          dispatch(
+            showToast({
+              open: true,
+              message:
+                error?.message || 'Failed to save team follow preferences',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+
       default:
         return;
     }
@@ -4064,138 +4377,116 @@ const AllocationForm = () => {
           }
 
           // If result is empty, return immediately
-          if (response === null) {
+          if (
+            response === null ||
+            !Array.isArray(response) ||
+            response.length === 0
+          ) {
             setHistoryStatus('no-data');
             setHistoryData([]);
             return;
           }
 
-          response = formatAPIResponse('AllocationHistoryOut', response).map(
-            item => ({
-              ...item,
-              ChangesLog: formatAPIResponse('ChangesLog', item.ChangesLog),
-            })
-          );
-          const formattedHistory = [];
-          (response ? response : [])
-            .filter(
-              item =>
-                Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
-            )
-            .forEach((item, idx) => {
-              const {
-                ResourceName,
-                ProjectName,
-                Period,
-                AllocationEntered,
-                ChangesLog = [],
-                AllocationId,
-              } = item;
+          // Helper functions
+          const getUserInitials = email => {
+            if (!email) return '';
+            const [name] = email.split('@');
+            const parts = name.split(/[.\s_]/);
+            return parts
+              .map(p => p[0]?.toUpperCase())
+              .join('')
+              .slice(0, 2);
+          };
+          const getUserName = email => {
+            if (!email) return '';
+            const [name] = email.split('@');
+            return name
+              .split(/[.\s_]/)
+              .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+              .join(' ');
+          };
+          const getDateString = ts => {
+            if (!ts) return '';
+            return format(parseISO(ts), DATE_FORMAT);
+          };
+          const getRelativeTime = ts => {
+            if (!ts) return '';
+            const now = Date.now();
+            const diff = now - ts * 1000;
+            const min = Math.floor(diff / 60000);
+            if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
+            const day = Math.floor(hr / 24);
+            return `${day} day${day === 1 ? '' : 's'} ago`;
+          };
 
-              // Helper functions
-              const getUserInitials = email => {
-                if (!email) return '';
-                const [name] = email.split('@');
-                const parts = name.split(/[.\s_]/);
-                return parts
-                  .map(p => p[0]?.toUpperCase())
-                  .join('')
-                  .slice(0, 2);
-              };
-              const getUserName = email => {
-                if (!email) return '';
-                const [name] = email.split('@');
-                return name
-                  .split(/[.\s_]/)
-                  .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-                  .join(' ');
-              };
-              const getDateString = ts => {
-                if (!ts) return '';
-                return format(parseISO(ts), DATE_FORMAT);
-              };
-              const getRelativeTime = ts => {
-                if (!ts) return '';
-                const now = Date.now();
-                const diff = now - ts * 1000;
-                const min = Math.floor(diff / 60000);
-                if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
-                const hr = Math.floor(min / 60);
-                if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
-                const day = Math.floor(hr / 24);
-                return `${day} day${day === 1 ? '' : 's'} ago`;
-              };
+          const formattedHistory = response.map((item, idx) => {
+            const {
+              ResourceName,
+              ProjectName,
+              Period,
+              AllocationId,
+              Action,
+              AllocationEnteredFromValue,
+              AllocationEnteredToValue,
+              Timestamp,
+              UserId,
+            } = item;
 
-              // Calculate week number from Period
-              let weekNumber = '';
-              if (Period) {
-                const d = parseISO(Period);
-                if (!isNaN(d)) {
-                  const temp = parseISO(new Date(d.getTime()).toISOString());
-                  temp.setHours(0, 0, 0, 0);
-                  temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-                  const yearStart = parseISO(
-                    new Date(temp.getFullYear(), 0, 1).toISOString()
-                  );
-                  weekNumber = Math.ceil(
-                    ((temp - yearStart) / 86400000 + 1) / 7
-                  );
-                }
+            // Calculate week number from Period
+            let weekNumber = '';
+            if (Period) {
+              const d = parseISO(Period);
+              if (!isNaN(d)) {
+                const temp = parseISO(new Date(d.getTime()).toISOString());
+                temp.setHours(0, 0, 0, 0);
+                temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
+                const yearStart = parseISO(
+                  new Date(temp.getFullYear(), 0, 1).toISOString()
+                );
+                weekNumber = Math.ceil(((temp - yearStart) / 86400000 + 1) / 7);
               }
+            }
 
-              // For each change log, create a history entry
-              ChangesLog.forEach((log, logIdx) => {
-                let action = '';
-                let fromVersion = '';
-                let toVersion = '';
-                const modifingUserDetails = getUserFromUid(log.User, allUsers);
+            const modifingUserDetails = getUserFromUid(UserId, allUsers);
 
-                // Find the next log entry if it exists
-                const nextLog = ChangesLog[logIdx + 1];
+            let action = '';
+            if (Action?.toLowerCase() === 'create') {
+              action = 'Created';
+            } else if (Action?.toLowerCase() === 'update') {
+              action = 'Updated';
+            } else if (Action?.toLowerCase() === 'delete') {
+              action = 'Deleted';
+            } else {
+              action = Action;
+            }
 
-                if (log.Action?.toLowerCase() === 'create') {
-                  action = 'Created';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = nextLog
-                    ? (nextLog.AllocationEnteredLast ?? '')
-                    : (AllocationEntered ?? '');
-                } else if (log.Action?.toLowerCase() === 'update') {
-                  action = 'Updated';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = nextLog
-                    ? (nextLog.AllocationEnteredLast ?? '')
-                    : (AllocationEntered ?? '');
-                } else if (log.Action?.toLowerCase() === 'delete') {
-                  action = 'Deleted';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = '';
-                } else {
-                  action = log.Action;
-                }
-
-                formattedHistory.push({
-                  id: `${AllocationId || idx + 1}-${logIdx + 1}`,
-                  userInitials: getUserInitials(ResourceName),
-                  userName: getUserName(ResourceName),
-                  projectName: ProjectName,
-                  weekNumber: weekNumber ? Number(weekNumber) : undefined,
-                  date: getDateString(Period),
-                  timestamp: getRelativeTime(
-                    Math.floor(new Date(log.Timestamp)?.getTime() / 1000)
-                  ),
-                  action,
-                  fromVersion:
-                    fromVersion !== undefined ? String(fromVersion) : '',
-                  toVersion: toVersion !== undefined ? String(toVersion) : '',
-                  byUser: `${modifingUserDetails?.firstName || ''} ${
-                    modifingUserDetails?.lastName || ''
-                  }`,
-                  _timestampRaw: Math.floor(
-                    new Date(log.Timestamp)?.getTime() / 1000
-                  ), // Add raw timestamp for sorting
-                });
-              });
-            });
+            return {
+              id: `${AllocationId || idx + 1}`,
+              userInitials: getUserInitials(ResourceName),
+              userName: getUserName(ResourceName),
+              projectName: ProjectName,
+              weekNumber: weekNumber ? Number(weekNumber) : undefined,
+              date: getDateString(Period),
+              timestamp: getRelativeTime(
+                Math.floor(new Date(Timestamp)?.getTime() / 1000)
+              ),
+              action,
+              fromVersion:
+                AllocationEnteredFromValue !== undefined
+                  ? String(AllocationEnteredFromValue)
+                  : '',
+              toVersion:
+                AllocationEnteredToValue !== undefined
+                  ? String(AllocationEnteredToValue)
+                  : '',
+              byUser: `${modifingUserDetails?.firstName || ''} ${
+                modifingUserDetails?.lastName || ''
+              }`,
+              _timestampRaw: Math.floor(new Date(Timestamp)?.getTime() / 1000),
+            };
+          });
 
           // Sort by _timestampRaw descending (latest first)
           formattedHistory.sort(
@@ -4507,6 +4798,22 @@ const AllocationForm = () => {
           <SaveReportsForm
             formikProps={formikProps}
             setFormValue={setFormValue}
+          />
+        );
+      case 'follow_project':
+        return (
+          <FollowForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+            objectType="project"
+          />
+        );
+      case 'follow_team':
+        return (
+          <FollowForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+            objectType="team"
           />
         );
       default:

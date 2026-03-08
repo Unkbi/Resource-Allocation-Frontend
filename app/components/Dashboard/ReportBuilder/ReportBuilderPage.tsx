@@ -1,26 +1,39 @@
 'use client';
 
 import { Box, Typography, Button, Tabs, Tab } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReportBuilderToolbar from './ReportBuilderToolbar';
 import ReportBuilderFilters, { ReportFilters } from './ReportBuilderFilters';
 import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchReport } from '@/app/redux/actions/dashboardAction';
 import { RootState } from '@/app/redux/store';
-import { ReportType, ReportUIFilters, SummaryType } from '@/app/types/dashboardTypes';
+import {
+  ReportType,
+  ReportUIFilters,
+  SummaryType,
+} from '@/app/types/dashboardTypes';
 import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
-import { ColumnManagementStyles, StyledDataGrid } from '../../AllocationTable/styles/StyledDataGrid';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import {
+  ColumnManagementStyles,
+  StyledDataGrid,
+} from '../../AllocationTable/styles/StyledDataGrid';
+
+dayjs.extend(isoWeek);
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import AISummaryTab from './AISummaryTab';
+import CustomTab from './CustomTab';
 import { fetchProjectSummary } from '@/app/redux/actions/aiSummaryAction';
+import { fetchCustomReportRequest, fetchAllocationCapacityRequest } from '@/app/redux/actions/customReportActions';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import ErrorPage from '../../ErrorPage/ErrorPage';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import { FETCH_SAVED_REPORTS } from '@/app/redux/actions/savedReportsActions';
+import { calculateDateRange } from '@/app/utils/dateUtils';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
@@ -31,9 +44,17 @@ interface ReportBuilderProps {
 /**
  * Parse query params and convert them to filter values
  */
-const parseQueryParams = (searchParams: URLSearchParams): Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string } => {
-  const filters: Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string } = {};
-  
+const parseQueryParams = (
+  searchParams: URLSearchParams
+): Partial<ReportFilters> & {
+  customStartDate?: string;
+  customEndDate?: string;
+} => {
+  const filters: Partial<ReportFilters> & {
+    customStartDate?: string;
+    customEndDate?: string;
+  } = {};
+
   // Helper to parse JSON array or return empty array
   const parseArrayParam = (param: string | null): string[] => {
     if (!param) return [];
@@ -58,12 +79,15 @@ const parseQueryParams = (searchParams: URLSearchParams): Partial<ReportFilters>
   }
 
   // Parse array filters from advanced filters
-  const projectTypeGroup = searchParams.get('projectTypeGroup') || searchParams.get('ProjectTypeGroup');
+  const projectTypeGroup =
+    searchParams.get('projectTypeGroup') ||
+    searchParams.get('ProjectTypeGroup');
   if (projectTypeGroup) {
     filters.projectTypeGroup = parseArrayParam(projectTypeGroup);
   }
 
-  const projectType = searchParams.get('projectType') || searchParams.get('ProjectType');
+  const projectType =
+    searchParams.get('projectType') || searchParams.get('ProjectType');
   if (projectType) {
     filters.projectType = parseArrayParam(projectType);
   }
@@ -78,12 +102,14 @@ const parseQueryParams = (searchParams: URLSearchParams): Partial<ReportFilters>
     filters.resource = parseArrayParam(resource);
   }
 
-  const organization = searchParams.get('organization') || searchParams.get('Organization');
+  const organization =
+    searchParams.get('organization') || searchParams.get('Organization');
   if (organization) {
     filters.organization = parseArrayParam(organization);
   }
 
-  const portfolio = searchParams.get('portfolio') || searchParams.get('Portfolio');
+  const portfolio =
+    searchParams.get('portfolio') || searchParams.get('Portfolio');
   if (portfolio) {
     filters.portfolio = parseArrayParam(portfolio);
   }
@@ -93,38 +119,63 @@ const parseQueryParams = (searchParams: URLSearchParams): Partial<ReportFilters>
     filters.project = parseArrayParam(project);
   }
 
-  const projectManager = searchParams.get('projectManager') || searchParams.get('ProjectManager');
+  const projectManager =
+    searchParams.get('projectManager') || searchParams.get('ProjectManager');
   if (projectManager) {
     filters.projectManager = parseArrayParam(projectManager);
   }
 
-  const allocationManager = searchParams.get('allocationManager') || searchParams.get('AllocationManager');
+  const allocationManager =
+    searchParams.get('allocationManager') ||
+    searchParams.get('AllocationManager');
   if (allocationManager) {
     filters.allocationManager = parseArrayParam(allocationManager);
   }
 
-  const resourceType = searchParams.get('resourceType') || searchParams.get('ResourceType');
+  const resourceType =
+    searchParams.get('resourceType') || searchParams.get('ResourceType');
   if (resourceType) {
     filters.resourceType = parseArrayParam(resourceType);
   }
 
- const resourceStatuses = searchParams.get('resourceStatuses') || searchParams.get('ResourceStatuses');
+  const resourceStatuses =
+    searchParams.get('resourceStatuses') ||
+    searchParams.get('ResourceStatuses');
   if (resourceStatuses) {
     filters.resourceStatuses = parseArrayParam(resourceStatuses);
   }
 
-  const resourceLocations = searchParams.get('resourceLocations') || searchParams.get('ResourceLocations');
+  const resourceLocations =
+    searchParams.get('resourceLocations') ||
+    searchParams.get('ResourceLocations');
   if (resourceLocations) {
     filters.resourceLocations = parseArrayParam(resourceLocations);
   }
-  const resourceWorkLocationGroup = searchParams.get('resourceWorkLocationGroup') || searchParams.get('ResourceWorkLocationGroup');
+  const resourceWorkLocationGroup =
+    searchParams.get('resourceWorkLocationGroup') ||
+    searchParams.get('ResourceWorkLocationGroup');
   if (resourceWorkLocationGroup) {
-    filters.resourceWorkLocationGroup = parseArrayParam(resourceWorkLocationGroup);
+    filters.resourceWorkLocationGroup = parseArrayParam(
+      resourceWorkLocationGroup
+    );
   }
 
-  const projectStatuses = searchParams.get('projectStatuses') || searchParams.get('ProjectStatuses');
+  const projectStatuses =
+    searchParams.get('projectStatuses') || searchParams.get('ProjectStatuses');
   if (projectStatuses) {
     filters.projectStatuses = parseArrayParam(projectStatuses);
+  }
+
+  const userStatuses =
+    searchParams.get('userStatuses') || searchParams.get('UserStatuses');
+  if (userStatuses) {
+    filters.userStatuses = parseArrayParam(userStatuses);
+  }
+
+  const userRoles =
+    searchParams.get('userRoles') || searchParams.get('UserRoles');
+  if (userRoles) {
+    filters.userRoles = parseArrayParam(userRoles);
   }
 
   // Parse custom date range
@@ -133,6 +184,11 @@ const parseQueryParams = (searchParams: URLSearchParams): Partial<ReportFilters>
   if (customStartDate && customEndDate) {
     filters.customStartDate = customStartDate;
     filters.customEndDate = customEndDate;
+  }
+
+  const showActuals = searchParams.get('show_actuals');
+  if (showActuals === 'true') {
+    filters.show_actuals = true;
   }
 
   return filters;
@@ -148,13 +204,13 @@ function ReportBuilderPage({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const hasQueryParams = Boolean(searchParams && searchParams.toString());
-  
+
   // Get active tab from URL or default to 'reports'
   const activeTabFromUrl = searchParams?.get('tab') || 'reports';
   const [activeTab, setActiveTab] = useState<string>(activeTabFromUrl);
-  
+
   const [filtersExpanded, setFiltersExpanded] = useState(true);
-  
+
   // Separate filter states for Reports and AI Summary
   const [filters, setFilters] = useState<ReportFilters>({
     reportType: 'resourceProjectPeriod',
@@ -174,8 +230,10 @@ function ReportBuilderPage({
     resourceLocations: [],
     resourceWorkLocationGroup: [],
     projectStatuses: [],
+    userStatuses: [],
+    userRoles: [],
   });
-  
+
   // Separate filter state for AI Summary tab
   const [summaryFilters, setSummaryFilters] = useState<ReportFilters>({
     reportType: 'resourceProjectPeriod', // Dummy value, not used in summary mode
@@ -196,17 +254,60 @@ function ReportBuilderPage({
     resourceLocations: [],
     resourceWorkLocationGroup: [],
     projectStatuses: [],
+    userStatuses: [],
+    userRoles: [],
   });
-  
+
+  // Separate filter state for Custom tab
+  const [customFilters, setCustomFilters] = useState<ReportFilters>({
+    reportType: 'percentageAllocation', // Dummy value
+    period: 'last_week',
+    customDateRange: undefined,
+    team: [],
+    organization: [],
+    resourceType: [],
+    resource: [],
+    projectType: [],
+    projectTypeGroup: [],
+    project: [],
+    portfolio: [],
+    projectManager: [],
+    allocationManager: [],
+    resourceStatuses: [],
+    resourceLocations: [],
+    resourceWorkLocationGroup: [],
+    projectStatuses: [],
+    userStatuses: [],
+    userRoles: [],
+    show_actuals: false,
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
   const [showData, setShowData] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
+  const [SavedReports, setSavedReports] = useState<
+    {
+      name: string;
+      reportType: ReportType;
+      uiFilters: ReportUIFilters;
+      createdAt: string;
+    }[]
+  >([]);
   const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
-  const [pendingQueryFilters, setPendingQueryFilters] = useState<(Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string }) | null>(null);
+  const [pendingQueryFilters, setPendingQueryFilters] = useState<
+    | (Partial<ReportFilters> & {
+        customStartDate?: string;
+        customEndDate?: string;
+      })
+    | null
+  >(null);
   const [hasAppliedQueryParams, setHasAppliedQueryParams] = useState(false);
   const [isInitializing, setIsInitializing] = useState(hasQueryParams);
   const [noAccess, setNoAccess] = useState(false);
+  const [lastAppliedFiltersParam, setLastAppliedFiltersParam] = useState<
+    string | null
+  >(null);
 
   const reportSlice = useSelector((state: RootState) => state.dashboard.report);
   const currentReport = reportSlice?.[filters.reportType as ReportType];
@@ -215,16 +316,37 @@ function ReportBuilderPage({
   // Get saved reports from Redux
   const { savedReports, loading: savedReportsLoading } = useSelector((state: RootState) => state.savedReports);
   
+  const customReportState = useSelector(
+    (state: RootState) => state.customReport
+  );
+
   // Get Redux data to check if it's loaded
-  const { projectTypeGroups, projectTypes } = useSelector((state: RootState) => state.allSettings);
+  const { projectTypeGroups, projectTypes } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   const { portfolios } = useSelector((state: RootState) => state.portfolios);
   const { teams } = useSelector((state: RootState) => state.teams);
   const { resources } = useSelector((state: RootState) => state.resources);
-  const { organisations } = useSelector((state: RootState) => state.organisations);
+  const { organisations } = useSelector(
+    (state: RootState) => state.organisations
+  );
   const { projects } = useSelector((state: RootState) => state.projects);
-  
+
+  const [APIFilters, setAPIFilters] = useState<any>(null);
+  const [customReportType, setCustomReportType] = useState<'percentageAllocation' | 'allocationCapacity'>('percentageAllocation');
+
+  // Ref to track if we've already attempted initial sessionStorage load
+  const hasAttemptedInitialLoadRef = useRef(false);
+
   // Check if all necessary data is loaded
-  const isDataLoaded = (teams?.length ?? 0) > 0 && (resources?.length ?? 0) > 0 && (projects?.length ?? 0) > 0 && (projectTypes?.length ?? 0) > 0 && (projectTypeGroups?.length ?? 0) > 0 && (organisations?.length ?? 0) > 0 && (portfolios?.length ?? 0) > 0;
+  const isDataLoaded =
+    (teams?.length ?? 0) > 0 &&
+    (resources?.length ?? 0) > 0 &&
+    (projects?.length ?? 0) > 0 &&
+    (projectTypes?.length ?? 0) > 0 &&
+    (projectTypeGroups?.length ?? 0) > 0 &&
+    (organisations?.length ?? 0) > 0 &&
+    (portfolios?.length ?? 0) > 0;
 
   // Helper function to prepare API payload from filters
   const prepareApiPayload = (filters: ReportUIFilters) => {
@@ -276,54 +398,69 @@ function ReportBuilderPage({
       resourceLocations: filters.resourceLocations,
       resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
       projectStatuses: filters.projectStatuses,
+      userStatuses: filters.userStatuses,
+      userRoles: filters.userRoles,
     };
     const apiPayload = prepareApiPayload(uiFilters);
     try {
-      dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload }));
+      dispatch(
+        fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload })
+      );
       setShowData(true);
       // Save the last generated report to sessionStorage
-      sessionStorage.setItem('last_generated_report', JSON.stringify({ uiFilters }));
+      sessionStorage.setItem(
+        'last_generated_report',
+        JSON.stringify({ uiFilters })
+      );
     } catch (error) {
       console.error('Error generating report:', error);
-      dispatch(showToast({ message: 'Failed to generate report. Please try again.', severity: 'error' }));
+      dispatch(
+        showToast({
+          message: 'Failed to generate report. Please try again.',
+          severity: 'error',
+        })
+      );
       setIsLoading(false);
       setShowData(false);
     }
     onReportGenerate?.(filters);
   };
 
-  
   const handleGenerateSummary = async () => {
     setIsLoading(true);
     setShowData(false);
     setFiltersExpanded(false);
-    
+
     if (summaryFilters.summaryType === 'project') {
       // Serialize custom date range for UI filters
       const [start, end] = summaryFilters.customDateRange || [];
-      
+
       const uiFilters: any = {
         customStartDate: start ? start.format('YYYY-MM-DD') : undefined,
         customEndDate: end ? end.format('YYYY-MM-DD') : undefined,
         ...summaryFilters,
       };
-      
+
       // Saga will handle date calculation and payload building
       try {
-      dispatch(fetchProjectSummary(uiFilters));
-      setShowData(true);
+        dispatch(fetchProjectSummary(uiFilters));
+        setShowData(true);
       } catch (error) {
         console.error('Error generating AI summary:', error);
-        dispatch(showToast({ message: 'Failed to generate AI summary. Please try again.', severity: 'error' }));
+        dispatch(
+          showToast({
+            message: 'Failed to generate AI summary. Please try again.',
+            severity: 'error',
+          })
+        );
         setIsLoading(false);
         setShowData(false);
       }
-    } 
+    }
     // else if (summaryFilters.summaryType === 'team') {
     //   dispatch(fetchTeamSummary({ filters: summaryFilters }));
     // }
   };
-
 
   const handleExport = (format: 'pdf' | 'excel') => {
     console.log(`Exporting as ${format}...`);
@@ -364,9 +501,11 @@ function ReportBuilderPage({
       resourceLocations: [],
       resourceWorkLocationGroup: [],
       projectStatuses: [],
+      userStatuses: [],
+      userRoles: [],
     });
   };
-  
+
   // Handler functions for AI Summary tab
   const handleSummaryFiltersChange = (newFilters: ReportFilters) => {
     setSummaryFilters(newFilters);
@@ -392,17 +531,125 @@ function ReportBuilderPage({
       resourceLocations: [],
       resourceWorkLocationGroup: [],
       projectStatuses: [],
+      userStatuses: [],
+      userRoles: [],
     });
+  };
+
+  // Handler functions for Custom tab
+  const handleGenerateCustomReport = async () => {
+    setIsLoading(true);
+    setShowData(false);
+    setFiltersExpanded(false);
+
+    const customStart = customFilters.customDateRange
+      ? customFilters?.customDateRange[0]?.format('MMM DD, YYYY')
+      : undefined;
+    const customEnd = customFilters.customDateRange
+      ? customFilters?.customDateRange[1]?.format('MMM DD, YYYY')
+      : undefined;
+    // Serialize custom date range
+    const { start, end } = calculateDateRange(
+      customFilters.period,
+      customStart,
+      customEnd
+    );
+
+    const apiFilters: any = {
+      Projects: customFilters.project,
+      ProjectTypeGroups: customFilters.projectTypeGroup,
+      ProjectTypes: customFilters.projectType,
+      Teams: customFilters.team,
+      Organizations: customFilters.organization,
+      ProjectStatuses: ['Active'],
+      StartDate: start || undefined,
+      EndDate: end || undefined,
+    };
+
+    setAPIFilters(apiFilters);
+
+    try {
+      if (customReportType === 'allocationCapacity') {
+        dispatch(fetchAllocationCapacityRequest(apiFilters));
+      } else {
+        dispatch(fetchCustomReportRequest(apiFilters));
+      }
+      setShowData(true);
+    } catch (error) {
+      console.error('Error generating custom report:', error);
+      dispatch(
+        showToast({
+          message: 'Failed to generate custom report. Please try again.',
+          severity: 'error',
+        })
+      );
+      setIsLoading(false);
+      setShowData(false);
+    }
+  };
+
+  const handleCustomFiltersChange = (newFilters: ReportFilters) => {
+    setCustomFilters(newFilters);
+  };
+
+  const handleResetCustomFilters = () => {
+    setCustomFilters({
+      reportType: 'resourceProjectPeriod', // Default to resourceProjectPeriod for custom tab
+      period: 'last_week',
+      customDateRange: undefined,
+      team: [],
+      organization: [],
+      resourceType: [],
+      resource: [],
+      projectType: [],
+      projectTypeGroup: [],
+      project: [],
+      portfolio: [],
+      projectManager: [],
+      allocationManager: [],
+      resourceStatuses: [],
+      resourceLocations: [],
+      resourceWorkLocationGroup: [],
+      projectStatuses: [],
+      userStatuses: [],
+      userRoles: [],
+      show_actuals: false,
+    });
+  };
+
+  const getCustomSelectedFiltersCount = () => {
+    let count = 0;
+
+    if (customFilters.period && customFilters.period !== 'last_week') {
+      count++;
+    }
+
+    const arrayFilters: (keyof ReportFilters)[] = [
+      'project',
+      'projectTypeGroup',
+      'projectType',
+      'team',
+      'organization',
+    ];
+
+    arrayFilters.forEach(key => {
+      const value = customFilters[key];
+      if (Array.isArray(value) && value.length > 0) {
+        count++;
+      }
+    });
+
+    return count;
   };
 
   const getSummarySelectedFiltersCount = () => {
     let count = 0;
-    
+
     // Count period if it's not the default
     if (summaryFilters.period && summaryFilters.period !== 'last_week') {
       count++;
     }
-    
+
     // Count array filters that have selections
     const arrayFilters: (keyof ReportFilters)[] = [
       'projectManager',
@@ -420,72 +667,228 @@ function ReportBuilderPage({
       'resourceWorkLocationGroup',
       'projectStatuses',
     ];
-    
+
     arrayFilters.forEach(key => {
       const value = summaryFilters[key];
       if (Array.isArray(value) && value.length > 0) {
         count++;
       }
     });
-    
+
     return count;
   };
 
   // Effect 1: Parse and store query params on mount
   useEffect(() => {
     if (loadingPermissions) return;
-    // Only run once on mount
-    if (hasAppliedQueryParams) return;
-    
+
     // Priority 1: Check for query params from dashboard navigation
     if (searchParams && searchParams.toString()) {
-      const decodedParams = decompressFromEncodedURIComponent(searchParams.toString() || '') || '';
-      const queryFilters = parseQueryParams(decodedParams ? new URLSearchParams(decodedParams) : new URLSearchParams());
+      // Extract the compressed filters parameter (everything except 'tab')
+      const filtersParam = searchParams.get('filters');
+
+      // Check if this is the same filters we already applied
+      if (filtersParam && filtersParam === lastAppliedFiltersParam) {
+        // Same filters, skip processing
+        return;
+      }
+
+      const decodedParams = filtersParam
+        ? decompressFromEncodedURIComponent(filtersParam) || ''
+        : '';
+      const queryFilters = parseQueryParams(
+        decodedParams
+          ? new URLSearchParams(decodedParams)
+          : new URLSearchParams()
+      );
       if (Object.keys(queryFilters).length > 0) {
+        // Filters are present (drill-down scenario) - skip permission checks
         setIsInitializing(true);
-        
+        setNoAccess(false);
+
         // Clear sessionStorage to prevent Effect 3 from loading old report
         sessionStorage.removeItem('last_generated_report');
-        
+
         // Store query params to apply later when data is loaded
         setPendingQueryFilters(queryFilters);
-         // Mark that we're initializing with query params
+
+        // Mark this filters param as processed
+        setLastAppliedFiltersParam(filtersParam);
+
+        // Reset the flag so we can process new navigations
+        setHasAppliedQueryParams(false);
+        // Mark that we're initializing with query params
         return; // Skip loading from sessionStorage
       }
-      // Query params exist but nothing to apply
-      // Not a valid Drill down scenario
-      // Check if permissions to reports is allowed
-      if (searchParams.get('tab') === 'reports' && permissions && !permissions['Reports'].r) {
+      // Query params exist but no filters - enforce permission checks
+      // Define tab to permission mapping
+      const tabPermissionMap = [
+        { tab: 'reports', permission: 'Reports' },
+        { tab: 'aisummary', permission: 'AISummary' },
+        { tab: 'custom', permission: 'CustomReports' },
+      ];
+
+      // Check if user has access to any tab
+      const accessibleTabs = tabPermissionMap.filter(
+        ({ permission }) => permissions && permissions[permission]?.r
+      );
+
+      // If no access to any tab, deny access
+      if (accessibleTabs.length === 0) {
         setNoAccess(true);
+        setIsInitializing(false);
+        return;
       }
+
+      setNoAccess(false);
+
+      // Check if user has permission for the requested tab
+      const requestedTab = searchParams.get('tab') || 'reports';
+      const isTabAccessible = accessibleTabs.some(
+        ({ tab }) => tab === requestedTab
+      );
+
+      if (!isTabAccessible) {
+        // Redirect to first accessible tab
+        const firstAccessibleTab = accessibleTabs[0].tab;
+        const params = new URLSearchParams(searchParams?.toString() || '');
+        params.set('tab', firstAccessibleTab);
+        router.replace(`${pathname}?${params.toString()}`);
+      }
+
+      // Reset hasAppliedQueryParams to allow Effect 3 to load from sessionStorage
+      setHasAppliedQueryParams(false);
       setIsInitializing(false);
       return;
     }
 
-    // No query params present
-    // Check if permissions to reports is allowed as only when their are no query params
-    if (permissions && !permissions['Reports'].r) {
+    // No query params present - enforce permission checks
+    // Define tab to permission mapping
+    const tabPermissionMap = [
+      { tab: 'reports', permission: 'Reports' },
+      { tab: 'aisummary', permission: 'AISummary' },
+      { tab: 'custom', permission: 'CustomReports' },
+    ];
+
+    // Check if user has access to any tab
+    const accessibleTabs = tabPermissionMap.filter(
+      ({ permission }) => permissions && permissions[permission]?.r
+    );
+
+    // If no access to any tab, deny access
+    if (accessibleTabs.length === 0) {
       setNoAccess(true);
+      setIsInitializing(false);
+      return;
     }
-    else {
-      setNoAccess(false);
-    }
+
+    setNoAccess(false);
     setIsInitializing(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, loadingPermissions]); // Only run when searchParams change
-  
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, loadingPermissions]);
+
   // Effect 2: Apply pending query params once data is loaded
   useEffect(() => {
     if (loadingPermissions) return;
     if (!pendingQueryFilters || hasAppliedQueryParams || !isDataLoaded) return;
-    
+
+    // Check which tab we're on
+    const currentTab = searchParams?.get('tab') || 'reports';
+
+    // Handle Custom Tab
+    if (currentTab === 'custom') {
+      // Parse dates for custom tab
+      const customStart = pendingQueryFilters.customStartDate
+        ? dayjs(pendingQueryFilters.customStartDate).format('MMM DD, YYYY')
+        : undefined;
+      const customEnd = pendingQueryFilters.customEndDate
+        ? dayjs(pendingQueryFilters.customEndDate).format('MMM DD, YYYY')
+        : undefined;
+
+      // Calculate date range
+      const { start, end } = calculateDateRange(
+        pendingQueryFilters.period || 'last_week',
+        customStart,
+        customEnd
+      );
+
+      // Set custom filters from query params
+      const customFiltersFromQuery: ReportFilters = {
+        reportType: pendingQueryFilters.reportType || 'percentageAllocation',
+        period: pendingQueryFilters.period || 'last_week',
+        customDateRange:
+          pendingQueryFilters.customStartDate && pendingQueryFilters.customEndDate
+            ? [
+                dayjs(pendingQueryFilters.customStartDate),
+                dayjs(pendingQueryFilters.customEndDate),
+              ]
+            : undefined,
+        team: pendingQueryFilters.team || [],
+        organization: pendingQueryFilters.organization || [],
+        resourceType: pendingQueryFilters.resourceType || [],
+        resource: pendingQueryFilters.resource || [],
+        projectType: pendingQueryFilters.projectType || [],
+        projectTypeGroup: pendingQueryFilters.projectTypeGroup || [],
+        project: pendingQueryFilters.project || [],
+        portfolio: pendingQueryFilters.portfolio || [],
+        projectManager: pendingQueryFilters.projectManager || [],
+        allocationManager: pendingQueryFilters.allocationManager || [],
+        resourceStatuses: pendingQueryFilters.resourceStatuses || [],
+        resourceLocations: pendingQueryFilters.resourceLocations || [],
+        resourceWorkLocationGroup:
+          pendingQueryFilters.resourceWorkLocationGroup || [],
+        projectStatuses: pendingQueryFilters.projectStatuses || [],
+        userStatuses: pendingQueryFilters.userStatuses || [],
+        userRoles: pendingQueryFilters.userRoles || [],
+        show_actuals: pendingQueryFilters.show_actuals || false,
+      };
+
+      setCustomFilters(customFiltersFromQuery);
+
+      // Set custom report type from query params
+      const reportTypeFromQuery = pendingQueryFilters.reportType;
+      if (reportTypeFromQuery === 'allocationCapacity' || reportTypeFromQuery === 'percentageAllocation') {
+        setCustomReportType(reportTypeFromQuery);
+      }
+
+      // Prepare API filters for custom report
+      const apiFilters: any = {
+        Projects: customFiltersFromQuery.project,
+        ProjectTypeGroups: customFiltersFromQuery.projectTypeGroup,
+        ProjectTypes: customFiltersFromQuery.projectType,
+        Teams: customFiltersFromQuery.team,
+        Organizations: customFiltersFromQuery.organization,
+        ProjectStatuses: ['Active'],
+        StartDate: start || undefined,
+        EndDate: end || undefined,
+      };
+
+      setAPIFilters(apiFilters);
+
+      // Auto-generate custom report based on reportType
+      if (reportTypeFromQuery === 'allocationCapacity') {
+        dispatch(fetchAllocationCapacityRequest(apiFilters));
+      } else {
+        dispatch(fetchCustomReportRequest(apiFilters));
+      }
+      setHasAppliedQueryParams(true);
+      setFiltersExpanded(false);
+      setIsInitializing(false);
+      return;
+    }
+
+    // Handle Reports Tab (existing logic)
     // Data is loaded, now apply the query params
     const mergedFilters: ReportFilters = {
       reportType: pendingQueryFilters.reportType || 'resourceProjectPeriod',
       period: pendingQueryFilters.period || 'last_week',
-      customDateRange: pendingQueryFilters.customStartDate && pendingQueryFilters.customEndDate
-        ? [dayjs(pendingQueryFilters.customStartDate), dayjs(pendingQueryFilters.customEndDate)]
-        : undefined,
+      customDateRange:
+        pendingQueryFilters.customStartDate && pendingQueryFilters.customEndDate
+          ? [
+              dayjs(pendingQueryFilters.customStartDate),
+              dayjs(pendingQueryFilters.customEndDate),
+            ]
+          : undefined,
       team: pendingQueryFilters.team || [],
       organization: pendingQueryFilters.organization || [],
       resourceType: pendingQueryFilters.resourceType || [],
@@ -498,11 +901,14 @@ function ReportBuilderPage({
       allocationManager: pendingQueryFilters.allocationManager || [],
       resourceStatuses: pendingQueryFilters.resourceStatuses || [],
       resourceLocations: pendingQueryFilters.resourceLocations || [],
-      resourceWorkLocationGroup: pendingQueryFilters.resourceWorkLocationGroup || [],
+      resourceWorkLocationGroup:
+        pendingQueryFilters.resourceWorkLocationGroup || [],
       projectStatuses: pendingQueryFilters.projectStatuses || [],
+      userStatuses: pendingQueryFilters.userStatuses || [],
+      userRoles: pendingQueryFilters.userRoles || [],
     };
     setFilters(mergedFilters);
-    
+
     // Prepare API filters
     const [start, end] = mergedFilters.customDateRange || [];
     const uiFilters: ReportUIFilters = {
@@ -524,75 +930,106 @@ function ReportBuilderPage({
       resourceLocations: mergedFilters.resourceLocations,
       resourceWorkLocationGroup: mergedFilters.resourceWorkLocationGroup,
       projectStatuses: mergedFilters.projectStatuses,
+      userStatuses: mergedFilters.userStatuses,
+      userRoles: mergedFilters.userRoles,
     };
-    
+
     const apiPayload = prepareApiPayload(uiFilters);
-    
+
     // Fetch the report data
-    dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload }));
+    dispatch(
+      fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload })
+    );
     setShowData(true);
     setFiltersExpanded(false);
     setHasAppliedQueryParams(true);
     setPendingQueryFilters(null);
     // Keep isInitializing true until report loads
-  }, [pendingQueryFilters, hasAppliedQueryParams, isDataLoaded, dispatch, loadingPermissions]);
-  
-  // Effect 3: Load from sessionStorage if no query params
+  }, [
+    pendingQueryFilters,
+    hasAppliedQueryParams,
+    isDataLoaded,
+    dispatch,
+    loadingPermissions,
+    searchParams,
+  ]);
+
+  // Effect 3: Load from sessionStorage only on initial page load (not on tab switch)
   useEffect(() => {
     if (loadingPermissions) return;
-    // Only load from sessionStorage if there are no query params and we haven't already applied them
-    if (pendingQueryFilters || hasAppliedQueryParams) return;
-    
+    // Only load from sessionStorage if:
+    // 1. This is the initial page load (not switching tabs)
+    // 2. Active tab is 'reports'
+    // 3. There are no query params and we haven't already applied them
+    if (
+      hasAttemptedInitialLoadRef.current ||
+      activeTab !== 'reports' ||
+      pendingQueryFilters ||
+      hasAppliedQueryParams
+    )
+      return;
+
+    // Mark that we've attempted the initial load
+    hasAttemptedInitialLoadRef.current = true;
+
     const savedLastReport = sessionStorage.getItem('last_generated_report');
-    
+
     if (savedLastReport) {
       try {
-      const parsed = JSON.parse(savedLastReport);
-      const f = parsed.uiFilters;
-      
-      // Restore filters
-      setFilters({
-        reportType: f.reportType,
-        period: f.period || 'last_week',
-        customDateRange: f.customStartDate && f.customEndDate 
-        ? [dayjs(f.customStartDate), dayjs(f.customEndDate)] 
-        : undefined,
-        team: f.team || [],
-        organization: f.organization || [],
-        resourceType: f.resourceType || [],
-        resource: f.resource || [],
-        projectType: f.projectType || [],
-        projectTypeGroup: f.projectTypeGroup || [],
-        project: f.project || [],
-        portfolio: f.portfolio || [],
-        projectManager: f.projectManager || [],
-        allocationManager: f.allocationManager || [],
-        resourceStatuses: f.resourceStatuses || [],
-        resourceLocations: f.resourceLocations || [],
-        resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
-        projectStatuses: f.projectStatuses || [],
-      });
-      
-      // Fetch the report data
-      dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
-      setShowData(true);
-      setFiltersExpanded(false);
-      setHasAppliedQueryParams(true);
+        const parsed = JSON.parse(savedLastReport);
+        const f = parsed.uiFilters;
+
+        // Restore filters
+        setFilters({
+          reportType: f.reportType,
+          period: f.period || 'last_week',
+          customDateRange:
+            f.customStartDate && f.customEndDate
+              ? [dayjs(f.customStartDate), dayjs(f.customEndDate)]
+              : undefined,
+          team: f.team || [],
+          organization: f.organization || [],
+          resourceType: f.resourceType || [],
+          resource: f.resource || [],
+          projectType: f.projectType || [],
+          projectTypeGroup: f.projectTypeGroup || [],
+          project: f.project || [],
+          portfolio: f.portfolio || [],
+          projectManager: f.projectManager || [],
+          allocationManager: f.allocationManager || [],
+          resourceStatuses: f.resourceStatuses || [],
+          resourceLocations: f.resourceLocations || [],
+          resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
+          projectStatuses: f.projectStatuses || [],
+          userStatuses: f.userStatuses || [],
+          userRoles: f.userRoles || [],
+        });
+
+        // Fetch the report data
+        dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
+        setShowData(true);
+        setFiltersExpanded(false);
+        setHasAppliedQueryParams(true);
       } catch (error) {
-      console.error('Error loading last report:', error);
+        console.error('Error loading last report:', error);
       }
     }
-  }, [dispatch, pendingQueryFilters, hasAppliedQueryParams, loadingPermissions]);
+  }, [
+    dispatch,
+    pendingQueryFilters,
+    hasAppliedQueryParams,
+    loadingPermissions,
+  ]);
 
   // Read report data and loading from Redux
-  
+
   useEffect(() => {
     if (loadingPermissions) return;
     if (currentReport) {
       setIsLoading(currentReport.loading);
       if (!currentReport.loading) {
-        if(currentReport.data.length > 0) {
-        setReportGenerated(true);
+        if (currentReport.data.length > 0) {
+          setReportGenerated(true);
         }
         setReportData(currentReport.data);
         // Report has finished loading, clear initializing flag
@@ -615,6 +1052,26 @@ function ReportBuilderPage({
     }
   }, [aiSummaryState, activeTab, loadingPermissions]);
 
+  useEffect(() => {
+    if (
+      customReportType === 'allocationCapacity' &&
+      !pendingQueryFilters &&
+      !hasAppliedQueryParams &&
+      !customFilters.customDateRange
+    ) {
+      // Calculate 13-week range: 4 weeks past + current week + 8 weeks future
+      const currentMonday = dayjs().isoWeekday(1);
+      const startDate = currentMonday.subtract(4, 'week');
+      const endDate = currentMonday.add(8, 'week').isoWeekday(7);
+      
+      setCustomFilters(prev => ({
+        ...prev,
+        period: 'custom',
+        customDateRange: [startDate, endDate],
+      }));
+    }
+  }, [customReportType, pendingQueryFilters, hasAppliedQueryParams, customFilters.customDateRange]);
+
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
   const hiddenColumns = getHiddenColumns(filters.reportType as ReportType);
@@ -624,15 +1081,53 @@ function ReportBuilderPage({
     dispatch({ type: FETCH_SAVED_REPORTS });
   }, [dispatch]);
 
-  const handleLoadReport = (reportId: string) => {
-    const entry = savedReports.find(r => r.Id === reportId);
+  const handleSaveReport = (name: string) => {
+    const [start, end] = filters.customDateRange || [];
+    const uiFilters: ReportUIFilters = {
+      reportType: filters.reportType as ReportType,
+      period: filters.period as ReportUIFilters['period'],
+      customStartDate: start ? start.format('YYYY-MM-DD') : undefined,
+      customEndDate: end ? end.format('YYYY-MM-DD') : undefined,
+      team: filters.team,
+      organization: filters.organization,
+      resourceType: filters.resourceType,
+      resource: filters.resource,
+      projectType: filters.projectType,
+      projectTypeGroup: filters.projectTypeGroup,
+      project: filters.project,
+      portfolio: filters.portfolio,
+      projectManager: filters.projectManager,
+      allocationManager: filters.allocationManager,
+      resourceStatuses: filters.resourceStatuses,
+      resourceLocations: filters.resourceLocations,
+      resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
+      projectStatuses: filters.projectStatuses,
+      userStatuses: filters.userStatuses,
+      userRoles: filters.userRoles,
+    };
+    const entry = {
+      name,
+      reportType: uiFilters.reportType,
+      uiFilters,
+      createdAt: new Date().toISOString(),
+    };
+    const next = [...SavedReports.filter(r => r.name !== name), entry];
+    // localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    setSavedReports(next);
+  };
+
+  const handleLoadReport = (name: string) => {
+    const entry = SavedReports.find(r => r.name === name);
     if (!entry) return;
-    const f = entry.Filters;
+    const f = entry.uiFilters;
     // Restore UI filters in component state
     setFilters({
       reportType: f.reportType,
       period: f.period,
-      customDateRange: f.customStartDate && f.customEndDate ? [dayjs(f.customStartDate), dayjs(f.customEndDate)] : undefined,
+      customDateRange:
+        f.customStartDate && f.customEndDate
+          ? [dayjs(f.customStartDate), dayjs(f.customEndDate)]
+          : undefined,
       team: f.team || [],
       organization: f.organization || [],
       resourceType: f.resourceType || [],
@@ -647,6 +1142,8 @@ function ReportBuilderPage({
       resourceLocations: f.resourceLocations || [],
       resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
       projectStatuses: f.projectStatuses || [],
+      userStatuses: f.userStatuses || [],
+      userRoles: f.userRoles || [],
     });
     // Dispatch fetch with restored filters
     dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
@@ -663,18 +1160,50 @@ function ReportBuilderPage({
     // Check arrays - count as active if not empty
     if (Array.isArray(filters.project) && filters.project.length > 0) count++;
     if (Array.isArray(filters.team) && filters.team.length > 0) count++;
-    if (Array.isArray(filters.organization) && filters.organization.length > 0) count++;
-    if (Array.isArray(filters.resourceType) && filters.resourceType.length > 0) count++;
+    if (Array.isArray(filters.organization) && filters.organization.length > 0)
+      count++;
+    if (Array.isArray(filters.resourceType) && filters.resourceType.length > 0)
+      count++;
     if (Array.isArray(filters.resource) && filters.resource.length > 0) count++;
-    if (Array.isArray(filters.projectType) && filters.projectType.length > 0) count++;
-    if (Array.isArray(filters.projectTypeGroup) && filters.projectTypeGroup.length > 0) count++;
-    if (Array.isArray(filters.portfolio) && filters.portfolio.length > 0) count++;
-    if (Array.isArray(filters.projectManager) && filters.projectManager.length > 0) count++;
-    if (Array.isArray(filters.allocationManager) && filters.allocationManager.length > 0) count++;
-    if (Array.isArray(filters.resourceStatuses) && filters.resourceStatuses.length > 0) count++;
-    if (Array.isArray(filters.resourceLocations) && filters.resourceLocations.length > 0) count++;
-    if (Array.isArray(filters.resourceWorkLocationGroup) && filters.resourceWorkLocationGroup.length > 0) count++;
-    if (Array.isArray(filters.projectStatuses) && filters.projectStatuses.length > 0) count++;
+    if (Array.isArray(filters.projectType) && filters.projectType.length > 0)
+      count++;
+    if (
+      Array.isArray(filters.projectTypeGroup) &&
+      filters.projectTypeGroup.length > 0
+    )
+      count++;
+    if (Array.isArray(filters.portfolio) && filters.portfolio.length > 0)
+      count++;
+    if (
+      Array.isArray(filters.projectManager) &&
+      filters.projectManager.length > 0
+    )
+      count++;
+    if (
+      Array.isArray(filters.allocationManager) &&
+      filters.allocationManager.length > 0
+    )
+      count++;
+    if (
+      Array.isArray(filters.resourceStatuses) &&
+      filters.resourceStatuses.length > 0
+    )
+      count++;
+    if (
+      Array.isArray(filters.resourceLocations) &&
+      filters.resourceLocations.length > 0
+    )
+      count++;
+    if (
+      Array.isArray(filters.resourceWorkLocationGroup) &&
+      filters.resourceWorkLocationGroup.length > 0
+    )
+      count++;
+    if (
+      Array.isArray(filters.projectStatuses) &&
+      filters.projectStatuses.length > 0
+    )
+      count++;
 
     return count;
   };
@@ -682,25 +1211,52 @@ function ReportBuilderPage({
   // Handle tab change and update URL
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
-    
+
     // Update URL with tab parameter
     const params = new URLSearchParams(searchParams?.toString() || '');
     params.set('tab', newValue);
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  // Sync active tab with URL
+  // Sync active tab with URL and set default tab parameter if missing
   useEffect(() => {
     const tabFromUrl = searchParams?.get('tab');
+
     if (tabFromUrl && tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
     }
+
+    if (!tabFromUrl) {
+      const params = new URLSearchParams(searchParams?.toString() || '');
+      params.set('tab', 'reports');
+      router.replace(`${pathname}?${params.toString()}`);
+    }
   }, [searchParams]);
 
+  // Track if we're in a drill-down scenario (have pending or applied query filters)
+  const isDrillingDown = pendingQueryFilters !== null || hasAppliedQueryParams;
+
+  // loading permissions
+  if (loadingPermissions) {
+    return <LoadingScreen />;
+  }
+
+  // no access
+  if (noAccess) {
+    return <ErrorPage type="accessDenied" redirectPath="/dashboard" />;
+  }
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        position: 'relative',
+      }}
+    >
       {/* Show loading overlay when initializing from query params (only for reports tab) */}
-      {(isInitializing || loadingPermissions) && activeTab === 'reports' && (
+      {isInitializing && activeTab === 'reports' && (
         <Box
           sx={{
             position: 'absolute',
@@ -713,42 +1269,52 @@ function ReportBuilderPage({
         </Box>
       )}
 
-      {noAccess ? (<ErrorPage type="accessDenied" redirectPath="/dashboard" />) : (
-      <>
-      {/* Tabs */}
-      <Box
-        sx={{
-          borderBottom: 1,
-          borderColor: 'divider',
-          backgroundColor: '#fff',
-          px: 3,
-        }}
-      >
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
+      {/* Reports Tab */}
+      {(permissions?.['Reports']?.r ||
+        permissions?.['AISummary']?.r ||
+        permissions?.['CustomReports']?.r ||
+        isDrillingDown) && (
+        <Box
           sx={{
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-              minHeight: 48,
-              color: '#6B7280',
-              '&.Mui-selected': {
-                color: '#152E75',
-                fontWeight: 600,
-              },
-            },
-            '& .MuiTabs-indicator': {
-              backgroundColor: '#152E75',
-              height: 3,
-            },
+            borderBottom: 1,
+            borderColor: 'divider',
+            backgroundColor: '#fff',
+            px: 3,
           }}
         >
-          <Tab label="Reports" value="reports" />
-          <Tab label="AI Summary" value="aisummary" />
-        </Tabs>
-      </Box>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            sx={{
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontSize: '14px',
+                fontWeight: 500,
+                minHeight: 48,
+                color: '#6B7280',
+                '&.Mui-selected': {
+                  color: '#152E75',
+                  fontWeight: 600,
+                },
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#152E75',
+                height: 3,
+              },
+            }}
+          >
+            {(permissions?.['Reports']?.r || isDrillingDown) && (
+              <Tab label="Reports" value="reports" />
+            )}
+            {permissions?.['AISummary']?.r && (
+              <Tab label="AI Summary" value="aisummary" />
+            )}
+            {permissions?.['CustomReports']?.r && (
+              <Tab label="Custom" value="custom" />
+            )}
+          </Tabs>
+        </Box>
+      )}
 
       {/* Conditional rendering based on active tab */}
       {activeTab === 'reports' && (
@@ -756,7 +1322,7 @@ function ReportBuilderPage({
           {/* Toolbar */}
           <ReportBuilderToolbar
             reportType={filters.reportType as ReportType}
-            tab='reports'
+            tab="reports"
             onGenerateReport={handleGenerateReport}
             onExport={handleExport}
             onShare={handleShare}
@@ -783,6 +1349,8 @@ function ReportBuilderPage({
                 resourceLocations: [],
                 resourceWorkLocationGroup: [],
                 projectStatuses: [],
+                userStatuses: [],
+                userRoles: [],
               });
               setFiltersExpanded(true);
             }}
@@ -802,28 +1370,28 @@ function ReportBuilderPage({
           <Box
             sx={{
               flex: 1,
-              backgroundColor: "#F9FAFB",
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
+              backgroundColor: '#F9FAFB',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {!reportGenerated && !showData ? (
               <Box
                 sx={{
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  textAlign: "center",
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
                 }}
               >
                 <Typography
                   sx={{
-                    fontSize: "15px",
+                    fontSize: '15px',
                     fontWeight: 500,
-                    color: "#6B7280",
+                    color: '#6B7280',
                     mb: 3,
                   }}
                 >
@@ -832,53 +1400,55 @@ function ReportBuilderPage({
                 <Button
                   variant="contained"
                   onClick={handleGenerateReport}
-                  disabled={isLoading}
+                  disabled={
+                    !(permissions && permissions['Reports'].r) || isLoading
+                  }
                   sx={{
                     height: 40,
-                    backgroundColor: "#152E75",
-                    color: "#fff",
-                    textTransform: "none",
+                    backgroundColor: '#152E75',
+                    color: '#fff',
+                    textTransform: 'none',
                     fontSize: 14,
                     fontWeight: 600,
                     px: 4,
-                    borderRadius: "6px",
-                    boxShadow: "none",
-                    "&:hover": {
-                      backgroundColor: "#1C3A8C",
-                      boxShadow: "none",
+                    borderRadius: '6px',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      backgroundColor: '#1C3A8C',
+                      boxShadow: 'none',
                     },
-                    "&:disabled": {
-                      backgroundColor: "#D1D5DB",
+                    '&:disabled': {
+                      backgroundColor: '#D1D5DB',
                     },
                   }}
                 >
-                  {isLoading ? "Generating..." : "Generate Report"}
+                  {isLoading ? 'Generating...' : 'Generate Report'}
                 </Button>
               </Box>
             ) : (
               <Box
                 sx={{
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  overflow: "hidden",
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
                   p: isFullscreenGrid ? 0 : 0,
                 }}
               >
                 <Box
                   sx={{
                     flex: 1,
-                    height: isFullscreenGrid ? "100vh" : "100%",
+                    height: isFullscreenGrid ? '100vh' : '100%',
                     minHeight: 400,
-                    backgroundColor: "#ffffff",
-                    borderRadius: isFullscreenGrid ? 0 : "0px",
-                    overflow: "hidden",
-                    position: isFullscreenGrid ? "fixed" : "relative",
-                    top: isFullscreenGrid ? 0 : "auto",
-                    left: isFullscreenGrid ? 0 : "auto",
-                    right: isFullscreenGrid ? 0 : "auto",
-                    bottom: isFullscreenGrid ? 0 : "auto",
-                    zIndex: isFullscreenGrid ? 1300 : "auto",
+                    backgroundColor: '#ffffff',
+                    borderRadius: isFullscreenGrid ? 0 : '0px',
+                    overflow: 'hidden',
+                    position: isFullscreenGrid ? 'fixed' : 'relative',
+                    top: isFullscreenGrid ? 0 : 'auto',
+                    left: isFullscreenGrid ? 0 : 'auto',
+                    right: isFullscreenGrid ? 0 : 'auto',
+                    bottom: isFullscreenGrid ? 0 : 'auto',
+                    zIndex: isFullscreenGrid ? 1300 : 'auto',
                   }}
                 >
                   <StyledDataGrid
@@ -895,10 +1465,14 @@ function ReportBuilderPage({
                         sortModel: [
                           {
                             field:
-                              columns.find((col) => col.field === "resource_name" || col.field === "project_name")?.field ||
+                              columns.find(
+                                col =>
+                                  col.field === 'resource_name' ||
+                                  col.field === 'project_name'
+                              )?.field ||
                               columns[0]?.field ||
-                              "id",
-                            sort: "asc",
+                              'id',
+                            sort: 'asc',
                           },
                         ],
                       },
@@ -909,7 +1483,7 @@ function ReportBuilderPage({
                     pageSizeOptions={[10, 25, 50, 100]}
                     disableRowSelectionOnClick
                     localeText={{
-                      noRowsLabel: "No data found",
+                      noRowsLabel: 'No data found',
                     }}
                     slots={{
                       toolbar: ReportBuilderDataGridToolbar,
@@ -917,53 +1491,55 @@ function ReportBuilderPage({
                     slotProps={{
                       toolbar: {
                         isFullscreen: isFullscreenGrid,
-                        onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
+                        onToggleFullscreen: () =>
+                          setIsFullscreenGrid(prev => !prev),
                         GridRowCount: reportData.length,
+                        tab: 'reports',
                       } as any,
                       columnsPanel: {
-                        className: "styleColumnMenu",
+                        className: 'styleColumnMenu',
                         sx: ColumnManagementStyles,
                       },
                       loadingOverlay: {
-                        variant: "skeleton",
-                        noRowsVariant: "skeleton",
+                        variant: 'skeleton',
+                        noRowsVariant: 'skeleton',
                       },
                     }}
                     sx={{
-                      height: "100%",
-                      "& .MuiDataGrid-virtualScrollerContent": {
-                        backgroundColor: "#F7FBFF",
+                      height: '100%',
+                      '& .MuiDataGrid-virtualScrollerContent': {
+                        backgroundColor: '#F7FBFF',
                       },
-                      "& .MuiDataGrid-row:hover": {
-                        backgroundColor: "#F7FBFF",
+                      '& .MuiDataGrid-row:hover': {
+                        backgroundColor: '#F7FBFF',
                       },
-                      "& .MuiDataGrid-cell": {
-                        border: "0.5px solid #E5E7EB !important",
+                      '& .MuiDataGrid-cell': {
+                        border: '0.5px solid #E5E7EB !important',
                       },
-                      "& .MuiDataGrid-columnHeaders": {
-                          position: "sticky",
-                          top: 0,
-                          zIndex: 3,
-                          backgroundColor: "#F1F6FF",
-                        },
-                      "& .MuiDataGrid-cell--textRight":{
-                        textAlign: "right !important",
-                      }
+                      '& .MuiDataGrid-columnHeaders': {
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 3,
+                        backgroundColor: '#F1F6FF',
+                      },
+                      '& .MuiDataGrid-cell--textRight': {
+                        textAlign: 'right !important',
+                      },
                     }}
                   />
-              </Box>       
+                </Box>
+              </Box>
+            )}
           </Box>
-           )}
-        </Box>
         </>
       )}
 
       {/* AI Summary Tab */}
       {activeTab === 'aisummary' && (
         <>
-         <ReportBuilderToolbar
+          <ReportBuilderToolbar
             reportType={summaryFilters.reportType as ReportType}
-            tab='aisummary'
+            tab="aisummary"
             onGenerateReport={handleGenerateSummary}
             onExport={handleExport}
             onShare={handleShare}
@@ -991,13 +1567,14 @@ function ReportBuilderPage({
                 resourceLocations: [],
                 resourceWorkLocationGroup: [],
                 projectStatuses: [],
+                userStatuses: [],
+                userRoles: [],
               });
               setFiltersExpanded(true);
             }}
             selectedFiltersCount={getSummarySelectedFiltersCount()}
           />
-          
-          {/* Filters for AI Summary */}
+
           <ReportBuilderFilters
             expanded={filtersExpanded}
             onToggle={() => setFiltersExpanded(!filtersExpanded)}
@@ -1006,24 +1583,70 @@ function ReportBuilderPage({
             onResetFilters={handleResetSummaryFilters}
             mode="aisummary"
           />
-          
+
           <Box
-            sx={{ 
+            sx={{
               flex: 1,
-              backgroundColor: "#F9FAFB",
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
+              backgroundColor: '#F9FAFB',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             <AISummaryTab />
           </Box>
         </>
       )}
-      </>
-    )}
+
+      {/* Custom Tab*/}
+      {activeTab === 'custom' && (
+        <>
+          <ReportBuilderToolbar
+            reportType={customFilters.reportType as ReportType}
+            tab="custom"
+            onGenerateReport={handleGenerateCustomReport}
+            onCustomReportTypeChange={setCustomReportType}
+            customReportType={customReportType}
+            onExport={handleExport}
+            onShare={handleShare}
+            isLoading={customReportState.loading}
+            selectedFiltersCount={getCustomSelectedFiltersCount()}
+          />
+
+          {/* Filters for Custom tab */}
+          <ReportBuilderFilters
+            expanded={filtersExpanded}
+            onToggle={() => setFiltersExpanded(!filtersExpanded)}
+            filters={customFilters}
+            onFiltersChange={handleCustomFiltersChange}
+            onResetFilters={handleResetCustomFilters}
+            mode="custom"
+          />
+
+          <Box
+            sx={{
+              flex: 1,
+              backgroundColor: '#F9FAFB',
+              overflow: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              p: 0,
+            }}
+          >
+            <CustomTab
+              showActuals={customFilters.show_actuals || false}
+              APIFilters={APIFilters}
+              customReportType={customReportType}
+            />
+          </Box>
+        </>
+      )}
     </Box>
   );
 }
 
-export default withRBAC(ReportBuilderPage, ['Reports']);
+export default withRBAC(ReportBuilderPage, [
+  'Reports',
+  'AISummary',
+  'CustomReports',
+]);

@@ -185,7 +185,7 @@ export const bulkDeleteAllocations = async postData => {
 export const fetchHistory = async payload => {
   let response;
   response = await axiosInstance.post(
-    `${API_PROJECT_PORTFOLIO}/GetAllocationHistory`,
+    `${API_PROJECT_PORTFOLIO}/GetAllocationHistoryDetailsWithSql`,
     payload
   );
   return response.data;

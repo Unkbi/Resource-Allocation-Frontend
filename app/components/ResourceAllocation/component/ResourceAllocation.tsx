@@ -6,7 +6,6 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import {
-  calculateTotalEffort,
   formatDateMMDDYYYY,
   getAllocationManagerFromPath,
   getResourceFromUid,
@@ -81,8 +80,8 @@ function ResourceAllocation({
     (state: RootState) => state.resources.resources
   );
   const { location } = useSelector((state: RootState) => state.allSettings);
-  const { showActuals } = useSelector(
-    (state: RootState) => state.allocationView
+  const showActuals = useSelector(
+    (state: RootState) => state.allocationView.currentView?.showActuals ?? false
   );
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
@@ -144,8 +143,7 @@ function ResourceAllocation({
 
         const formattedResources = filteredResources?.map(allocation => ({
           ...allocation,
-          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+         hasAllocation: (allocation?.totalEffort ?? 0) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
             _resources || []

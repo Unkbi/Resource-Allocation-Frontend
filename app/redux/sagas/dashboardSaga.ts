@@ -4,6 +4,7 @@ import { fetchDashboardChart, fetchInventoryMetrics, fetchReport } from '../acti
 import { setDashboardChart, startChartLoading, startMultipleChartsLoading, startReportLoading, setReportRequestPayload, setReportData, setReportError } from '../reducers/dashboardReducer';
 import { RootState } from '../store';
 import { fetchDashboardChartData, DashboardFilterPayload, fetchDashboardChartsByGroup, buildReportPayload, fetchReportData } from '../../services/dashboardServices';
+import { fetchCustomReport } from '../../services/customReportServices';
 
 
 function* fetchDashboardChartSaga(action: { payload: ChartParams }): Generator<any, void, any> {
@@ -42,10 +43,52 @@ function* fetchDashboardChartSaga(action: { payload: ChartParams }): Generator<a
   }
 }
 
+// Fetch custom allocation percentage using the custom report API
+function* fetchCustomAllocationPercentageSaga(action: { payload: ChartParams }): Generator<any, void, any> {
+  const { startDate, endDate } = action.payload;
+  
+  yield put(startChartLoading('custom_allocation_percentage'));
+  
+  const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
+  
+  try {
+    const advancedFilters: ReturnType<typeof selectAdvancedFilters> = yield select(selectAdvancedFilters);
+    
+    // Prepare payload using the same structure as CustomTab
+    const apiFilters = {
+      Projects: advancedFilters.Project || [],
+      ProjectTypeGroups: advancedFilters.ProjectTypeGroup || [],
+      ProjectTypes: advancedFilters.ProjectType || [],
+      Teams: advancedFilters.Team || [],
+      Organizations: advancedFilters.Organization || [],
+      ProjectStatuses: ['Active'],
+      StartDate: startDate,
+      EndDate: endDate,
+    };
+
+    // Call the custom report API
+    const response: any = yield call(
+      fetchCustomReport as any,
+      apiFilters
+    );
+    
+    // Extract ChartData from the response
+    const chartData = response?.ChartData || [];
+    
+    yield put(setDashboardChart({ 
+      chartKey: 'custom_allocation_percentage', 
+      data: chartData 
+    }));
+  } catch (err) {
+    console.error('Custom allocation percentage fetch failed', err);
+    yield put(setDashboardChart({ chartKey: 'custom_allocation_percentage', data: [] }));
+  }
+}
+
 function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator<any, void, any> {
   const { startDate, endDate, bucket } = action.payload;
   
-  // Mark all inventory charts as loading
+  // Mark all inventory charts as loading (excluding custom_allocation_percentage as it has its own saga)
   yield put(startMultipleChartsLoading([
     'activeProjects',
     'systemActiveProjects',
@@ -57,6 +100,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
     'allocation_by_project_type_group',
     'plan_vs_actual_variance',
     'actuals_confirmation_status',
+    'weeklyLoggedInUsersByTeam',
   ]));
   
   const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
@@ -136,7 +180,11 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({
           chartKey: 'actuals_confirmation_status',
           data: responseData.actuals_confirmation_status ? [responseData.actuals_confirmation_status] : []
-        })),
+        })),        
+        put(setDashboardChart({
+          chartKey: 'weeklyLoggedInUsersByTeam',
+          data: responseData.weekly_logged_in_users_by_team || []
+        })),      
       ]);
     } else {
       yield all([
@@ -152,6 +200,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
         put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
         put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
+        put(setDashboardChart({ chartKey: 'weeklyLoggedInUsersByTeam', data: [] })),
       ]);
     }
   } catch (err) {
@@ -169,6 +218,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
       put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
       put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
       put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
+      put(setDashboardChart({ chartKey: 'weeklyLoggedInUsersByTeam', data: [] })),
     ]);
   }
 }
@@ -190,6 +240,12 @@ function* fetchReportSaga(action: { payload: { reportType: string; uiFilters: an
 
 export function* dashboardSaga() {
   yield takeEvery(fetchDashboardChart, fetchDashboardChartSaga);
-  yield takeEvery(fetchInventoryMetrics, fetchInventoryMetricsSaga);
+  yield takeEvery(fetchInventoryMetrics, function* (action) {
+    // Call both inventory metrics and custom allocation in parallel
+    yield all([
+      call(fetchInventoryMetricsSaga, action),
+      call(fetchCustomAllocationPercentageSaga, action),
+    ]);
+  });
   yield takeEvery(fetchReport, fetchReportSaga);
 }

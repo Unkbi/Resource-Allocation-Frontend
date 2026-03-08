@@ -75,6 +75,7 @@ import AllProjectIcon from '../TableIcons/AllProjectIcon';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import {
   setCurrentView,
+  setRemoveContractorPT,
   setShowActuals,
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
@@ -593,9 +594,11 @@ const FlatIcon = () => <img src="/images/icons/FlatView.svg" alt="flat view" />;
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
-  const { view, savedViews, currentView, showActuals } = useSelector(
+  const { view, savedViews, currentView } = useSelector(
     state => state.allocationView
   );
+  const showActuals = currentView?.showActuals ?? false;
+  const removeContractorPT = currentView?.removeContractorPT ?? false;
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { projects, calendarDate: projectsCalendar } = useSelector(
     state => state.projects
@@ -1113,6 +1116,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
 
   const handleShowActualsToggle = () => {
     dispatch(setShowActuals(!showActuals));
+  };
+
+  const handleRemoveContractorPTToggle = () => {
+    dispatch(setRemoveContractorPT(!removeContractorPT));
   };
 
   return (
@@ -1872,6 +1879,74 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                           <span>● Yellow</span> = actuals are lower
                           <br />
                           <span>● Red</span> = actuals are higher than planned.
+                        </Typography>
+                      </Box>
+                    }
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <img src="/images/icons/InfoRounded.svg" alt="info" />
+                    </Box>
+                  </Tooltip>
+                </Box>
+              )}
+              <Box
+                sx={{
+                  borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+                  ml: '20px',
+                  height: '34px',
+                  position: 'relative',
+                  top: '10px',
+                }}
+              ></Box>
+              {permissions && permissions['ActualsStatus']?.r && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginLeft: '22px',
+                  }}
+                >
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={!removeContractorPT}
+                        disabled={currentView?.GroupBy.includes('Cost')}
+                        onChange={handleRemoveContractorPTToggle}
+                        size="small"
+                        sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
+                      />
+                    }
+                    label={
+                      <Typography
+                        sx={{
+                          color: '#374151',
+                          fontFamily: 'Open Sans',
+                          fontSize: '14px',
+                          fontStyle: 'normal',
+                          fontWeight: 500,
+                          lineHeight: '20px',
+                          marginRight: '-12px',
+                        }}
+                      >
+                        Part-time Resources
+                      </Typography>
+                    }
+                  />
+                  <Tooltip
+                    placement="right"
+                    title={
+                      <Box>
+                        <Typography variant="body2">
+                          Includes part-time resources in capacity and
+                          availability calculations. When enabled, part-time
+                          resources contribute to the team’s headcount and may
+                          impact capacity indicators
                         </Typography>
                       </Box>
                     }

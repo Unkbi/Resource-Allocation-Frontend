@@ -37,6 +37,7 @@ import {
   AllocationForm_Status_Filter,
   DATE_FORMAT,
   PROJECT_ALLOCATION_STATUS,
+  PROJECT_INACTIVE_STATUS,
   teamsViewsGrouping,
 } from '../constants/constants';
 import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
@@ -45,6 +46,7 @@ import {
   fetchResourceAllocationsForSaga,
   fetchTeamAllocationsForSaga,
 } from '../services/teamServices';
+import { ProjectTotal, ProjectTotalCost } from '../types/allocationTotalsTypes';
 
 export const formatAllocations = (
   allocationsData: ApiResponse<Allocation[]>,
@@ -185,7 +187,9 @@ export function formatAllAllocations(
   allResourcesDetail: AllResourceDetail[],
   location: Location[],
   startDate: string,
-  endDate: string
+  endDate: string,
+  totalAllocations: any[],
+  totalAllocationsTillDate: any[]
 ) {
   if (!allocations || allocations.length === 0) {
     return [];
@@ -205,6 +209,18 @@ export function formatAllAllocations(
       r => r?.Resource?.Id === alloc.Resource
     );
     const resource = resourceDetails?.Resource;
+    const allTimeTotal = totalAllocations?.find(
+      (t: any) => t.Project === alloc.Project
+    );
+    const resourceAllTimeTotal = allTimeTotal?.ResourceTotals?.find(
+      (r: any) => r.Resource === alloc.Resource
+    );
+    const tillDateTotal = totalAllocationsTillDate?.find(
+      (t: any) => t.Project === alloc.Project
+    );
+    const resourceTillDateTotal = tillDateTotal?.ResourceTotals?.find(
+      (r: any) => r.Resource === alloc.Resource
+    );
     // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
     // Filter out Allocations that belong to projects without an PROJECT_ACTIVE_STATUS Status.
     if (
@@ -245,7 +261,12 @@ export function formatAllAllocations(
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
         projectTypeGroup: projectTypeGroup?.Name || null,
-        projectOvertimeAllowed:project?.AllowOvertime === true ? 'Yes': project?.AllowOvertime === false ? 'No': null,
+        projectOvertimeAllowed:
+          project?.AllowOvertime === true
+            ? 'Yes'
+            : project?.AllowOvertime === false
+              ? 'No'
+              : null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
@@ -264,7 +285,8 @@ export function formatAllAllocations(
         workLocation: locationDetails?.Name || null,
         department: resource?.Department || null,
         hrLevel: resource?.HRLevel || null,
-        manager: getResourceFromUid(resource?.Manager , resources)?.FullName ||null,
+        manager:
+          getResourceFromUid(resource?.Manager, resources)?.FullName || null,
         contractorHourlyRate: resource?.ContractorHourlyRate || null,
         contractorHourlyRateCurrency:
           resource?.ContractorHourlyRateCurrency || null,
@@ -273,7 +295,20 @@ export function formatAllAllocations(
         organisationId: organisation?.Id,
         organisationName: organisation?.Name,
         organisationStatus: organisation?.Status,
-        totalEffort: 0,
+        totalEffort:
+          Math.round(
+            (resourceAllTimeTotal?.TotalAllocationsEntered ?? 0) * 100
+          ) / 100,
+        totalAllocationsTillDate: {
+          value:
+            Math.round(
+              (resourceTillDateTotal?.TotalAllocationsEntered ?? 0) * 100
+            ) / 100,
+          actuals:
+            Math.round(
+              (resourceTillDateTotal?.TotalActualsEntered ?? 0) * 100
+            ) / 100,
+        },
       };
 
       for (const w of weeks) {
@@ -298,8 +333,6 @@ export function formatAllAllocations(
       actuals: alloc.ActualsEntered || null,
       notes: alloc.Notes || null,
     };
-
-    entry.totalEffort += alloc.AllocationEntered;
   }
 
   return sortAllAllocations(Array.from(grouped.values()));
@@ -407,6 +440,103 @@ export function injectBlankRows(
   return [...allocations, ...extraRows];
 }
 
+export function injectBlankProjectRows(
+  allocations: AllAllocations[],
+  projects: Project[],
+  portfolios: Portfolio[],
+  projectTypes: ProjectType[],
+  resources: Resource[],
+  StartDate?: string,
+  EndDate?: string
+) {
+  let weeks = null;
+  if (StartDate && EndDate) {
+    weeks = getWeeksInRange(StartDate, EndDate);
+  }
+
+  const existingKeys = new Set(allocations.map(a => `${a.project}___`));
+
+  const extraRows: AllAllocations[] = [];
+
+  projects.forEach(project => {
+    // Filter out Allocations that belong to resource without an AllocationForm_Status_FILTER Status.
+    if (project?.Status && PROJECT_INACTIVE_STATUS.includes(project?.Status))
+      return;
+
+    const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
+    const key = `${project.Name}___`;
+
+    const projectType = projectTypes.find(pt => pt.Id === project?.Type);
+
+    if (!existingKeys.has(key)) {
+      extraRows.push({
+        id: `project/${project.Name}`,
+        resourceId: null,
+        project: project.Name,
+        projectId: project.Id,
+        projectSponsor:
+          getResourceFromUid(project?.ProjectSponsor, resources)?.FullName ||
+          null,
+        projectManager:
+          getResourceFromUid(project?.ProjectManager, resources)?.FullName ||
+          null,
+        projectStatus: project.Status || '',
+        projectLocation: project.Location || '',
+        projectType: projectType?.Name || '',
+        projectTypeGroup: '',
+        projectOvertimeAllowed: project.AllowOvertime || null,
+        projectCost: project.Budget || null,
+        projectCurrency: project.BudgetCurrency || '',
+        projectStartDate: project.StartDate || '',
+        projectEndDate: project.EndDate || '',
+        projectDescription: project.Description || '',
+        portfolioId: portfolio ? portfolio?.Id : null,
+        portfolioName: portfolio ? portfolio?.Name : 'zzzzz',
+        portfolioSidebarColor: portfolio ? portfolio?.SidebarColor : null,
+        portfolioDescription: portfolio ? portfolio?.Description || null : null,
+        portfolioStatus: portfolio ? portfolio?.Status || null : null,
+        organisationId: null,
+        organisationName: '',
+        organisationStatus: '',
+        email: null,
+        phoneNumber: null,
+        resourceStartDate: null,
+        resourceEndDate: null,
+        resourceLocationCategory: null,
+        workLocation: null,
+        department: null,
+        hrLevel: null,
+        manager: null,
+        contractorHourlyRate: null,
+        contractorHourlyRateCurrency: null,
+        averageWeeklyHours: null,
+        resourceStatus: null,
+        resource: null,
+        totalEffort: 0,
+        role: '',
+        teams: '',
+        resourceType: '',
+        teamStatus: '',
+        teamAllocationManager: '',
+        teamId: '',
+        hasAllocation: false,
+      });
+
+      if (weeks) {
+        weeks.forEach(week => {
+          extraRows[extraRows.length - 1][week.key] = {
+            allocationId: null,
+            value: null,
+            period: week.period,
+          };
+        });
+      }
+    }
+  });
+
+  return [...allocations, ...extraRows];
+}
+
 export function formatCostAllocations(
   allocations: CostAllocation[],
   teams: Team[],
@@ -417,7 +547,8 @@ export function formatCostAllocations(
   location: Location[],
   teamResources: Record<string, Resource[]>, // UPDATED TYPE
   startDate: string,
-  endDate: string
+  endDate: string,
+  totalAllocationCosts: ProjectTotalCost[]
 ) {
   if (!allocations || allocations.length === 0) {
     return [];
@@ -451,6 +582,14 @@ export function formatCostAllocations(
       ptg => ptg.Id === projectType?.Group
     );
     const resource = resources.find(r => r.Id === alloc.Resource);
+
+    const allTimeTotal = totalAllocationCosts?.find(
+      (t: any) => t.Project === alloc.Project
+    );
+    const resourceAllTimeTotalCost = allTimeTotal?.ResourceCosts?.find(
+      (r: any) => r.Resource === alloc.Resource
+    );
+
     // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
     if (
       resource?.Status &&
@@ -488,7 +627,12 @@ export function formatCostAllocations(
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
         projectTypeGroup: projectTypeGroup?.Name || null,
-        projectOvertimeAllowed:project?.AllowOvertime === true ? 'Yes' : project?.AllowOvertime === false ? 'No': null,
+        projectOvertimeAllowed:
+          project?.AllowOvertime === true
+            ? 'Yes'
+            : project?.AllowOvertime === false
+              ? 'No'
+              : null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
@@ -502,13 +646,14 @@ export function formatCostAllocations(
         workLocation: locationDetails?.Name || null,
         department: resource?.Department || null,
         hrLevel: resource?.HRLevel || null,
-        manager: getResourceFromUid(resource?.Manager , resources)?.FullName ||null,
+        manager:
+          getResourceFromUid(resource?.Manager, resources)?.FullName || null,
         contractorHourlyRate: resource?.ContractorHourlyRate || null,
         contractorHourlyRateCurrency:
           resource?.ContractorHourlyRateCurrency || null,
         averageWeeklyHours: resource?.AverageWeeklyHours || null,
         resourceStatus: resource?.Status || null,
-        totalEffort: 0,
+        totalEffort: (resourceAllTimeTotalCost?.TotalPlannedCost ?? 0) / 1000,
       };
 
       for (const w of weeks) {
@@ -531,7 +676,6 @@ export function formatCostAllocations(
       value: alloc.Cost,
       period: alloc.Period.split('T')[0],
     };
-    entry.totalCost += alloc.Cost;
   }
 
   return Array.from(grouped.values());
@@ -564,6 +708,8 @@ export const generateEmptyRow = (
   allResourcesDetail: AllResourceDetail[],
   portfolios: Portfolio[] | null,
   projects: Project[] | null,
+  projectTypes: ProjectType[],
+  projectTypeGroups: ProjectTypeGroup[],
   resources: Resource[],
   location: Location[],
   allocation: Allocation
@@ -583,6 +729,10 @@ export const generateEmptyRow = (
 
   const team = resourceIdToTeam.get(allocation.Resource);
   const project = projects?.find(p => p.Id === allocation.Project);
+  const projectType = projectTypes.find(pt => pt.Id === project?.Type);
+  const projectTypeGroup = projectTypeGroups.find(
+    ptg => ptg.Id === projectType?.Group
+  );
   const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
   const resource = resources.find(r => r.Id === allocation.Resource);
   const locationDetails = location?.find(l => l?.Id === resource?.WorkLocation);
@@ -623,9 +773,14 @@ export const generateEmptyRow = (
       getResourceFromUid(project?.ProjectManager, resources)?.FullName || null,
     projectStatus: project?.Status || null,
     projectLocation: project?.Location || null,
-    projectType: project?.Type || null,
-    projectTypeGroup: null,
-    projectOvertimeAllowed: project?.AllowOvertime === true? 'Yes': project?.AllowOvertime === false ? 'No': null,
+    projectType: projectType?.Name || null,
+    projectTypeGroup: projectTypeGroup?.Name || null,
+    projectOvertimeAllowed:
+      project?.AllowOvertime === true
+        ? 'Yes'
+        : project?.AllowOvertime === false
+          ? 'No'
+          : null,
     projectCost: project?.Budget ?? null,
     projectCurrency: project?.BudgetCurrency || null,
     projectStartDate: project?.StartDate || null,
@@ -639,12 +794,98 @@ export const generateEmptyRow = (
     workLocation: locationDetails?.Name || null,
     department: resource?.Department || null,
     hrLevel: resource?.HRLevel || null,
-    manager: getResourceFromUid(resource?.Manager , resources)?.FullName ||null,
+    manager: getResourceFromUid(resource?.Manager, resources)?.FullName || null,
     contractorHourlyRate: resource?.ContractorHourlyRate || null,
     contractorHourlyRateCurrency:
       resource?.ContractorHourlyRateCurrency || null,
     averageWeeklyHours: resource?.AverageWeeklyHours || null,
     resourceStatus: resource?.Status || null,
+    totalEffort: 0,
+  };
+
+  weeks.forEach(week => {
+    emptyRow[week.key] = {
+      allocationId: null,
+      value: null,
+      period: week.period,
+    };
+  });
+
+  return emptyRow;
+};
+
+export const generateEmptyProjectRow = (
+  startDate: string,
+  endDate: string,
+  portfolios: Portfolio[] | null,
+  projects: Project[] | null,
+  projectTypes: ProjectType[],
+  projectTypeGroups: ProjectTypeGroup[],
+  resources: Resource[],
+  allocation: Allocation
+): AllocationGridCell => {
+  const weeks = getWeeksInRange(startDate, endDate);
+
+  const project = projects?.find(p => p.Id === allocation.Project);
+  const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
+  const key = `project/${allocation.ProjectName}___`;
+
+  const projectType = projectTypes.find(pt => pt.Id === project?.Type);
+  const projectTypeGroup = projectTypeGroups.find(
+    ptg => ptg.Id === projectType?.Group
+  );
+
+  const emptyRow: AllocationGridCell = {
+    id: key,
+    resourceId: null,
+    resource: null,
+    role: null,
+    resourceType: null,
+    teams: null,
+    teamStatus: null,
+    teamAllocationManager: null,
+    organisationId: null,
+    organisationName: null,
+    organisationStatus: null,
+    portfolioId: portfolio ? portfolio?.Id : null,
+    portfolioName: portfolio ? portfolio?.Name : 'zzzzz',
+    portfolioSidebarColor: portfolio ? portfolio?.SidebarColor : null,
+    portfolioDescription: portfolio ? portfolio?.Description || null : null,
+    portfolioStatus: portfolio ? portfolio?.Status || null : null,
+    project: project?.Name || allocation.ProjectName || null,
+    projectId: project?.Id || allocation.Project || null,
+    projectSponsor:
+      getResourceFromUid(project?.ProjectSponsor, resources)?.FullName || null,
+    projectManager:
+      getResourceFromUid(project?.ProjectManager, resources)?.FullName || null,
+    projectStatus: project?.Status || null,
+    projectLocation: project?.Location || null,
+    projectType: projectType?.Name || null,
+    projectTypeGroup: projectTypeGroup?.Name || null,
+    projectOvertimeAllowed:
+      project?.AllowOvertime === true
+        ? 'Yes'
+        : project?.AllowOvertime === false
+          ? 'No'
+          : null,
+    projectCost: project?.Budget ?? null,
+    projectCurrency: project?.BudgetCurrency || null,
+    projectStartDate: project?.StartDate || null,
+    projectEndDate: project?.EndDate || null,
+    projectDescription: project?.Description || null,
+    email: null,
+    phoneNumber: null,
+    resourceStartDate: null,
+    resourceEndDate: null,
+    resourceLocationCategory: null,
+    workLocation: null,
+    department: null,
+    hrLevel: null,
+    manager: null,
+    contractorHourlyRate: null,
+    contractorHourlyRateCurrency: null,
+    averageWeeklyHours: null,
+    resourceStatus: null,
     totalEffort: 0,
   };
 
@@ -686,6 +927,8 @@ export const getFormattedAllocationsForUpdate = (
   projects: Project[],
   resources: Resource[],
   location: Location[],
+  projectTypes: ProjectType[],
+  projectTypeGroups: ProjectTypeGroup[],
   splitView: boolean,
   bottomTeamAllocationGrid: GridApi,
   teamAllocationGrid: GridApi,
@@ -763,6 +1006,8 @@ export const getFormattedAllocationsForUpdate = (
         allResourcesDetail || [],
         portfolios || null,
         projects || [],
+        projectTypes || [],
+        projectTypeGroups || [],
         resources || [],
         location || [],
         allocation
