@@ -392,7 +392,7 @@ function ReportBuilderToolbar({
       {/* Right side - Actions */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         {/* My Reports Dropdown */}
-        {tab === 'reports' && (
+        {/* {tab === 'reports' && ( */}
           <Button
             variant="outlined"
             onClick={handleMenuOpen}
@@ -433,7 +433,7 @@ function ReportBuilderToolbar({
               {selectedReportName}
             </Typography>
           </Button>
-        )}
+        {/* )} */}
 
         <Menu
           anchorEl={menuAnchor}
