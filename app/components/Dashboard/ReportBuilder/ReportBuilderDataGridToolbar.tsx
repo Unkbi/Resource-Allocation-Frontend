@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tooltip, styled, IconButton,Button, Box, Menu } from '@mui/material';
 import {
   GridToolbarContainer,
   useGridApiContext,
   GridToolbarColumnsButton,
+  GridToolbarFilterButton,
   GridToolbarProps,
   GridColumnsPanel,
   useGridSelector,
@@ -14,7 +15,7 @@ import { download, mkConfig } from 'export-to-csv';
 import ReportBuilderExport from './ReportBuilderExport';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
-import { ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
+import { ColumnManagementStyles, FilterPanelStyles } from '../../AllocationTable/styles/StyledDataGrid';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 interface ReportBuilderDataGridToolbarExtraProps {
@@ -62,6 +63,25 @@ export default function ReportBuilderDataGridToolbar({
 }: ReportBuilderDataGridToolbarProps) {
   const apiRef = useGridApiContext();
   const [columnsAnchorEl, setColumnsAnchorEl] = useState<null | HTMLElement>(null);
+  const [filterCount, setFilterCount] = useState(0);
+
+  // Track filter count
+  useEffect(() => {
+    if (apiRef?.current) {
+      const updateFilterCount = () => {
+        const filters = apiRef.current.state.filter.filterModel.items;
+        // Count filters that have a value (including 0, false, empty array, etc.)
+        const activeCount = filters.filter((f: any) => f.value !== null && f.value !== undefined).length;
+        setFilterCount(activeCount);
+      };
+      updateFilterCount();
+      const unsubscribe = apiRef.current.subscribeEvent(
+        'filterModelChange',
+        updateFilterCount
+      );
+      return unsubscribe;
+    }
+  }, [apiRef]);
 
   const handleToggleFullscreen = () => {
     onToggleFullscreen?.();
@@ -75,6 +95,16 @@ export default function ReportBuilderDataGridToolbar({
     setColumnsAnchorEl(null);
   };
 
+  const handleOpenFilter = (event: React.MouseEvent<HTMLElement>) => {
+    // Use the DataGrid's built-in filter panel
+    apiRef?.current?.showFilterPanel();
+  };
+
+  const handleCloseFilter = () => {
+    apiRef?.current?.hideFilterPanel();
+  };
+
+
   return (
     <GridToolbarContainer
       sx={{
@@ -86,6 +116,10 @@ export default function ReportBuilderDataGridToolbar({
         px: 3
       }}
     >
+      {/* Hidden filter button for DataGrid integration */}
+      <Box sx={{ display: 'none' }}>
+        <GridToolbarFilterButton />
+      </Box>
         <Box
           sx={{
             display: 'flex',
@@ -127,18 +161,7 @@ export default function ReportBuilderDataGridToolbar({
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
-  {/* ************* Part of save reports feature****************  */}
-         
-        {/* <Tooltip title="Save Report">
-          <SmallIconButton onClick={handleOpenColumns} aria-label="save report">
-            <img
-              src="/images/icons/SaveIcon.svg"
-              alt="save report"
-              style={{ width: 36, height: 40 }}
-            />
-          </SmallIconButton>
-        </Tooltip> */}
-        {tab === 'aisummary' && (
+         {tab === 'aisummary' && (
             <Box
               sx={{
                 display: 'flex',
@@ -159,6 +182,51 @@ export default function ReportBuilderDataGridToolbar({
               </Box>
             </Box>
           )}
+
+  {/* ************* Part of save reports feature****************  */}
+         
+         <Tooltip title="Save Report">
+          <SmallIconButton onClick={handleOpenColumns} aria-label="save report">
+            <img
+              src="/images/icons/SaveIcon.svg"
+              alt="save report"
+              style={{ width: 36, height: 40 }}
+            />
+          </SmallIconButton>
+        </Tooltip>
+
+        <Tooltip title="Filter">
+          <SmallIconButton 
+            onClick={handleOpenFilter} 
+            aria-label="filter"
+            sx={{
+              position: 'relative',
+              '&::after': filterCount > 0 ? {
+                content: `"${filterCount}"`,
+                position: 'absolute',
+                top: 2,
+                right: 2,
+                backgroundColor: '#152E75',
+                color: '#fff',
+                borderRadius: '50%',
+                width: 16,
+                height: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 10,
+                fontWeight: 600,
+              } : {},
+            }}
+          >
+            <img
+              src="/images/icons/NewFilterIcon.svg"
+              alt="filter"
+              style={{ width: 36, height: 40 }}
+            />
+          </SmallIconButton>
+        </Tooltip>
+       
 
         <Tooltip title="Columns">
           <SmallIconButton onClick={handleOpenColumns} aria-label="columns">

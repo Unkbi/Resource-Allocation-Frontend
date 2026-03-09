@@ -11,6 +11,7 @@ export interface ChartReportConfig {
   customEndDate?: string;
   additionalFilters?: Record<string, string | string[]>;
   show_actuals?: string;
+  gridFilters?: Record<string, string | string[]>; // Filters to apply to DataGrid after report generation
 }
 
 /**
@@ -78,6 +79,12 @@ export const buildReportUrl = (
       }
     });
   }
+
+  // Add gridFilters separately for DataGrid filtering after report generation
+  if (config.gridFilters) {
+    params.set('gridFilters', JSON.stringify(config.gridFilters));
+  }
+  
   const encodedParams = compressToEncodedURIComponent(
     params.toString()
   );
