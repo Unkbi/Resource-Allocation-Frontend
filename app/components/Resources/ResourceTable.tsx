@@ -121,6 +121,7 @@ const ResourceTable = ({
         localeText={{
           toolbarFilters: '',
           toolbarColumns: '',
+          toolbarExport: '', 
         }}
         sx={{
           height: '95vh',

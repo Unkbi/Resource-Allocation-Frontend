@@ -114,6 +114,7 @@ const TeamsTable = ({
         localeText={{
           toolbarFilters: '',
           toolbarColumns: '',
+          toolbarExport: '', 
         }}
         sx={{
           height: '100vh',

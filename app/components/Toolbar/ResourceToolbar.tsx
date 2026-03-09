@@ -1,8 +1,11 @@
 import React, { SyntheticEvent } from 'react';
 import { Box, Tabs, Tab, styled, Button } from '@mui/material';
 import {
+  GridCsvExportMenuItem,
+  GridExcelExportMenuItem,
   GridToolbarColumnsButton,
   GridToolbarContainer,
+  GridToolbarExportContainer,
 } from '@mui/x-data-grid-premium';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
@@ -239,6 +242,39 @@ const ResourceToolbar = ({
                 },
               }}
             />
+            <GridToolbarExportContainer
+              slotProps={{
+                button: {
+                  variant: 'outlined',
+                  startIcon: (
+                    <img
+                      src="/images/icons/ExportIcon.svg"
+                      alt="export"
+                      style={{ width: 40, height: 40 }}
+                    />
+                  ),
+                  sx: {
+                    backgroundColor: 'white',
+                    border: '1px solid #D0D5DD',
+                    borderRadius: '6px',
+                    height: '38px',
+                    width: '38px',
+                    minWidth: '34px',
+                    padding: '0px',
+                    color: 'rgb(33, 33, 33)',
+                    textTransform: 'none',
+                    '& .MuiButton-startIcon': {
+                      margin: 0,
+                    },
+                  },
+                },
+              }}
+            >
+              <GridExcelExportMenuItem options={{ fileName: `${value}_data` }} />
+              <GridCsvExportMenuItem
+                options={{ fileName: `${value}_data` }} />
+            </GridToolbarExportContainer>
+      
             {/* Commenting out download Icon  */}
             {/* <ActionButton
               src="/images/icons/newExportPeople.svg"

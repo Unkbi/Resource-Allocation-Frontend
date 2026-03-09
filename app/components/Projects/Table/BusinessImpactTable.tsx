@@ -99,6 +99,7 @@ const BusinessImpactTable = ({
         localeText={{
           toolbarFilters: '',
           toolbarColumns: '',
+          toolbarExport: '',
         }}
         sx={{
           height: '95vh',

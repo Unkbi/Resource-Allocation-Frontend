@@ -114,6 +114,7 @@ export default function SettingsTable({
           }}
           localeText={{
             toolbarFilters: '',
+            toolbarExport: '',
           }}
           sx={{
             border: 'none',

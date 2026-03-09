@@ -2,7 +2,10 @@
 
 import { Box, Button, Typography } from '@mui/material';
 import {
+  GridCsvExportMenuItem,
+  GridExcelExportMenuItem,
   GridToolbarContainer,
+  GridToolbarExportContainer,
 } from '@mui/x-data-grid-premium';
 import FilterButtonWithCount from './FilterButtonWithCount';
 
@@ -64,6 +67,39 @@ export default function SettingsToolbar({
       {/* Right Side: Filter + Button */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <FilterButtonWithCount />
+          <GridToolbarExportContainer
+              slotProps={{
+                button: {
+                  variant: 'outlined',
+                  startIcon: (
+                    <img
+                      src="/images/icons/ExportIcon.svg"
+                      alt="export"
+                      style={{ width: 40, height: 40 }}
+                    />
+                  ),
+                  sx: {
+                    backgroundColor: 'white',
+                    border: '1px solid #D0D5DD',
+                    borderRadius: '6px',
+                    height: '38px',
+                    width: '38px',
+                    minWidth: '34px',
+                    padding: '0px',
+                    color: 'rgb(33, 33, 33)',
+                    textTransform: 'none',
+                    '& .MuiButton-startIcon': {
+                      margin: 0,
+                    },
+                  },
+                },
+              }}
+            >
+        <GridExcelExportMenuItem
+          options={{ fileName: `${title}_data` }} />
+              <GridCsvExportMenuItem
+                options={{ fileName: `${title}_data` }} />
+            </GridToolbarExportContainer>
         {buttonLabel && (
           <Button
             variant="contained"
@@ -83,6 +119,7 @@ export default function SettingsToolbar({
           </Button>
         )}
       </Box>
+      
     </GridToolbarContainer>
   );
 }
