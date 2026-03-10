@@ -9,7 +9,8 @@ export type actualsDisplayType = HOURS | PERCENTAGES | FRACTIONS;
 export interface UserPreferences {
   userPreferences: ScalarSettings | null;
   actualsDisplayType: actualsDisplayType;
-  loading: false;
+  loading: boolean;
+  preferenceChanging: boolean;
   error: null;
 }
 
