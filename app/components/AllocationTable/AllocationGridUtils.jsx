@@ -571,7 +571,7 @@ export const getFinalColumns = (
     state => state.allocationView
   );
   const { scalarSettings } = useSelector(state => state.allSettings);
-  const { userPreferences } = useSelector(state => state.userPreferences);
+  const { userPreferences } = useSelector(state => state.userPreferences) ?? {};
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,

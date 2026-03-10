@@ -132,7 +132,7 @@ function Project({ permissions, loadingPermissions }) {
   );
   const { users } = useSelector(state => state.allSettings);
   const { projectTypes } = useSelector(state => state.allSettings);
-  const { followsByObjectId } = useSelector(state => state.follows);
+  const { followsByObjectId } = useSelector(state => state.follows) ?? {};
   const { user } = useSelector(state => state.user);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
