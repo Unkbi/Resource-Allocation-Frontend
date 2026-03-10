@@ -611,6 +611,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   );
   const showActuals = currentView?.showActuals ?? false;
   const removeContractorPT = currentView?.removeContractorPT ?? false;
+  const showDateHeader = currentView?.showDateHeader ?? false;
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { projects, calendarDate: projectsCalendar } = useSelector(
     state => state.projects
@@ -1160,6 +1161,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
 
   const handleRemoveContractorPTToggle = () => {
     dispatch(setRemoveContractorPT(!removeContractorPT));
+  };
+
+  const handleShowDateHeaderToggle = () => {
+    dispatch(updateCurrentView({ showDateHeader: !showDateHeader }));
   };
 
   return (
@@ -2071,6 +2076,42 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               </FormControl>
             </>
           )}
+          <Box
+            sx={{
+              borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+              ml: '20px',
+              height: '34px',
+              position: 'relative',
+              top: '10px',
+            }}
+          ></Box>
+          <ToolBox2>
+            <Stack direction="row" sx={{ alignItems: 'center' }}>
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#344665',
+                }}
+              >
+                Weeks
+              </Typography>
+              <Switch
+                size="small"
+                checked={showDateHeader}
+                onChange={handleShowDateHeaderToggle}
+              />
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#344665',
+                }}
+              >
+                Date
+              </Typography>
+            </Stack>
+          </ToolBox2>
         </Box>
 
         <Box
