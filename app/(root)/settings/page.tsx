@@ -220,7 +220,8 @@ const SettingsPanel = ({
             headerText: 'My Projects',
             icon: '',
             content: <FollowSettings />,
-            description: 'Manage your followed projects and teams',
+            // description: 'Manage your followed projects and teams',
+            description: 'Manage your followed projects',
           },
           {
             id: 'allocation-settings',
