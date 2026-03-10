@@ -5,6 +5,7 @@ const initialState: SavedReportsState = {
   savedReports: [],
   loading: false,
   error: null,
+  currentLoadedReport: null,
 };
 
 const savedReportsSlice = createSlice({
@@ -27,9 +28,14 @@ const savedReportsSlice = createSlice({
       state.savedReports.push(action.payload);
     },
     updateSavedReport: (state, action) => {
+      
+      
       const index = state.savedReports.findIndex(
-        report => report.Id === action.payload.Id
+        report => {
+          return report.Id === action.payload.Id;
+        }
       );
+      
       if (index !== -1) {
         state.savedReports[index] = action.payload;
       }
@@ -38,6 +44,9 @@ const savedReportsSlice = createSlice({
       state.savedReports = state.savedReports.filter(
         report => report.Id !== action.payload
       );
+    },
+    setCurrentLoadedReport: (state, action) => {
+      state.currentLoadedReport = action.payload;
     },
   },
 });
@@ -49,6 +58,7 @@ export const {
   addSavedReport,
   updateSavedReport,
   removeSavedReport,
+  setCurrentLoadedReport,
 } = savedReportsSlice.actions;
 
 export default savedReportsSlice.reducer;

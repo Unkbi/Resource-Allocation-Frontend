@@ -1,7 +1,7 @@
-import { call, put, takeEvery } from 'redux-saga/effects';
+import { call, put, takeEvery, select } from 'redux-saga/effects';
 import {
   FETCH_SAVED_REPORTS,
-  SAVE_REPORTS,
+  CREATE_SAVED_REPORT,
   DELETE_SAVED_REPORT,
   UPDATE_SAVED_REPORT,
 } from '../actions/savedReportsActions';
@@ -11,20 +11,25 @@ import {
   setSavedReportsError,
   addSavedReport,
   removeSavedReport,
-  updateSavedReport,
+  updateSavedReport as updateSavedReportReducer,
 } from '../reducers/savedReportsReducer';
 import {
   fetchSavedReportsAPI,
-  saveReportAPI,
+  createSavedReportAPI,
   deleteSavedReportAPI,
   updateSavedReportAPI,
 } from '@/app/services/savedReportsServices';
 import { SavedReport } from '@/app/types/savedReportsTypes';
+import { RootState } from '../store';
 
-function* fetchSavedReportsSaga(): Generator<any, void, any> {
+function* fetchSavedReportsSaga(action: {
+  type: string;
+  payload: { userId: string };
+}): Generator<any, void, any> {
   try {
     yield put(setSavedReportsLoading(true));
-    const reports: SavedReport[] = yield call(fetchSavedReportsAPI);
+    const { userId } = action.payload;
+    const reports: SavedReport[] = yield call(fetchSavedReportsAPI, userId);
     yield put(setSavedReports(reports));
   } catch (error: any) {
     console.error('Failed to fetch saved reports:', error);
@@ -32,26 +37,21 @@ function* fetchSavedReportsSaga(): Generator<any, void, any> {
   }
 }
 
-function* saveReportSaga(action: {
+function* createSavedReportSaga(action: {
   type: string;
   payload: {
-    postData: {
-      Name: string;
-      Description?: string;
-      Filters: any;
-      ReportType: string;
-    };
+    reportData: any;
     resolve: (value: any) => void;
     reject: (error: any) => void;
   };
 }): Generator<any, void, any> {
   try {
-    const { postData, resolve, reject } = action.payload;
-    const savedReport: SavedReport = yield call(saveReportAPI, postData);
+    const { reportData, resolve, reject } = action.payload;
+    const savedReport: SavedReport = yield call(createSavedReportAPI, reportData);
     yield put(addSavedReport(savedReport));
     resolve(savedReport);
   } catch (error: any) {
-    console.error('Failed to save report:', error);
+    console.error('Failed to create saved report:', error);
     action.payload.reject(error);
   }
 }
@@ -79,7 +79,7 @@ function* updateSavedReportSaga(action: {
   type: string;
   payload: {
     reportId: string;
-    reportData: Partial<SavedReport>;
+    reportData: any;
     resolve: (value: any) => void;
     reject: (error: any) => void;
   };
@@ -87,7 +87,7 @@ function* updateSavedReportSaga(action: {
   try {
     const { reportId, reportData, resolve, reject } = action.payload;
     const updatedReport: SavedReport = yield call(updateSavedReportAPI, reportId, reportData);
-    yield put(updateSavedReport(updatedReport));
+    yield put(updateSavedReportReducer(updatedReport));
     resolve(updatedReport);
   } catch (error: any) {
     console.error('Failed to update saved report:', error);
@@ -97,7 +97,7 @@ function* updateSavedReportSaga(action: {
 
 export default function* savedReportsSaga() {
   yield takeEvery(FETCH_SAVED_REPORTS, fetchSavedReportsSaga);
-  yield takeEvery(SAVE_REPORTS, saveReportSaga);
+  yield takeEvery(CREATE_SAVED_REPORT, createSavedReportSaga);
   yield takeEvery(DELETE_SAVED_REPORT, deleteSavedReportSaga);
   yield takeEvery(UPDATE_SAVED_REPORT, updateSavedReportSaga);
 }

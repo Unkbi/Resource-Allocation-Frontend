@@ -1,29 +1,59 @@
 import apiClient from '../utils/apiClient';
-import { SavedReport } from '../types/savedReportsTypes';
+import {
+  SavedReport,
+  CreateSavedReportPayload,
+  UpdateSavedReportPayload,
+  GetUserSavedReportsPayload,
+  GetUserSavedReportsResponse,
+} from '../types/savedReportsTypes';
 
-export const fetchSavedReportsAPI = async (): Promise<SavedReport[]> => {
-  const response = await apiClient.get('/api/reports/saved');
-  return response.data;
+/**
+ * Fetch all saved reports for a specific user
+ * POST /Resource/GetUserSavedReports
+ */
+export const fetchSavedReportsAPI = async (userId: string): Promise<SavedReport[]> => {
+  const payload: GetUserSavedReportsPayload = { UserId: userId };
+  const response = await apiClient.post<GetUserSavedReportsResponse[]>(
+    '/Resource/GetUserReports',
+    payload
+  );
+  // Extract SavedReport from the response array
+  return response.data.map((item) => item.UserReports);
 };
 
-export const saveReportAPI = async (reportData: {
-  Name: string;
-  Description?: string;
-  Filters: any;
-  ReportType: string;
-}): Promise<SavedReport> => {
-  const response = await apiClient.post('/api/reports/saved', reportData);
-  return response.data;
+/**
+ * Create a new saved report
+ * POST /Resource/UserSavedReports
+ */
+export const createSavedReportAPI = async (
+  reportData: CreateSavedReportPayload
+): Promise<SavedReport> => {
+  const response = await apiClient.post(
+    '/Resource/SaveUserReport',
+    reportData
+  );
+  return response.data.UserReports;
 };
 
+/**
+ * Update an existing saved report
+ * PUT /Resource/UserSavedReports/{id}
+ */
 export const updateSavedReportAPI = async (
   id: string,
-  reportData: Partial<SavedReport>
+  reportData: UpdateSavedReportPayload
 ): Promise<SavedReport> => {
-  const response = await apiClient.put(`/api/reports/saved/${id}`, reportData);
-  return response.data;
+  const response = await apiClient.post(
+    `/Resource/SaveUserReport`,
+    reportData
+  );
+  return response.data[0].UserReports;
 };
 
+/**
+ * Delete a saved report
+ * DELETE /Resource/UserSavedReports/{id}
+ */
 export const deleteSavedReportAPI = async (id: string): Promise<void> => {
-  await apiClient.delete(`/api/reports/saved/${id}`);
+  await apiClient.delete(`/Resource/UserReports/${id}`);
 };

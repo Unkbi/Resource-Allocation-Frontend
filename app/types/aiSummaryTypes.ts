@@ -70,6 +70,8 @@ export interface AISummaryState {
   error: string | null;
   loadingHistory: boolean;
   historyError: string | null;
+  uiFilters: any | null; // Store the UI filters used to generate the summary
+  requestPayload: any | null; // Store the API request payload
 }
 
 export type SummaryType = 'project' | 'resource' | 'team'; // Extensible for future summary types

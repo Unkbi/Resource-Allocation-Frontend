@@ -167,6 +167,19 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
     ],
     requiresPeriod: false,
   },
+
+  // AI Summary filters
+  aisummary: {
+    enabledFilters: [
+      'period',
+      'projectType',
+      'projectTypeGroup',
+      'project',
+      'projectManager',
+      'portfolio',
+    ],
+    requiresPeriod: true,
+  },
 };
 
 /**

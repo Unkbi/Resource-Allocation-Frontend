@@ -193,7 +193,7 @@ import {
   CREATE_BUSINESS_IMPACT,
   UPDATE_BUSINESS_IMPACT,
 } from '@/app/redux/actions/businessImpactActions';
-import { SAVE_REPORTS } from '@/app/redux/actions/savedReportsActions';
+import { CREATE_SAVED_REPORT, UPDATE_SAVED_REPORT } from '@/app/redux/actions/savedReportsActions';
 import { UPDATE_TOTAL_ALLOCATIONS } from '@/app/redux/actions/allocationTotalsAction';
 
 const initialValuesMap = {
@@ -3862,24 +3862,53 @@ const AllocationForm = () => {
       }
       case 'save_reports': {
         try {
-          // Include filters from initialData if available
-          const postData = { 
+          // Get userId from Redux state
+          const userId = user?.id;
+          if (!userId) {
+            throw new Error('User ID not found');
+          }
+
+          // Determine report type based on tab
+          let reportType = initialData?.reportType || 'resourceProjectPeriod';
+          let filters = initialData?.filters || {};
+          
+          // For AI Summary tab, handle summaryType
+          if (initialData?.tab === 'aisummary') {
+            // For AI Summary, we store the summaryType in the filters
+            // and use a consistent reportType identifier
+            reportType = 'aisummary';
+            filters = {
+              ...filters,
+              summaryType: initialData?.summaryType || filters?.summaryType || 'project',
+            };
+          } else if (initialData?.tab === 'custom') {
+            // For Custom Reports, ensure we have the correct reportType
+            reportType = initialData?.reportType || 'percentageAllocation';
+          }
+
+          // Prepare report data with all required fields
+          const reportData = {
+            UserId: userId,
             Name: cleanedValues.Name,
             Description: cleanedValues.Description || '',
-            Filters: initialData?.filters || {},
-            ReportType: initialData?.reportType || 'resourceProjectPeriod',
+            ReportType: reportType,
+            Filters: filters, // This now contains the actual uiFilters
+            GridFilters: {}, // Empty for now as per user requirements
+            Columns: initialData?.columns || [], // This now contains currently visible columns
+            IsDefault: false,
           };
+
           const response = await new Promise((resolve, reject) => {
             dispatch({
-              type: SAVE_REPORTS,
+              type: CREATE_SAVED_REPORT,
               payload: {
-                postData,
+                reportData,
                 resolve,
                 reject,
               },
             });
-          }
-          );
+          });
+
           dispatch(
             showToast({
               open: true,
@@ -3909,16 +3938,48 @@ const AllocationForm = () => {
       case 'edit_reports': {
         try {
           const reportId = initialData?.id;
-          const postData = {
+           const userId = user?.id;
+
+           if (!userId) {
+            throw new Error('User ID not found');
+          }
+
+          // Determine report type based on tab
+          let reportType = initialData?.reportType || 'resourceProjectPeriod';
+          let filters = initialData?.filters || {};
+          
+          // For AI Summary tab, handle summaryType
+          if (initialData?.tab === 'aisummary') {
+            // For AI Summary, we store the summaryType in the filters
+            // and use a consistent reportType identifier
+            reportType = 'aisummary';
+            filters = {
+              ...filters,
+              summaryType: initialData?.summaryType || filters?.summaryType || 'project',
+            };
+          } else if (initialData?.tab === 'custom') {
+            // For Custom Reports, ensure we have the correct reportType
+            reportType = initialData?.reportType || 'percentageAllocation';
+          }
+
+          const reportData = {
+            Id: reportId,
+            UserId: userId,
             Name: cleanedValues.Name,
             Description: cleanedValues.Description || '',
+            ReportType: reportType,
+            Filters: filters, // This now contains the actual uiFilters
+            GridFilters: {}, // Empty for now as per user requirements
+            Columns: initialData?.columns || [], // This now contains currently visible columns
+            IsDefault: false,
           };
+
           const response = await new Promise((resolve, reject) => {
             dispatch({
-              type: UPDATE_REPORTS,
+              type: UPDATE_SAVED_REPORT,
               payload: {
                 reportId,
-                postData,
+                reportData,
                 resolve,
                 reject,
               },
@@ -3951,6 +4012,8 @@ const AllocationForm = () => {
         }
         break;
       }
+      //   break;
+      // }
 
       case 'follow_project':
         // Determine object type from initialData (can be 'project' or 'team')

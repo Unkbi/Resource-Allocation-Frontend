@@ -323,6 +323,7 @@ export default function AISummaryTab() {
                   isFullscreen: isFullscreenGrid,
                   onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
                   GridRowCount: rows.length,
+                  reportType: 'aisummary',
                   tab: 'aisummary',
                 } as any,
                 columnsPanel: {
