@@ -106,6 +106,7 @@ import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
 import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
 import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
+import LegendBar from '../AllocationTable/LegendBar';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -646,6 +647,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [allApiSuccess, setAllApiSuccess] = useState(false);
   const { portfolios } = useSelector(state => state.portfolios);
   const { scalarSettings } = useSelector(state => state.allSettings);
+  const [showLegend, setShowLegend] = useState(false);
 
   const projectsLoaded = Array.isArray(projects);
   const resourcesLoaded = Array.isArray(resources);
@@ -1161,6 +1163,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const handleRemoveContractorPTToggle = () => {
     dispatch(setRemoveContractorPT(!removeContractorPT));
   };
+
+ const handleLegendBox = () => {
+   setShowLegend(prev => !prev);
+ };
 
   return (
     <Box className="Toolbar" sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -2077,6 +2083,18 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           className="lowerToolbarRight"
           sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
         >
+          <Button
+            onClick={handleLegendBox}
+            sx={{
+              height: '43px',
+              width: '90px',
+              '&:hover': {
+                backgroundColor: 'transparent',
+              },
+            }}
+          >
+            <img src="/images/icons/legendBtn.svg" alt="Legend" />
+          </Button>
           <GridToolbarContainer
             ref={setFilterButtonEl}
             sx={{ padding: 0, flexWrap: 'nowrap' }}
@@ -2220,6 +2238,11 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </Box>
         </Box>
       </Box>
+      {showLegend && (
+        <Box sx={{ height: '54px', padding: '11px 21px 1px 11px' }}>
+          <LegendBar onClose={() => setShowLegend(false)} />
+        </Box>
+      )}
       <ConfirmDialog
         open={deleteDialogOpen}
         onConfirm={handleConfirmDelete}
