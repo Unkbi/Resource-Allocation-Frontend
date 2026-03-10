@@ -21,6 +21,8 @@ interface ReportBuilderToolbarProps {
   onGenerateReport: () => void;
   onReportTypeChange?: (reportType: ReportType) => void;
   onSummaryTypeChange?: (summaryType: SummaryType) => void;
+  onCustomReportTypeChange?: (customReportType: 'percentageAllocation' | 'allocationCapacity') => void;
+  customReportType?: 'percentageAllocation' | 'allocationCapacity';
   onExport?: (format: 'pdf' | 'excel') => void;
   onShare?: () => void;
   tab: string;
@@ -71,6 +73,8 @@ function ReportBuilderToolbar({
   onGenerateReport,
   onReportTypeChange,
   onSummaryTypeChange,
+  onCustomReportTypeChange,
+  customReportType = 'percentageAllocation',
   onExport,
   onShare,
   tab,
@@ -160,7 +164,6 @@ function ReportBuilderToolbar({
 
         {/* Report Type and Select - horizontal */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          {tab !== 'custom' && (
             <>
               <Typography
                 sx={{
@@ -169,10 +172,10 @@ function ReportBuilderToolbar({
                   color: '#1C2D5F',
                 }}
               >
-                {tab === 'reports' ? 'Report Type' : 'Summary Type'}
+                {tab !== 'aisummary' ? 'Report Type' : 'Summary Type'}
               </Typography>
 
-              {tab === 'reports' ? (
+              {tab === 'reports' && (
                 <Select
                   disabled={permissions?.['Reports'].r === false}
                   value={selectedReport}
@@ -244,8 +247,13 @@ function ReportBuilderToolbar({
                   <MenuItem value="projectsOnly" sx={{ pl: 4 }}>
                     Project Roster
                   </MenuItem>
+                  <MenuItem value="userActivity" sx={{ pl: 4 }}>
+                    User Activity Report
+                  </MenuItem>
                 </Select>
-              ) : (
+              )
+            }
+              {tab === 'aisummary' && (
                 <Select
                   value={selectedSummary}
                   onChange={e => {
@@ -304,8 +312,66 @@ function ReportBuilderToolbar({
                   {/* <MenuItem value="team" sx={{ pl: 4 }}>Team</MenuItem> */}
                 </Select>
               )}
+
+              {tab === 'custom' && (
+                <>
+                  <Select
+                    value={customReportType}
+                    onChange={e => {
+                      onCustomReportTypeChange?.(e.target.value as 'percentageAllocation' | 'allocationCapacity');
+                    }}
+                    size="small"
+                    displayEmpty
+                    sx={{
+                      minWidth: 200,
+                      height: 36,
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      backgroundColor: '#ffffff',
+                      borderRadius: '6px',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#E5E7EB',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#D1D5DB',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#152E75',
+                        borderWidth: '1px',
+                      },
+                    }}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
+                          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                          borderRadius: '8px',
+                          mt: 0.1,
+                          '& .MuiMenuItem-root': {
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            py: 1,
+                            px: 2,
+                            '&:hover': {
+                              backgroundColor: '#F3F4F6',
+                            },
+                            '&.Mui-selected': {
+                              backgroundColor: '#EEF2FF',
+                              color: '#152E75',
+                              '&:hover': {
+                                backgroundColor: '#E0E7FF',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    <MenuItem value="percentageAllocation">Percentage Allocation</MenuItem>
+                    <MenuItem value="allocationCapacity">Allocation Capacity</MenuItem>
+                  </Select>
+                </>
+              )}
             </>
-          )}
         </Box>
       </Box>
       {/* Right side - Actions */}

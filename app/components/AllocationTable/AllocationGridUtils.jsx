@@ -571,7 +571,7 @@ export const getFinalColumns = (
     state => state.allocationView
   );
   const { scalarSettings } = useSelector(state => state.allSettings);
-  const { userPreferences } = useSelector(state => state.userPreferences);
+  const { userPreferences } = useSelector(state => state.userPreferences) ?? {};
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
@@ -1244,7 +1244,9 @@ export const getCellClassName = (
   updatedRows,
   allocationTheme = [],
   type = 'allocation',
+  removeContractorPT = false,
   allProjects = [],
+  resources = [],
   projectTypes = [],
   isCellEditable,
   groupBy = ''
@@ -1296,8 +1298,28 @@ export const getCellClassName = (
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
-      const totalRows =
-        params.rowNode?.children?.length || uniqueProjectRows.size;
+
+      const children = params.rowNode?.children ?? [];
+
+      let totalRows = uniqueProjectRows.size;
+
+      if (removeContractorPT) {
+        const validResources = children.filter(childId => {
+          const childNode = params.api.getRowNode(childId);
+          if (!childNode) return false;
+          const resourceName = childNode.groupingKey;
+
+          const resource = resources?.find(r => r.FullName === resourceName);
+
+          return resource && resource.Type !== 'Contractor - PT';
+        });
+
+        const validResourceCount = validResources.length;
+        totalRows = validResourceCount;
+      } else {
+        totalRows = children.length;
+      }
+
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
         const numericValue =
