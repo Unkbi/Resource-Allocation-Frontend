@@ -2093,7 +2093,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               },
             }}
           >
-            <img src="/images/icons/LegendButton.svg" alt="Legend" />
+            <img
+              src={
+                showLegend
+                  ? '/images/icons/legendBtn.svg'
+                  : '/images/icons/LegendButton.svg'
+              }
+              alt="Legend"
+            />
           </Button>
           <GridToolbarContainer
             ref={setFilterButtonEl}
