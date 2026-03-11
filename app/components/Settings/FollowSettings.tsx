@@ -88,7 +88,7 @@ const FollowSettings: React.FC<FollowSettingsProps> = () => {
     const userId = getLoginUserDetails(user)?.id;
     const { follows, followsByObjectId, loading } = useSelector(
         (state: RootState) => state.follows
-    );
+    ) ?? {};
     const { projectTypes } = useSelector((state: RootState) => state.allSettings);
     const { projects } = useSelector((state: RootState) => state.projects);
     const { teams } = useSelector((state: RootState) => state.teams);

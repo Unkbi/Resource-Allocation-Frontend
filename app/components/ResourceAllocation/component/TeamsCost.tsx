@@ -66,7 +66,7 @@ const TeamsCost = ({
   const { setRows, ready } = useAllocationGrid('main');
   
   const { totalAllocationCosts } = useSelector(
-    (state: RootState) => state.allocationTotals);
+    (state: RootState) => state.allocationTotals) ?? {};
 
   useEffect(() => {
     if (projectTypes.length === 0) {

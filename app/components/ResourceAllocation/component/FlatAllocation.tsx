@@ -73,8 +73,8 @@ function FlatAllocation({
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
   );
-  const { showActuals } = useSelector(
-    (state: RootState) => state.allocationView
+  const showActuals = useSelector(
+    (state: RootState) => state.allocationView.currentView?.showActuals ?? false
   );
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations

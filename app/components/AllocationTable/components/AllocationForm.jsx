@@ -281,6 +281,8 @@ const initialValuesMap = {
     showColumns: ['teams', 'resource', 'project', 'resourceType'],
     filters: [{ filed: 'teams', operator: 'contains', value: '' }],
     calendarBy: 'week',
+    showActuals: false,
+    removeContractorPT: false,
   },
   new_view: {
     groupBy: 'project',
@@ -291,6 +293,8 @@ const initialValuesMap = {
     showColumns: ['teams', 'resource', 'project', 'resourceType'],
     filters: [{ filed: 'teams', operator: 'contains', value: '' }],
     calendarBy: 'week',
+    showActuals: false,
+    removeContractorPT: false,
   },
   name_view: {
     groupBy: '',
@@ -304,6 +308,8 @@ const initialValuesMap = {
     name: '',
     description: '',
     isDefault: false,
+    showActuals: false,
+    removeContractorPT: false,
   },
   clone_resource: {
     Project: [],
@@ -507,7 +513,7 @@ const AllocationForm = () => {
   const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
-  const { followsByObjectId } = useSelector(state => state.follows);
+  const { followsByObjectId } = useSelector(state => state.follows) ?? {};
   const { startDate, endDate } = calendarDate || {};
   const { allocations } = useSelector(state => state.dataGrid);
   const { rowState } = useSelector(state => state.dataGrid);
@@ -524,7 +530,7 @@ const AllocationForm = () => {
   const privileges = useSelector(state => state.rbac.privileges);
   const { user: allUsers } = useSelector(state => state.rbac);
   const { scalarSettings } = useSelector(state => state.allSettings);
-  const { userPreferences } = useSelector(state => state.userPreferences);
+  const { userPreferences } = useSelector(state => state.userPreferences) ?? {};
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const {
@@ -2044,6 +2050,8 @@ const AllocationForm = () => {
               ...(values?.filters !== undefined && {
                 Filters: values.filters,
               }),
+              RemoveContractorPT: initialData?.removeContractorPT ?? values.removeContractorPT ?? false,
+              ShowActuals: initialData?.showActuals ?? values.showActuals ?? false,
             };
 
             // PUT request.
@@ -2097,6 +2105,8 @@ const AllocationForm = () => {
               Description: values.description,
               Filters: values.filters,
               UserId: userId,
+              RemoveContractorPT: initialData?.removeContractorPT ?? values.removeContractorPT ?? false,
+              ShowActuals: initialData?.showActuals ?? values.showActuals ?? false,
             };
 
             // POST request to save the view.
@@ -2149,6 +2159,8 @@ const AllocationForm = () => {
               Columns: values.showColumns,
               ShowBy: values.showBy,
               Filters: values.filters,
+              RemoveContractorPT: values.removeContractorPT ?? false,
+              ShowActuals: values.showActuals ?? false,
             };
 
             // PUT request to update the view
