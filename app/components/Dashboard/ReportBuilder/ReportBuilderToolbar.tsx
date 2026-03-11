@@ -20,6 +20,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/app/redux/store';
 import { deleteSavedReport } from '@/app/redux/actions/savedReportsActions';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import ConfirmDialog from '../../Dialog/ConfirmDialog';
 
 interface ReportBuilderToolbarProps {
   reportType?: string;
@@ -88,11 +89,24 @@ function ReportBuilderToolbar({
     (state: RootState) => state.savedReports
   );
   
-  // Filter saved reports by current tab's report type
+  // Filter saved reports by current tab only (not by report type)
   const filteredSavedReports = savedReports.filter(report => {
+    // Parse filters if they come as a string from the API
+    let filters = report?.Filters;
+    if (typeof filters === 'string') {
+      try {
+        filters = JSON.parse(filters);
+      } catch (e) {
+        console.error('Failed to parse report filters:', e);
+        filters = {};
+      }
+    }
+    
     if (tab === 'reports') {
-      // For reports tab, show only reports matching the current report type
-      return report?.ReportType === reportType;
+      // For reports tab, show reports that are NOT aisummary or custom report types
+      return report?.ReportType !== 'aisummary' && 
+             report?.ReportType !== 'percentageAllocation' && 
+             report?.ReportType !== 'allocationCapacity';
     } else if (tab === 'aisummary') {
       // For AI Summary tab, show only AI summary reports
       return report?.ReportType === 'aisummary';
@@ -107,6 +121,8 @@ function ReportBuilderToolbar({
   const [selectedReport, setSelectedReport] = useState(reportType);
   const [selectedSummary, setSelectedSummary] = useState('project');
   const [selectedSavedReport, setSelectedSavedReport] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // Sync selectedReport with reportType prop when it changes
   useEffect(() => {
@@ -139,12 +155,23 @@ function ReportBuilderToolbar({
     const report = savedReports.find(r => r.Id === reportId);
     if (!report) return;
     
+    // Parse filters if they come as a string from the API
+    let filters = report.Filters;
+    if (typeof filters === 'string') {
+      try {
+        filters = JSON.parse(filters);
+      } catch (e) {
+        console.error('Failed to parse report filters:', e);
+        filters = {};
+      }
+    }
+    
     // Prepare the same payload structure as save report
     let editDialogData: any = {
       id: report.Id,
       Name: report.Name,
       Description: report.Description || '',
-      filters: report.Filters || {},
+      filters: filters || {},
       columns: report.Columns || [],
       reportType: report.ReportType,
       tab: tab,
@@ -152,7 +179,7 @@ function ReportBuilderToolbar({
 
     // For AI Summary, extract summaryType from filters if it exists
     if (tab === 'aisummary') {
-      editDialogData.summaryType = report.Filters?.summaryType || 'project';
+      editDialogData.summaryType = filters?.summaryType || 'project';
     }
     
     dispatch(
@@ -172,39 +199,56 @@ function ReportBuilderToolbar({
     const report = savedReports.find(r => r.Id === reportId);
     if (!report) return;
     
-    if (window.confirm(`Are you sure you want to delete "${report.Name}"?`)) {
-      dispatch(
-        deleteSavedReport(
-          reportId,
-          () => {
-            dispatch(
-              showToast({
-                open: true,
-                message: 'Report deleted successfully.',
-                type: 'success',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-            // Reset selected if it was the deleted one
-            if (selectedSavedReport === reportId) {
-              setSelectedSavedReport(null);
-            }
-          },
-          (error) => {
-            dispatch(
-              showToast({
-                open: true,
-                message: error?.response?.data?.exception || 'Failed to delete report.',
-                type: 'error',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
+    // Open confirmation dialog
+    setReportToDelete({ id: reportId, name: report.Name });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!reportToDelete) return;
+    
+    dispatch(
+      deleteSavedReport(
+        reportToDelete.id,
+        () => {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Report deleted successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          // Reset selected if it was the deleted one
+          if (selectedSavedReport === reportToDelete.id) {
+            setSelectedSavedReport(null);
           }
-        ) as any
-      );
-    }
+          // Close dialog and reset state
+          setDeleteDialogOpen(false);
+          setReportToDelete(null);
+        },
+        (error) => {
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.response?.data?.exception || 'Failed to delete report.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          // Close dialog and reset state
+          setDeleteDialogOpen(false);
+          setReportToDelete(null);
+        }
+      ) as any
+    );
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setReportToDelete(null);
   };
 
   const selectedReportName = selectedSavedReport
@@ -648,6 +692,16 @@ function ReportBuilderToolbar({
                 : 'Generate Report'}
         </Button>
       </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onCancel={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Report"
+      >
+        {`Are you sure you want to delete "${reportToDelete?.name}"?`}
+      </ConfirmDialog>
     </Box>
   );
 }

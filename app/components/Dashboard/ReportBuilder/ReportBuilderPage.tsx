@@ -1078,6 +1078,17 @@ function ReportBuilderPage({
   }, [aiSummaryState, activeTab, loadingPermissions]);
 
   useEffect(() => {
+    if (loadingPermissions) return;
+    if (activeTab === 'custom' && customReportState) {
+      setIsLoading(customReportState.loading);
+      if (!customReportState.loading && (customReportState.currentReport || customReportState.allocationCapacityReport)) {
+        setReportGenerated(true);
+        setShowData(true);
+      }
+    }
+  }, [customReportState, activeTab, loadingPermissions]);
+
+  useEffect(() => {
     if (
       customReportType === 'allocationCapacity' &&
       !pendingQueryFilters &&
@@ -1148,7 +1159,15 @@ function ReportBuilderPage({
     if (!report) return;
     
     // Convert saved filters back to UI filters format
-    const savedFilters = report.Filters as any;
+    let savedFilters = report.Filters as any;
+    if (typeof savedFilters === 'string') {
+      try {
+        savedFilters = JSON.parse(savedFilters);
+      } catch (e) {
+        console.error('Failed to parse report filters:', e);
+        savedFilters = {};
+      }
+    }
     
     // Determine which tab this report belongs to
     const isAISummary = report.ReportType === 'aisummary';
@@ -1196,11 +1215,16 @@ function ReportBuilderPage({
         customEndDate: end ? end.format('YYYY-MM-DD') : undefined,
         ...savedFilters,
       };
+
+      setIsLoading(true);
+      setFiltersExpanded(false);
       
       dispatch(fetchProjectSummary(summaryUiFilters));
       
     } else if (isCustom) {
       // Handle Custom report
+      setCustomReportType(report.ReportType as 'percentageAllocation' | 'allocationCapacity');
+      
       const customStart = savedFilters.customStartDate
         ? dayjs(savedFilters.customStartDate).format('MMM DD, YYYY')
         : undefined;
@@ -1240,6 +1264,10 @@ function ReportBuilderPage({
         show_actuals: savedFilters.show_actuals || false,
       });
       
+      // Set loading state
+      setIsLoading(true);
+      setFiltersExpanded(false);
+      
       const apiFilters: any = {
         Projects: savedFilters.project || [],
         ProjectTypeGroups: savedFilters.projectTypeGroup || [],
@@ -1250,6 +1278,8 @@ function ReportBuilderPage({
         StartDate: start || undefined,
         EndDate: end || undefined,
       };
+      
+      setAPIFilters(apiFilters);
       
       const uiFilters = {
         reportType: report.ReportType,
@@ -1332,9 +1362,11 @@ function ReportBuilderPage({
       dispatch(fetchReport({ reportType: report.ReportType as ReportType, uiFilters: apiPayload }));
     }
     
-    setShowData(true);
-    setReportGenerated(true);
-    setFiltersExpanded(false);
+    if (!isCustom) {
+      setShowData(true);
+      setReportGenerated(true);
+      setFiltersExpanded(false);
+    }
     
     // Set the current loaded report in Redux
     dispatch(setCurrentLoadedReport(report));

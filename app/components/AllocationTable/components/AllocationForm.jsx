@@ -3872,6 +3872,16 @@ const AllocationForm = () => {
           let reportType = initialData?.reportType || 'resourceProjectPeriod';
           let filters = initialData?.filters || {};
           
+          // Ensure filters is an object (parse if it's a string)
+          if (typeof filters === 'string') {
+            try {
+              filters = JSON.parse(filters);
+            } catch (e) {
+              console.error('Failed to parse filters:', e);
+              filters = {};
+            }
+          }
+          
           // For AI Summary tab, handle summaryType
           if (initialData?.tab === 'aisummary') {
             // For AI Summary, we store the summaryType in the filters
@@ -3887,12 +3897,14 @@ const AllocationForm = () => {
           }
 
           // Prepare report data with all required fields
+          // NOTE: Filters must be sent as an object. If the backend stores it as a string,
+          // the frontend will parse it back to an object when loading.
           const reportData = {
             UserId: userId,
             Name: cleanedValues.Name,
             Description: cleanedValues.Description || '',
             ReportType: reportType,
-            Filters: filters, // This now contains the actual uiFilters
+            Filters: filters, // This should always be an object
             GridFilters: {}, // Empty for now as per user requirements
             Columns: initialData?.columns || [], // This now contains currently visible columns
             IsDefault: false,
@@ -3948,6 +3960,16 @@ const AllocationForm = () => {
           let reportType = initialData?.reportType || 'resourceProjectPeriod';
           let filters = initialData?.filters || {};
           
+          // Ensure filters is an object (parse if it's a string)
+          if (typeof filters === 'string') {
+            try {
+              filters = JSON.parse(filters);
+            } catch (e) {
+              console.error('Failed to parse filters:', e);
+              filters = {};
+            }
+          }
+          
           // For AI Summary tab, handle summaryType
           if (initialData?.tab === 'aisummary') {
             // For AI Summary, we store the summaryType in the filters
@@ -3962,13 +3984,15 @@ const AllocationForm = () => {
             reportType = initialData?.reportType || 'percentageAllocation';
           }
 
+          // NOTE: Filters must be sent as an object. If the backend stores it as a string,
+          // the frontend will parse it back to an object when loading.
           const reportData = {
             Id: reportId,
             UserId: userId,
             Name: cleanedValues.Name,
             Description: cleanedValues.Description || '',
             ReportType: reportType,
-            Filters: filters, // This now contains the actual uiFilters
+            Filters: filters, // This should always be an object
             GridFilters: {}, // Empty for now as per user requirements
             Columns: initialData?.columns || [], // This now contains currently visible columns
             IsDefault: false,

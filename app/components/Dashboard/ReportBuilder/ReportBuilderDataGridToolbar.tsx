@@ -168,46 +168,72 @@ export default function ReportBuilderDataGridToolbar({
           }}
         >
   {/* ************* Part of save reports feature****************  */}
-          {/* Show loaded report name or default text for AI Summary */}
-          {currentLoadedReport ? (
-            <>
-              <Box
-                sx={{
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: '#2B5BA6',
-                }}
-              >
-                {currentLoadedReport.Name}
-              </Box>
-              <Box
-                sx={{
-                  width: '1px',
-                  height: 40,
-                  bgcolor: '#CEDCE9',
-                }}
-              />
-            </>
-          ) : tab === 'aisummary' ? (
-            <>
-              <Box
-                sx={{
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: '#2B5BA6',
-                }}
-              >
-                Projects Summaries
-              </Box>
-              <Box
-                sx={{
-                  width: '1px',
-                  height: 40,
-                  bgcolor: '#CEDCE9',
-                }}
-              />
-            </>
-          ) : null}
+          {(() => {
+            // Check if currentLoadedReport belongs to the current tab
+            if (currentLoadedReport) {
+              const reportType = currentLoadedReport.ReportType;
+              let belongsToCurrentTab = false;
+              
+              if (tab === 'reports') {
+                belongsToCurrentTab = reportType !== 'aisummary' && 
+                                     reportType !== 'percentageAllocation' && 
+                                     reportType !== 'allocationCapacity';
+              } else if (tab === 'aisummary') {
+                belongsToCurrentTab = reportType === 'aisummary';
+              } else if (tab === 'custom') {
+                belongsToCurrentTab = reportType === 'percentageAllocation' || 
+                                     reportType === 'allocationCapacity';
+              }
+              
+              if (belongsToCurrentTab) {
+                return (
+                  <>
+                    <Box
+                      sx={{
+                        fontSize: 14,
+                        fontWeight: 400,
+                        color: '#2B5BA6',
+                      }}
+                    >
+                      {currentLoadedReport.Name}
+                    </Box>
+                    <Box
+                      sx={{
+                        width: '1px',
+                        height: 40,
+                        bgcolor: '#CEDCE9',
+                      }}
+                    />
+                  </>
+                );
+              }
+            }
+            
+            if (tab === 'aisummary') {
+              return (
+                <>
+                  <Box
+                    sx={{
+                      fontSize: 14,
+                      fontWeight: 400,
+                      color: '#2B5BA6',
+                    }}
+                  >
+                    Projects Summaries
+                  </Box>
+                  <Box
+                    sx={{
+                      width: '1px',
+                      height: 40,
+                      bgcolor: '#CEDCE9',
+                    }}
+                  />
+                </>
+              );
+            }
+            
+            return null;
+          })()}
           <Box
             sx={{
               fontSize: 14,
