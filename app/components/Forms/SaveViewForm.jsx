@@ -7,6 +7,7 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Checkbox,
   Button,
   IconButton,
   TextField,
@@ -33,8 +34,10 @@ import {
   getResourceFromEmail,
   getUpdatedFiltersOnMyProjectsAllProjects,
   getUpdatedFiltersOnMyTeamsAllTeams,
+  getUpdatedFiltersOnRemoveContractorPT,
   isMyProjectsValid,
   isMyTeamsValid,
+  isRemoveContractorPTValid,
 } from '@/app/utils/common';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import {
@@ -46,6 +49,24 @@ import {
   DEFAULT_VISIBLE_TEAMS_COLUMNS,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { getLoginUserDetails } from '@/app/utils/authUtils';
+
+const StyledContainer = styled(Box)(() => ({
+  marginBottom: 3,
+}));
+
+const StyledOptionsLabel = styled(Typography)(() => ({
+  fontFamily: 'Open Sans',
+  fontSize: '14px',
+}));
+
+const StyledExtraInfoText = styled(Typography)(({ theme }) => ({
+  color: theme.palette.info.main,
+  fontFamily: 'Open Sans',
+  fontSize: '10px',
+  fontStyle: 'italic',
+  fontWeight: '400',
+  lineHeight: '180%',
+}));
 
 const getDateFromWeekMath = (date, operation, weeks) => {
   let newDate = date || new Date();
@@ -443,6 +464,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
           };
         }) || [],
       calendarBy: 'week',
+      showActuals: currentView?.showActuals || false,
+      removeContractorPT: currentView?.removeContractorPT || false,
     };
     setFormValue(initialData);
   }, []);
@@ -521,25 +544,22 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         setFieldValue('showBy', 'AllProject');
       }
     }
+
+    if (
+      values?.removeContractorPT &&
+      !isRemoveContractorPTValid(values.filters)
+    ) {
+      setFieldValue('removeContractorPT', false);
+    }
   }, [values.filters]);
 
-  const StyledContainer = styled(Box)(({ theme }) => ({
-    marginBottom: 3,
-  }));
-
-  const StyledOptionsLabel = styled(Typography)(({ theme }) => ({
-    fontFamily: 'Open Sans',
-    fontSize: '14px',
-  }));
-
-  const StyledExtraInfoText = styled(Typography)(({ theme }) => ({
-    color: theme.palette.info.main,
-    fontFamily: 'Open Sans',
-    fontSize: '10px',
-    fontStyle: 'italic',
-    fontWeight: '400',
-    lineHeight: '180%',
-  }));
+  useEffect(() => {
+    const updatedFilters = getUpdatedFiltersOnRemoveContractorPT(
+      values.filters,
+      values.removeContractorPT
+    );
+    setFieldValue('filters', updatedFilters);
+  }, [values.removeContractorPT]);
 
   const handleDateField = (StartDate, EndDate) => {
     const currentDate = new Date();
@@ -562,7 +582,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
           options={viewByOptions || []}
           disableClearable
           getOptionLabel={option => option?.label || ''}
-          value={viewByOptions.find(option => option.value === values.groupBy)}
+          value={viewByOptions.find(option => option.value === values.groupBy) ?? null}
           onChange={(event, newValue) => {
             handleGroupByChange(newValue);
           }}
@@ -646,6 +666,60 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
           </RadioGroup>
         )}
         {showError('showBy')}
+        <Box
+          sx={{ display: 'flex', flexDirection: 'row', gap: 2, mt: 1, ml: 1 }}
+        >
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={values?.showActuals || false}
+                onChange={e => setFieldValue('showActuals', e.target.checked)}
+                sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
+              />
+            }
+            label={
+              <Typography
+                sx={{
+                  color: '#374151',
+                  fontFamily: 'Open Sans',
+                  fontSize: '14px',
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  lineHeight: '20px',
+                }}
+              >
+                Show Actuals
+              </Typography>
+            }
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={!values?.removeContractorPT}
+                onChange={e =>
+                  setFieldValue('removeContractorPT', !e.target.checked)
+                }
+                sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
+              />
+            }
+            label={
+              <Typography
+                sx={{
+                  color: '#374151',
+                  fontFamily: 'Open Sans',
+                  fontSize: '14px',
+                  fontStyle: 'normal',
+                  fontWeight: 500,
+                  lineHeight: '20px',
+                }}
+              >
+                Part-time Resources
+              </Typography>
+            }
+          />
+        </Box>
       </StyledContainer>
       <Box sx={{ borderTop: '1px solid #E5E7EB', my: 2 }} />
 
@@ -689,12 +763,12 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
 
           {values.filters &&
             values.filters.map((filter, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              <Box key={index} sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
                 <Box sx={{ flex: 1 }}>
                   <CustomSelect
                     name={`filters[${index}].field`}
                     options={columnOptions}
-                    value={filter.field}
+                    value={filter.field ?? ''}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     width="100%"

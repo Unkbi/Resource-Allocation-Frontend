@@ -323,6 +323,7 @@ export const DASHBOARD_ALL_ACCESS = [
   'projectHealthOverview',
   'projectFTE',
   'custom_allocation_percentage',
+  'weeklyAllocationVsCapacity',
 ];
 
 export const TOTAL_ACTUALS_LESS_THAN_ONE = 'TOTAL_ACTUALS_LESS_THAN_ONE';

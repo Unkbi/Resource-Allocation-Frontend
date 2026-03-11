@@ -11,6 +11,12 @@ import { GridColDef } from '@mui/x-data-grid-premium';
 import { StyledDataGrid, ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
 import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
 import { BarChart } from '@mui/x-charts/BarChart';
+import { ChartContainer } from '@mui/x-charts/ChartContainer';
+import { BarPlot } from '@mui/x-charts/BarChart';
+import { LinePlot, MarkPlot } from '@mui/x-charts/LineChart';
+import { ChartsXAxis } from '@mui/x-charts/ChartsXAxis';
+import { ChartsYAxis } from '@mui/x-charts/ChartsYAxis';
+import { ChartsTooltip, ChartsTooltipContainer, useAxisTooltip } from '@mui/x-charts/ChartsTooltip';
 import DashboardWidget from '../DashboardWidget';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -19,6 +25,39 @@ import { Global, css } from '@emotion/react';
 import { formatDate } from '@/app/utils/reportDataFormatter';
 import { navigateToReport } from '@/app/utils/reportNavigation';
 import { useRouter } from 'next/navigation';
+
+// Module-level tooltip for allocation capacity chart (must be outside component)
+const AllocCapTooltip = () => {
+    const tooltipData = useAxisTooltip();
+    if (!tooltipData) return null;
+    const { axisValue, seriesItems } = tooltipData;
+    const capacityItem = seriesItems?.find((s: any) => s.label === 'Capacity');
+    const cap = capacityItem ? Number(capacityItem.value ?? 0) : 0;
+    const alloc = seriesItems
+        ?.filter((s: any) => s.label !== 'Capacity')
+        .reduce((sum: number, s: any) => sum + Number(s.value ?? 0), 0) ?? 0;
+    const avail = Math.round(cap - alloc);
+    return (
+        <ChartsTooltipContainer>
+            <Box sx={{ bgcolor: 'rgba(255,255,255,0.97)', border: '1px solid #e2e8f0', borderRadius: 1.5, boxShadow: 4, p: 1.5, minWidth: 160, pointerEvents: 'none' }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 0.5, color: '#0f172a' }}>{String(axisValue || '')}</Typography>
+                {avail >= 0 && (
+                    <Typography sx={{ color: '#16a34a', fontWeight: 600, fontSize: 12, mb: 0.75, bgcolor: '#dcfce7', px: 1, py: 0.25, borderRadius: 1, display: 'inline-block' }}>
+                        {avail} avail
+                    </Typography>
+                )}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4, mt: 0.5 }}>
+                    <Typography sx={{ fontSize: 12, color: '#64748b' }}>Alloc</Typography>
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{alloc}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
+                    <Typography sx={{ fontSize: 12, color: '#64748b' }}>Cap</Typography>
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{cap}</Typography>
+                </Box>
+            </Box>
+        </ChartsTooltipContainer>
+    );
+};
 
 // Utility function to calculate responsive chart dimensions
 const getResponsiveChartConfig = (dimensions: any, chartType = 'bar') => {
@@ -56,6 +95,9 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 // Chart sequence for custom report
 const CUSTOM_CHART_SEQUENCE = ['customAllocationChart'];
+
+// Chart sequence for allocation capacity report
+const ALLOCATION_CAPACITY_CHART_SEQUENCE = ['allocationCapacityChart'];
 
 // Utility function to get ordinal suffix for day
 const getOrdinalSuffix = (day: number): string => {
@@ -116,13 +158,14 @@ const generateLayouts = (chartKeys: string[]) => {
 interface CustomTabProps {
     showActuals: boolean;
     APIFilters: any;
+    customReportType?: 'percentageAllocation' | 'allocationCapacity';
 }
 
-export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
+export default function CustomTab({ showActuals, APIFilters, customReportType = 'percentageAllocation' }: CustomTabProps) {
     const router = useRouter();
-    const { currentReport, loading, error } = useSelector(
-        (state: RootState) => state.customReport
-    );
+    const { currentReport, loading, error, allocationCapacityReport, allocationCapacityLoading, allocationCapacityError } = useSelector(
+        (state: RootState) => state.customReport as any
+    ) ?? {};
     const { projectTypeGroups, projectTypes } = useSelector((state: RootState) => state.allSettings);
     const { organisations } = useSelector((state: RootState) => state.organisations);
     const { teams } = useSelector((state: RootState) => state.teams);
@@ -132,12 +175,20 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
     const suppressSaveRef = useRef(true);
 
     const STORAGE_KEY = 'custom_report_chart_layout';
+    const ALLOC_CAP_STORAGE_KEY = 'alloc_cap_chart_layout';
 
     // Generate default layouts
     const defaultLayouts = useMemo(
         () => generateLayouts(CUSTOM_CHART_SEQUENCE),
         []
     );
+
+    const defaultAllocCapLayouts = useMemo(
+        () => generateLayouts(ALLOCATION_CAPACITY_CHART_SEQUENCE),
+        []
+    );
+
+    const [persistedAllocCapLayouts, setPersistedAllocCapLayouts] = useState<any>(null);
 
     // Load persisted layouts from localStorage
     useEffect(() => {
@@ -146,6 +197,10 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
             if (saved) {
                 const parsed = JSON.parse(saved);
                 setPersistedLayouts(parsed);
+            }
+            const savedAllocCap = localStorage.getItem(ALLOC_CAP_STORAGE_KEY);
+            if (savedAllocCap) {
+                setPersistedAllocCapLayouts(JSON.parse(savedAllocCap));
             }
             // Allow saving after initial load
             setTimeout(() => {
@@ -251,6 +306,19 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
         []
     );
 
+    const handleAllocCapLayoutChange = useCallback(
+        (_layout: any, layouts: any) => {
+            if (suppressSaveRef.current) return;
+            try {
+                localStorage.setItem(ALLOC_CAP_STORAGE_KEY, JSON.stringify(layouts));
+                setPersistedAllocCapLayouts(layouts);
+            } catch (error) {
+                console.error('Failed to save alloc cap layout:', error);
+            }
+        },
+        []
+    );
+
     // Format data for the bar chart - MUI X Charts format
     const chartData = useMemo(() => {
         if (!currentReport?.ChartData || !Array.isArray(currentReport.ChartData)) {
@@ -264,7 +332,7 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
         return { categories, allocation, actuals };
     }, [currentReport]);
 
-    const handleClick = (event: React.MouseEvent, params: any) => {
+    const handleClick = useCallback((event: React.MouseEvent, params: any) => {
         event.stopPropagation();
 
         const projectId = params.row?.projectId;
@@ -315,7 +383,7 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
         navigateToReport(
             {}, // No advanced filters from current context
             {
-                reportType: 'resourceProjectPeriod',
+                reportType: params.field === 'total_allocation' ? 'projectPeriod': 'resourceProjectPeriod',
                 period: 'custom',
                 customStartDate,
                 customEndDate,
@@ -328,7 +396,7 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
             false, // Navigate in the same tab (not a new tab)
             router
         );
-    };
+    }, [projectTypeGroups, projectTypes, router]);
 
     // Define columns for the data grid
     const columns: GridColDef[] = useMemo(() => {
@@ -407,6 +475,9 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
                 type: 'number',
                 headerAlign: 'left',
                 align: 'right',
+                valueFormatter: (value: any) => {
+                    return Number(value).toFixed(2);
+                },
                 renderCell: (params: any) => {
                     return (
                         <Box
@@ -437,6 +508,9 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
                 type: 'number',
                 headerAlign: 'left',
                 align: 'right',
+                valueFormatter: (value: any) => {
+                    return Number(value).toFixed(2);
+                },
                 renderCell: (params: any) => {
                     return (
                         <Box
@@ -467,6 +541,9 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
                 type: 'number',
                 headerAlign: 'left',
                 align: 'right',
+                valueFormatter: (value: any) => {
+                    return Number(value).toFixed(2);
+                },
                 renderCell: (params: any) => {
                     const value = params.value;
                     return (
@@ -489,7 +566,7 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
             //     ),
             // },
         ];
-    }, []);
+    }, [handleClick]);
 
     // Map grid data from API structure
     const rows = useMemo(() => {
@@ -627,9 +704,233 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
         ),
     };
 
+    // Build allocation capacity chart
+    const weeklyData: any[] = useMemo(() => {
+        return allocationCapacityReport?.WeeklyData || [];
+    }, [allocationCapacityReport]);
+
+    const allProjectTypes: string[] = useMemo(() => [
+        ...new Set(
+            weeklyData.flatMap((period: any) =>
+                (period.ProjectTypeAllocations || []).map((d: any) => d.ProjectType?.Name).filter(Boolean)
+            )
+        ),
+    ] as string[], [weeklyData]);
+
+    const allocCapDataset = useMemo(() => weeklyData.map((period: any) => {
+        const entry: any = { week: period.Week || period.Period, capacity: Number(period.TotalCapacity || 0) };
+        allProjectTypes.forEach(pt => {
+            const match = (period.ProjectTypeAllocations || []).find((d: any) => d.ProjectType?.Name === pt);
+            entry[pt] = Number(match?.TotalAllocation || 0);
+        });
+        return entry;
+    }), [weeklyData, allProjectTypes]);
+
+    const allocCapBarColors = [
+        '#4D79FF', '#7BBCB1', '#8B5CF694', '#F6C260',
+        '#E97E7E', '#A9D18E', '#FFD700', ,
+      ];
+
+    const allocCapAllZero = weeklyData.length === 0 ||
+        weeklyData.every((p: any) =>
+            Number(p.TotalCapacity || 0) === 0 &&
+            (p.ProjectTypeAllocations || []).every((d: any) => Number(d.TotalAllocation || 0) === 0)
+        );
+
+    // Allocation capacity DataGrid rows - using GridData from API
+    const allocCapRows = useMemo(() => {
+        const gridData = allocationCapacityReport?.GridData || [];
+        return gridData.map((item: any, index: number) => ({
+            id: `${item.Project?.Id}- ${item.Metrics?.Period || ''}-${index}`,
+            projectId: item.Project?.Id || '',
+            project: item.Project?.Name || '',
+            portfolio: item.Portfolio?.Name || '',
+            project_type: item.ProjectType?.Name || '',
+            project_type_group: item.ProjectTypeGroup?.Name || '',
+            project_manager: item.ProjectManager?.FullName || '',
+            project_sponsor: item.ProjectSponsor?.FullName || '',
+            yearweek: `${item.Metrics?.Year || ''} - ${item.Metrics?.Week || ''}`,
+            period: formatDate(item.Metrics?.Period) || item.Metrics?.Period || '',
+            year: item.Metrics?.Year || '',
+            total_allocation: Number(item.Metrics?.TotalAllocation || 0),
+            // total_actuals: Number(item.Metrics?.TotalActuals || 0),
+            // variance: Number(item.Metrics?.Variance || 0),
+            // allocation_percentage: Number(item.Metrics?.AllocationPercentage || 0),
+            // actuals_percentage: Number(item.Metrics?.ActualsPercentage || 0),
+        }));
+    }, [allocationCapacityReport]);
+
+    // Allocation capacity DataGrid columns - matching GridData structure
+    const allocCapColumns: GridColDef[] = useMemo(() => [
+        { field: 'project', headerName: 'Project', minWidth: 180, flex: 1.5, renderCell: (params: any) => <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>{params.value}</Typography> },
+        { field: 'project_type', headerName: 'Project Type', minWidth: 140, flex: 1, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value}</Typography> },
+        { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160, flex: 1.2, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value}</Typography> },
+        { field: 'period', headerName: 'Period', minWidth: 120, flex: 1, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value}</Typography> },
+        { field: 'yearweek', headerName: 'Year - Week', minWidth: 80, flex: 0.6, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value}</Typography> },
+        { field: 'total_allocation', headerName: 'Total Allocation', minWidth: 100, flex: 1, type: 'number', headerAlign: 'left', align: 'right', valueFormatter: (value: any) => {
+                return Number(value).toFixed(2);
+            }, renderCell: (params: any) => {
+                    return (
+                        <Box
+                            onClick={(event) => handleClick(event, params)}
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                alignItems: 'center',
+                                width: '100%',
+                                height: '100%',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    opacity: 0.8,
+                                    textDecoration: 'underline',
+                                },
+                            }}
+                        >
+                            {params.value}
+                        </Box>
+                    );
+                }, },
+        // { field: 'total_actuals', headerName: 'Total Actuals', minWidth: 120, flex: 1, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%' }}>{Number(params.value).toFixed(2)}</Typography> },
+        // { field: 'variance', headerName: 'Variance', minWidth: 110, flex: 0.9, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%', color: params.value < 0 ? '#ef4444' : params.value > 0 ? '#10b981' : 'inherit' }}>{Number(params.value).toFixed(2)}</Typography> },
+        // { field: 'allocation_percentage', headerName: 'Allocation %', minWidth: 120, flex: 1, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%' }}>{Number(params.value).toFixed(2)}%</Typography> },
+        // { field: 'actuals_percentage', headerName: 'Actuals %', minWidth: 110, flex: 1, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%' }}>{Number(params.value).toFixed(2)}%</Typography> },
+        // { field: 'portfolio', headerName: 'Portfolio', minWidth: 140, flex: 1, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value || '-'}</Typography> },
+        // { field: 'project_manager', headerName: 'Project Manager', minWidth: 150, flex: 1.2, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value || '-'}</Typography> },
+        // { field: 'project_sponsor', headerName: 'Project Sponsor', minWidth: 150, flex: 1.2, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value || '-'}</Typography> },
+    ], []);
+
+    const allocCapacityCharts: Record<string, React.ReactElement> = {
+        allocationCapacityChart: (
+            <DashboardWidget
+                onClick={() => {}}
+                minWidth={320}
+                minHeight={380}
+                showNoData={allocCapAllZero}
+                noDataMessage="No allocation capacity data available"
+            >
+                {(dimensions: any) => {
+                    const chartWidth = Math.max(dimensions.width - 40, 400);
+                    const chartHeight = Math.max(dimensions.height - 100, 300);
+                    const filtersDisplay = formatFiltersForDisplay(APIFilters);
+                    const series = [
+                        ...allProjectTypes.map((pt: string, idx: number) => ({
+                            type: 'bar' as const,
+                            dataKey: pt,
+                            label: pt,
+                            stack: 'allocation',
+                            color: allocCapBarColors[idx % allocCapBarColors.length],
+                        })),
+                        {
+                            type: 'line' as const,
+                            dataKey: 'capacity',
+                            label: 'Capacity',
+                            color: '#F97316',
+                            curve: 'linear' as const,
+                            showMark: true,
+                        },
+                    ];
+                    return (
+                        <Box sx={{ pt: 1, px: 1 }}>
+                            <Typography sx={{ fontSize: '18px', fontWeight: 600, color: '#000000DE', mb: 1, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
+                                Weekly Allocation vs Capacity{''}
+                                {filtersDisplay && (
+                                    <Typography sx={{ fontSize: '14px', fontWeight: 400, color: '#64748B' }}>- {filtersDisplay}</Typography>
+                                )}
+                            </Typography>
+                            <ChartContainer
+                                width={chartWidth}
+                                height={chartHeight}
+                                dataset={allocCapDataset}
+                                series={series}
+                                xAxis={[{ scaleType: 'band', dataKey: 'week', categoryGapRatio: 0.3, tickLabelStyle: { color: '#475569', fontSize: 12 } }]}
+                                yAxis={[{ tickLabelStyle: { color: '#475569' } }]}
+                                margin={{ bottom: 70, left: 55, right: 20, top: 20 }}
+                            >
+                                <BarPlot />
+                                <LinePlot />
+                                <MarkPlot />
+                                <ChartsXAxis />
+                                <ChartsYAxis />
+                                <ChartsTooltip />
+                            </ChartContainer>
+                            {/* Custom legend so it's always visible */}
+                            <Box
+                                sx={{
+                                    mt: 1.5,
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: 1.5,
+                                    alignItems: 'center',
+                                    justifyContent: chartWidth < 400 ? 'flex-start' : 'center',
+                                }}
+                            >
+                                {allProjectTypes.map((pt: string, idx: number) => (
+                                    <Box
+                                        key={pt}
+                                        sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                width: 12,
+                                                height: 12,
+                                                borderRadius: 0.5,
+                                                bgcolor: allocCapBarColors[idx % allocCapBarColors.length],
+                                            }}
+                                        />
+                                        <Typography sx={{ fontSize: 12, color: '#475569' }}>
+                                            {pt}
+                                        </Typography>
+                                    </Box>
+                                ))}
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.75,
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            position: 'relative',
+                                            width: 22,
+                                            height: 2,
+                                            bgcolor: '#F97316',
+                                            borderRadius: 1,
+                                        }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                position: 'absolute',
+                                                right: -3,
+                                                top: -3,
+                                                width: 8,
+                                                height: 8,
+                                                borderRadius: '50%',
+                                                bgcolor: '#F97316',
+                                            }}
+                                        />
+                                    </Box>
+                                    <Typography sx={{ fontSize: 12, color: '#475569' }}>
+                                        Capacity
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Box>
+                    );
+                }}
+            </DashboardWidget>
+        ),
+    };
+
+    // Determine which report is active based on type
+    const isAllocCap = customReportType === 'allocationCapacity';
+    const activeLoading = isAllocCap ? allocationCapacityLoading : loading;
+    const activeError = isAllocCap ? allocationCapacityError : error;
+    const hasReport = isAllocCap ? weeklyData.length > 0 : !!currentReport;
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {!currentReport && !loading ? (
+            {!hasReport && !activeLoading ? (
                 <Box
                     sx={{
                         height: '100%',
@@ -659,9 +960,9 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
                         Configure your filters and click Generate Report to see custom analytics
                     </Typography>
                 </Box>
-            ) : loading ? (
+            ) : activeLoading ? (
                 <LoadingScreen />
-            ) : error ? (
+            ) : activeError ? (
                 <Box
                     sx={{
                         height: '100%',
@@ -672,10 +973,84 @@ export default function CustomTab({ showActuals, APIFilters }: CustomTabProps) {
                     }}
                 >
                     <Typography sx={{ color: '#EF4444', fontSize: '14px' }}>
-                        {error}
+                        {activeError}
                     </Typography>
                 </Box>
+            ) : isAllocCap ? (
+                /* Allocation Capacity Report */
+                <>
+                    <Global styles={css`
+                        .MuiChartsAxisHighlight-root { fill: none !important; opacity: 0 !important; }
+                        .MuiChartsLegend-root { max-width: 100% !important; overflow: hidden !important; font-size: 10px !important; margin: 0 !important; }
+                    `} />
+                    <ResponsiveGridLayout
+                        className="layout"
+                        layouts={persistedAllocCapLayouts || defaultAllocCapLayouts}
+                        breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+                        cols={{ lg: 12, md: 12, sm: 12 }}
+                        rowHeight={135}
+                        onLayoutChange={handleAllocCapLayoutChange}
+                        isDraggable
+                        isResizable
+                        draggableHandle=".drag-handle"
+                        compactType="vertical"
+                        style={{ padding: 0 }}
+                    >
+                        {ALLOCATION_CAPACITY_CHART_SEQUENCE.map(key => (
+                            <div key={key}>
+                                {allocCapacityCharts[key]}
+                            </div>
+                        ))}
+                    </ResponsiveGridLayout>
+
+                    {/* Allocation Capacity DataGrid */}
+                    <Box
+                        sx={{
+                            flex: 1,
+                            minHeight: 400,
+                            backgroundColor: '#ffffff',
+                            borderRadius: isFullscreenGrid ? 0 : '8px',
+                            overflow: 'hidden',
+                            position: isFullscreenGrid ? 'fixed' : 'relative',
+                            top: isFullscreenGrid ? 0 : 'auto',
+                            left: isFullscreenGrid ? 0 : 'auto',
+                            right: isFullscreenGrid ? 0 : 'auto',
+                            bottom: isFullscreenGrid ? 0 : 'auto',
+                            zIndex: isFullscreenGrid ? 1300 : 'auto',
+                            height: isFullscreenGrid ? '100vh' : 'auto',
+                        }}
+                    >
+                        <StyledDataGrid
+                            rows={allocCapRows}
+                            columns={allocCapColumns}
+                            hideFooter
+                            loading={allocationCapacityLoading}
+                            pageSizeOptions={[10, 25, 50, 100]}
+                            disableRowSelectionOnClick
+                            localeText={{ noRowsLabel: 'No data found' }}
+                            slots={{ toolbar: ReportBuilderDataGridToolbar }}
+                            slotProps={{
+                                toolbar: {
+                                    isFullscreen: isFullscreenGrid,
+                                    onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
+                                    GridRowCount: allocCapRows.length,
+                                    tab: 'custom',
+                                } as any,
+                                columnsPanel: { className: 'styleColumnMenu', sx: ColumnManagementStyles },
+                                loadingOverlay: { variant: 'skeleton', noRowsVariant: 'skeleton' },
+                            }}
+                            sx={{
+                                height: '100%',
+                                '& .MuiDataGrid-virtualScrollerContent': { backgroundColor: '#F7FBFF' },
+                                '& .MuiDataGrid-row:hover': { backgroundColor: '#F7FBFF' },
+                                '& .MuiDataGrid-cell': { border: '0.5px solid #E5E7EB !important', padding: '8px 16px' },
+                                '& .MuiDataGrid-columnHeaders': { position: 'sticky', top: 0, zIndex: 3, backgroundColor: '#F1F6FF' },
+                            }}
+                        />
+                    </Box>
+                </>
             ) : currentReport ? (
+                /* Percentage Allocation Report */
                 <>
                     <Global styles={css`
                         .MuiChartsAxisHighlight-root {
