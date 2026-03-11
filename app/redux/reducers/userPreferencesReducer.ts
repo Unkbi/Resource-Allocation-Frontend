@@ -11,6 +11,7 @@ const initialState: UserPreferences = {
   userPreferences: null,
   actualsDisplayType: HOURS,
   loading: false,
+  preferenceChanging: false,
   error: null,
 };
 
@@ -27,9 +28,19 @@ const userPreferencesSlice = createSlice({
         acc[setting.Key] = setting.Value;
         return acc;
       }, {} as ScalarSettings);
+      state.preferenceChanging = false;
     },
     setActualsDisplayType: (state, action) => {
       state.actualsDisplayType = action.payload;
+    },
+    optimisticUpdatePreference: (state, action) => {
+      if (state.userPreferences) {
+        state.userPreferences = {
+          ...state.userPreferences,
+          [action.payload.key]: action.payload.value,
+        };
+      }
+      state.preferenceChanging = true;
     },
     setLoading: (state, action) => {
       state.loading = action.payload;
@@ -43,6 +54,7 @@ const userPreferencesSlice = createSlice({
 export const {
   setUserPreferences,
   setActualsDisplayType,
+  optimisticUpdatePreference,
   setLoading,
   setError,
 } = userPreferencesSlice.actions;

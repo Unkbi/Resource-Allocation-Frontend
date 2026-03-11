@@ -77,13 +77,14 @@ export const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   WeekPlus: DEFAULT_PROJECT_WEEK_PLUS,
   WeekMinus: DEFAULT_PROJECT_WEEK_MINUS,
   Filters: [],
+  removeContractorPT: false,
+  showActuals: false,
 };
 
 const initialState: AllocationGridViewState = {
   view: 'Teams',
   splitView: false,
   splitViewCurrentProject: null,
-  showActuals: false,
   loading: false,
   error: null,
   expandRowId: [],
@@ -161,7 +162,7 @@ const initialState: AllocationGridViewState = {
       'manager',
       'organisationName',
       'organisationStatus',
-      'resourceStatus',    
+      'resourceStatus',
       'portfolioDescription',
       'portfolioName',
       'portfolioStatus',
@@ -390,7 +391,16 @@ const viewSlice = createSlice({
       state.splitViewCurrentProject = action.payload;
     },
     setShowActuals: (state, action) => {
-      state.showActuals = action.payload;
+      state.currentView = {
+        ...state.currentView,
+        showActuals: action.payload,
+      };
+    },
+    setRemoveContractorPT: (state, action) => {
+      state.currentView = {
+        ...state.currentView,
+        removeContractorPT: action.payload,
+      };
     },
     setExpandRowId: (state, action) => {
       state.expandRowId = action.payload;
@@ -470,6 +480,8 @@ const viewSlice = createSlice({
             WeekPlus: view.WeekPlus,
             WeekMinus: view.WeekMinus,
             Filters: view.Filters,
+            removeContractorPT: view.RemoveContractorPT ?? false,
+            showActuals: view.ShowActuals ?? false,
           }));
         }
         state.savedViews = [...formatedView, COMPANY_DEFAULT_VIEW];
@@ -504,6 +516,8 @@ const viewSlice = createSlice({
           WeekPlus: newView.WeekPlus,
           WeekMinus: newView.WeekMinus,
           Filters: newView.Filters,
+          removeContractorPT: newView.RemoveContractorPT ?? false,
+          showActuals: newView.ShowActuals ?? false,
         };
         state.savedViews = [formatedView, ...state.savedViews];
         state.currentView = {
@@ -545,6 +559,8 @@ const viewSlice = createSlice({
           WeekPlus: updatedView?.WeekPlus,
           WeekMinus: updatedView?.WeekMinus,
           Filters: updatedView?.Filters,
+          removeContractorPT: updatedView?.RemoveContractorPT ?? false,
+          showActuals: updatedView?.ShowActuals ?? false,
         };
 
         // Update saved View list.
@@ -603,6 +619,7 @@ export const {
   setSplitView,
   setSplitViewCurrentProject,
   setShowActuals,
+  setRemoveContractorPT,
   setExpandRowId,
   setCellSelectionData,
   setInitialCurrentView,
