@@ -63,7 +63,8 @@ interface ValidationErrors {
   [key: number]: {
     From?: boolean;
     To?: boolean;
-    message?: string;
+    Label?: boolean;
+    messages?: string[];
   };
 }
 
@@ -84,26 +85,33 @@ export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
     Id: Number(range.id),
     From: Math.round(parseFloat(range.From) / STEP) * STEP,
     To: Math.round(parseFloat(range.To) / STEP) * STEP,
+    Label: range.Label,
   }));
 
   numericRanges.forEach((range, index) => {
+    errors[range.Id] = { messages: [] };
+
+    if (!range.Label || range.Label.trim().length === 0) {
+      errors[range.Id].Label = true;
+      errors[range.Id].messages!.push('Label is required');
+    }
+
+    if (range.Label && range.Label.length > 20) {
+      errors[range.Id].Label = true;
+      errors[range.Id].messages!.push('Label cannot exceed 20 characters');
+    }
+
     if (isNaN(range.From) || isNaN(range.To)) {
-      errors[range.Id] = {
-        From: isNaN(range.From),
-        To: isNaN(range.To),
-        message: 'Invalid number format',
-      };
-      return;
+      errors[range.Id].From = isNaN(range.From);
+      errors[range.Id].To = isNaN(range.To);
+      errors[range.Id].messages!.push('Invalid number format');
     }
 
     // From must be <= To
     if (range.From - range.To > EPS) {
-      errors[range.Id] = {
-        From: true,
-        To: true,
-        message: 'FROM value cannot be greater than TO value',
-      };
-      return;
+      errors[range.Id].From = true;
+      errors[range.Id].To = true;
+      errors[range.Id].messages!.push('FROM value cannot be greater than TO value');
     }
 
     // Overlap check (STEP aware)
@@ -117,13 +125,15 @@ export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
         range.From >= other.To + STEP - EPS;
 
       if (!noOverlap) {
-        errors[range.Id] = {
-          From: true,
-          To: true,
-          message: 'Range overlaps with another range',
-        };
+        errors[range.Id].From = true;
+        errors[range.Id].To = true;
+        errors[range.Id].messages!.push('Range overlaps with another range');
         break;
       }
+    }
+
+    if (errors[range.Id].messages!.length === 0) {
+      delete errors[range.Id];
     }
   });
 

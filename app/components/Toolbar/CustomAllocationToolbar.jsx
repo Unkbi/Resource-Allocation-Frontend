@@ -106,6 +106,7 @@ import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
 import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
 import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
+import LegendBar from '../AllocationTable/LegendBar';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -647,6 +648,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [allApiSuccess, setAllApiSuccess] = useState(false);
   const { portfolios } = useSelector(state => state.portfolios);
   const { scalarSettings } = useSelector(state => state.allSettings);
+  const [showLegend, setShowLegend] = useState(false);
 
   const projectsLoaded = Array.isArray(projects);
   const resourcesLoaded = Array.isArray(resources);
@@ -1163,6 +1165,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     dispatch(setRemoveContractorPT(!removeContractorPT));
   };
 
+ const handleLegendBox = () => {
+   setShowLegend(prev => !prev);
+ };
   const handleShowDateHeaderToggle = () => {
     dispatch(updateCurrentView({ showDateHeader: !showDateHeader }));
   };
@@ -2124,6 +2129,18 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           className="lowerToolbarRight"
           sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
         >
+          <Button
+            onClick={handleLegendBox}
+            sx={{
+              height: '43px',
+              width: '90px',
+              '&:hover': {
+                backgroundColor: 'transparent',
+              },
+            }}
+          >
+            <img src="/images/icons/LegendButton.svg" alt="Legend" />
+          </Button>
           <GridToolbarContainer
             ref={setFilterButtonEl}
             sx={{ padding: 0, flexWrap: 'nowrap' }}
@@ -2267,6 +2284,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </Box>
         </Box>
       </Box>
+      {showLegend && (
+          <LegendBar onClose={() => setShowLegend(false)} />
+      )}
       <ConfirmDialog
         open={deleteDialogOpen}
         onConfirm={handleConfirmDelete}
