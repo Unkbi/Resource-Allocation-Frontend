@@ -329,6 +329,7 @@ function ReportBuilderPage({
 
   const [APIFilters, setAPIFilters] = useState<any>(null);
   const [customReportType, setCustomReportType] = useState<'percentageAllocation' | 'allocationCapacity'>('percentageAllocation');
+  const hasSetAllocationCapacityDefault = useRef(false);
 
   // Ref to track if we've already attempted initial sessionStorage load
   const hasAttemptedInitialLoadRef = useRef(false);
@@ -1047,25 +1048,33 @@ function ReportBuilderPage({
     }
   }, [aiSummaryState, activeTab, loadingPermissions]);
 
+  // Set default date range for allocation capacity on first selection only
   useEffect(() => {
-    if (
-      customReportType === 'allocationCapacity' &&
-      !pendingQueryFilters &&
-      !hasAppliedQueryParams &&
-      !customFilters.customDateRange
-    ) {
-      // Calculate 13-week range: 4 weeks past + current week + 8 weeks future
-      const currentMonday = dayjs().isoWeekday(1);
-      const startDate = currentMonday.subtract(4, 'week');
-      const endDate = currentMonday.add(8, 'week').isoWeekday(7);
-      
-      setCustomFilters(prev => ({
-        ...prev,
-        period: 'custom',
-        customDateRange: [startDate, endDate],
-      }));
+    if (customReportType === 'allocationCapacity') {
+      // Only set defaults if this is the first time selecting allocation capacity
+      if (
+        !hasSetAllocationCapacityDefault.current &&
+        !pendingQueryFilters &&
+        !hasAppliedQueryParams
+      ) {
+        // Calculate 13-week range: 4 weeks past + current week + 8 weeks future
+        const currentMonday = dayjs().isoWeekday(1);
+        const startDate = currentMonday.subtract(4, 'week');
+        const endDate = currentMonday.add(8, 'week').isoWeekday(7);
+        
+        setCustomFilters(prev => ({
+          ...prev,
+          period: 'custom',
+          customDateRange: [startDate, endDate],
+        }));
+        
+        hasSetAllocationCapacityDefault.current = true;
+      }
+    } else {
+      // Reset the flag when switching away from allocation capacity
+      hasSetAllocationCapacityDefault.current = false;
     }
-  }, [customReportType, pendingQueryFilters, hasAppliedQueryParams, customFilters.customDateRange]);
+  }, [customReportType, pendingQueryFilters, hasAppliedQueryParams]);
 
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
@@ -1626,6 +1635,7 @@ function ReportBuilderPage({
             onFiltersChange={handleCustomFiltersChange}
             onResetFilters={handleResetCustomFilters}
             mode="custom"
+            customReportType={customReportType}
           />
 
           <Box
