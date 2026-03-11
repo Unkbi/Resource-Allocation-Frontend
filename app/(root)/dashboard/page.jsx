@@ -911,6 +911,8 @@ export default function ExecutiveDashboardPage() {
     if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
 
+    if (queryKey === 'budgetVsPlanVsActual' || queryKey === 'totalResourceCost') return false; // Hide cost chart until permissions are properly implemented
+
     const queryDetails = dashboardQueryKeys?.find(
       qk => qk.QueryKey === queryKey
     );
