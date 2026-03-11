@@ -45,14 +45,21 @@ const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
                     textAlign: "center",
                   }}
                 >
-                  <Typography variant="caption" fontWeight={500}>
-                    {toPercent(item.From)} - {toPercent(item.To)}
+                  <Typography variant="caption" fontWeight={600} fontSize={10}> 
+                    {item.Label || 'ColorLabel'} : {toPercent(item.From)} - {toPercent(item.To)}
                   </Typography>
                 </Box>
               ))}
             </Box>
           )}
         </Box>
+
+        <Box
+          sx={{
+            borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+            height: '34px',
+            position: 'relative',
+          }}></Box>
 
         {/* Actuals */}
         <Box display="flex" alignItems="center" gap={1}>
@@ -66,21 +73,21 @@ const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
             <Box
               sx={{
                 display: "flex",
-                borderRadius: "16px",
+                borderRadius: "8px",
                 overflow: "hidden",
                 border: "1px solid #E5E7EB",
               }}
             >
-              <Box sx={{ background: "#F0FFEC", px: 2, py: "3px", fontSize: 12 }}>
-                <Typography sx={{color:'#22BE48',fontSize :'14px'}}>On Track</Typography>
+              <Box sx={{ background: "#F0FFEC", px: 2, py: "3px" }}>
+                <Typography sx={{color:'#22BE48', fontSize: 10,fontWeight:600}}>On-Target</Typography>
               </Box>
 
-              <Box sx={{ background: "#FFF8D6", px: 2, py: "3px", fontSize: 12 }}>
-                <Typography sx={{color:'#F39A4C',fontSize :'14px'}}>At Risk </Typography>
+              <Box sx={{ background: "#E0ECFF", px: 2, py: "3px"}}>
+                <Typography sx={{color:'#4C89EE', fontSize: 10 , fontWeight:600}}>Over-Achieved</Typography>
               </Box>
 
-              <Box sx={{ background: "#FFF5F5", px: 2, py: "3px", fontSize: 12 }}>
-                 <Typography sx={{color:'#B91C1C',fontSize :'14px'}}> Off Track </Typography>
+              <Box sx={{ background: "#FFF5F5", px: 2, py: "3px" }}>
+                 <Typography sx={{color:'#B91C1C',fontSize: 10 , fontWeight:600}}> Under-Achieved </Typography>
               </Box>
             </Box>
           )}
