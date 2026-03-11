@@ -39,12 +39,14 @@ const WEEK_CONFIG = {
 
 export const getStartDate = () => getStartOfPreviousWeek(new Date());
 
-const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
+const createBaseColumnConfig = (weekDate, isCurrentWeek, showDateHeader = false) => ({
   field: getWeekNumber(weekDate),
   // Keep the visible header short (legacy format like "W1") while the
   // internal `field` remains canonical (e.g. "W1-2026"). This prevents the
   // UI label from showing the ISO-year while preserving canonical keys.
-  headerName: String(getWeekNumber(weekDate)).split('-')[0],
+  headerName: showDateHeader
+    ? format(weekDate, 'MMM d')
+    : String(getWeekNumber(weekDate)).split('-')[0],
   width: WEEK_CONFIG.COLUMN_WIDTH,
   type: 'number',
   editable: true,
@@ -154,7 +156,8 @@ export const generateWeeklyColumns = (
   dispatch,
   isFormatWithK,
   scalarSettings = null,
-  userPreferences = null
+  userPreferences = null,
+  showDateHeader = false
 ) => {
   const isoStart = parseISO(startDate);
   const isoEnd = parseISO(endDate);
@@ -179,7 +182,7 @@ export const generateWeeklyColumns = (
     });
 
     return {
-      ...createBaseColumnConfig(weekStartDate, isCurrentWeek),
+      ...createBaseColumnConfig(weekStartDate, isCurrentWeek, showDateHeader),
       ...(dispatch
         ? createValueHandlers(
             dispatch,
@@ -287,7 +290,8 @@ export const getAllColumnsWithWeek = (
   endDate,
   isFormatWithK,
   scalarSettings,
-  userPreferences
+  userPreferences,
+  showDateHeader = false
 ) => {
   return [
     ...existingColumns,
@@ -297,7 +301,8 @@ export const getAllColumnsWithWeek = (
       dispatch,
       isFormatWithK,
       scalarSettings,
-      userPreferences
+      userPreferences,
+      showDateHeader
     ),
   ];
 };

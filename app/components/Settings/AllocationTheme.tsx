@@ -89,7 +89,8 @@ interface ValidationErrors {
   [key: number]: {
     From?: boolean;
     To?: boolean;
-    message?: string;
+    messages?: string[]
+    Label?: boolean;
   };
 }
 
@@ -707,9 +708,23 @@ function AllocationTheme({
       )
     );
   };
+  
+  const MAX_ROWS = 7;
 
   // Add new allocation range
   const handleAddAllocationRange = () => {
+  if (allocationRanges.length >= MAX_ROWS) {
+    dispatch(
+      showToast({
+        open: true,
+        message: 'Maximum allocation range allowed is 7',
+        type: 'error',
+        autoHideTimer: 4000,
+      })
+    );
+    return;
+    }
+    
     const baseRow = allocationRanges.find(
       row => row.To === max_allocation_error
     );
@@ -831,10 +846,18 @@ function AllocationTheme({
       width: 286,
       editable: true,
       sortable: false,
+      cellClassName: params =>
+        validationErrors[Number(params.id)]?.Label ? 'label-error-cell' : '',
+
       preProcessEditCellProps: params => {
-        const { value } = params.props;
-        handleLabelChange(params.id as string, value as string);
-        return { ...params.props };
+        const value = params.props.value as string;
+
+        handleLabelChange(params.id as string, value);
+        const rowError = validationErrors[Number(params.id)];
+        return {
+          ...params.props,
+          error: !!rowError?.Label,
+        };
       },
     },
     {
@@ -869,6 +892,8 @@ function AllocationTheme({
       row.id === newRow.id ? { ...row, Label: newRow.Label as string } : row
     );
     setAllocationRanges(updated);
+    const errors = validateRanges(updated);
+    setValidationErrors(errors);
     setHasUnsavedChanges(true);
     return newRow;
   };
@@ -880,14 +905,14 @@ function AllocationTheme({
       const hasErrors = Object.keys(errors).length > 0;
 
       if (hasErrors) {
-        Object.entries(errors).forEach(([rangeId, error]) => {
-          dispatch(
-            showToast({
-              message: `${error.message}`,
-              type: 'error',
-            })
-          );
-        });
+        const firstError: any = Object.values(errors)[0];
+        dispatch(
+          showToast({
+            open: true,
+            message: firstError.messages[0],
+            type: 'error',
+          })
+        );
         return;
       }
       setOriginalAllocationRanges([...allocationRanges]);
@@ -1186,6 +1211,12 @@ function AllocationTheme({
                     ? allocationRanges
                     : []
                 }
+                sx={{
+                '& .label-error-cell': {
+                    border: '1px solid #d32f2f',
+                    borderRadius: '4px',
+                  },
+                }}
                 disableColumnMenu
                 isCellEditable={() => permissions!['AllocationRangeSetting'].u}
                 columns={columns}

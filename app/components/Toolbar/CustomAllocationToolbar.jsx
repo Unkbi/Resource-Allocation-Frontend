@@ -51,12 +51,16 @@ import {
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 import {
+  ALLOCATION_PREFERENCE_OPTIONS,
   DATE_FORMAT,
+  DEFAULT_ALLOCATION_PREFERENCE,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
   PORTFOLIO_DISPLAY_NAME,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
+import { SET_USER_PREFERENCES } from '@/app/redux/actions/userPreferencesActions';
+import { optimisticUpdatePreference } from '@/app/redux/reducers/userPreferencesReducer';
 import { parseISO } from 'date-fns';
 import FolderIcon from '@mui/icons-material/Folder';
 import PeopleIcon from '@mui/icons-material/People';
@@ -102,6 +106,7 @@ import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
 import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
 import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
+import LegendBar from '../AllocationTable/LegendBar';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -553,6 +558,14 @@ const ViewOptionCheckedStartIcon = () => (
   </svg>
 );
 
+const FractionIcon = () => (
+  <img src="/images/icons/fraction.svg" alt="fraction" width={22} height={22} />
+);
+
+const PercentIcon = () => (
+  <img src="/images/icons/percent.svg" alt="percent" width={18} height={18} />
+);
+
 const EditActionIcon = () => (
   <img src="/images/icons/pencil_underline.svg" alt="edit" />
 );
@@ -599,6 +612,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   );
   const showActuals = currentView?.showActuals ?? false;
   const removeContractorPT = currentView?.removeContractorPT ?? false;
+  const showDateHeader = currentView?.showDateHeader ?? false;
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { projects, calendarDate: projectsCalendar } = useSelector(
     state => state.projects
@@ -610,6 +624,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const { teams } = useSelector(state => state.teams);
   const { loginUserPrivileges: permissions, loadingLoginUserPrivileges } =
     useSelector(state => state.rbac);
+  const { userPreferences, preferenceChanging } = useSelector(
+    state => state.userPreferences
+  );
   const { startDate, endDate } = getStartAndEndDateForView(
     view,
     projectsCalendar,
@@ -631,6 +648,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [allApiSuccess, setAllApiSuccess] = useState(false);
   const { portfolios } = useSelector(state => state.portfolios);
   const { scalarSettings } = useSelector(state => state.allSettings);
+  const [showLegend, setShowLegend] = useState(false);
 
   const projectsLoaded = Array.isArray(projects);
   const resourcesLoaded = Array.isArray(resources);
@@ -976,6 +994,31 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     dispatch(performChangeView(newGroupBy));
   };
 
+  const handleAllocationPreferenceChange = e => {
+    if (!user) return;
+    dispatch(
+      optimisticUpdatePreference({
+        key: 'Allocation_Preference',
+        value: e.target.value,
+      })
+    );
+    dispatch({
+      type: SET_USER_PREFERENCES,
+      payload: {
+        postData: {
+          User: user?.id,
+          Key: 'Allocation_Preference',
+          Value: e.target.value,
+        },
+        resolve: () => {},
+        reject: () => {},
+      },
+    });
+  };
+
+  const getAllocationPreferenceIcon = option =>
+    option === 'Fractions' ? <FractionIcon /> : <PercentIcon />;
+
   const open = Boolean(anchorEl);
   const openPopover = Boolean(popOverAnchorEl);
 
@@ -1120,6 +1163,13 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
 
   const handleRemoveContractorPTToggle = () => {
     dispatch(setRemoveContractorPT(!removeContractorPT));
+  };
+
+ const handleLegendBox = () => {
+   setShowLegend(prev => !prev);
+ };
+  const handleShowDateHeaderToggle = () => {
+    dispatch(updateCurrentView({ showDateHeader: !showDateHeader }));
   };
 
   return (
@@ -1653,8 +1703,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                         !permissions['UserAllocationView']?.u) ||
                       currentView.GroupBy.includes('Cost') ||
                       isObjectEqual(
-                        savedViews.find(view => view.Id === selectedView),
-                        currentView
+                        // Sahadev - Removed showDateHeader from comparison temporaily.
+                        // savedViews.find(view => view.Id === selectedView),
+                        // currentView
+                        (({ showDateHeader: _, ...rest }) => rest)(
+                          savedViews.find(view => view.Id === selectedView) ??
+                            {}
+                        ),
+                        (({ showDateHeader: _, ...rest }) => rest)(currentView)
                       )
                     }
                     onClick={handleSaveView}
@@ -1963,14 +2019,128 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   </Tooltip>
                 </Box>
               )}
+              <Box
+                sx={{
+                  borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+                  ml: '20px',
+                  height: '34px',
+                  position: 'relative',
+                  top: '10px',
+                }}
+              ></Box>
+              <FormControl
+                sx={{
+                  ml: '6px',
+                  alignSelf: 'center',
+                  ...(preferenceChanging && {
+                    opacity: 0.5,
+                    pointerEvents: 'none',
+                    cursor: 'not-allowed',
+                  }),
+                }}
+              >
+                <Select
+                  value={
+                    userPreferences?.Allocation_Preference ||
+                    DEFAULT_ALLOCATION_PREFERENCE
+                  }
+                  onChange={handleAllocationPreferenceChange}
+                  disabled={preferenceChanging}
+                  IconComponent={KeyboardArrowDown}
+                  renderValue={value => (
+                    <Box
+                      sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      {getAllocationPreferenceIcon(value)}
+                      {value}
+                    </Box>
+                  )}
+                  sx={{
+                    height: '40px',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    color: '#5D6979',
+                    background: '#FFF',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD0DB',
+                    '& .MuiSelect-select': {
+                      padding: '6px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      border: 'none',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      border: 'none',
+                    },
+                  }}
+                >
+                  {ALLOCATION_PREFERENCE_OPTIONS.map(option => (
+                    <StyledMenuItem key={option} value={option}>
+                      {getAllocationPreferenceIcon(option)}
+                      {option}
+                    </StyledMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </>
           )}
+          <Box
+            sx={{
+              borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+              ml: '20px',
+              height: '34px',
+              position: 'relative',
+              top: '10px',
+            }}
+          ></Box>
+          <ToolBox2>
+            <Stack direction="row" sx={{ alignItems: 'center' }}>
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#344665',
+                }}
+              >
+                Weeks
+              </Typography>
+              <Switch
+                size="small"
+                checked={showDateHeader}
+                onChange={handleShowDateHeaderToggle}
+              />
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#344665',
+                }}
+              >
+                Date
+              </Typography>
+            </Stack>
+          </ToolBox2>
         </Box>
 
         <Box
           className="lowerToolbarRight"
           sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
         >
+          <Button
+            onClick={handleLegendBox}
+            sx={{
+              height: '43px',
+              width: '90px',
+              '&:hover': {
+                backgroundColor: 'transparent',
+              },
+            }}
+          >
+            <img src="/images/icons/LegendButton.svg" alt="Legend" />
+          </Button>
           <GridToolbarContainer
             ref={setFilterButtonEl}
             sx={{ padding: 0, flexWrap: 'nowrap' }}
@@ -2114,6 +2284,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </Box>
         </Box>
       </Box>
+      {showLegend && (
+          <LegendBar onClose={() => setShowLegend(false)} />
+      )}
       <ConfirmDialog
         open={deleteDialogOpen}
         onConfirm={handleConfirmDelete}

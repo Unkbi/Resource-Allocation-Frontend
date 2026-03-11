@@ -296,7 +296,7 @@ const formatUserActivity = (data: any[]): any[] => {
         phone_number: safeGet(item, 'Resource.PhoneNumber', ''),
         department: safeGet(item, 'Resource.Department', ''),
         team_name: safeGet(item, 'Team.Name', ''),
-        role: safeGet(item, 'Resource.Role', ''),
+        role: safeGet(item, 'Role.name', ''),
         hr_level: safeGet(item, 'Resource.HRLevel', ''),
         resource_type: safeGet(item, 'Resource.Type', ''),
         manager_name: safeGet(item, 'Manager.FullName', ''),

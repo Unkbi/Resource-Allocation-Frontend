@@ -168,7 +168,7 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
     const router = useRouter();
     const { currentReport, loading, error, allocationCapacityReport, allocationCapacityLoading, allocationCapacityError } = useSelector(
         (state: RootState) => state.customReport as any
-    );
+    ) ?? {};
     const { projectTypeGroups, projectTypes } = useSelector((state: RootState) => state.allSettings);
     const { organisations } = useSelector((state: RootState) => state.organisations);
     const { teams } = useSelector((state: RootState) => state.teams);

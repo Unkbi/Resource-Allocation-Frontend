@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, Tooltip } from '@mui/material';
+import { Box, Skeleton, Tooltip } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
   gridExpandedSortedRowIdsSelector,
@@ -158,7 +158,8 @@ function AllocationGrid({
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
-  const { userPreferences } = useSelector(state => state.userPreferences);
+  const { userPreferences, preferenceChanging } =
+    useSelector(state => state.userPreferences) ?? {};
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
@@ -1031,6 +1032,26 @@ function AllocationGrid({
           const shouldShowActuals = showActuals;
 
           const cellContent = (() => {
+            if (preferenceChanging) {
+              return (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                  }}
+                >
+                  <Skeleton
+                    variant="rounded"
+                    width="70%"
+                    height={14}
+                    sx={{ borderRadius: '4px' }}
+                  />
+                </Box>
+              );
+            }
             if (showTooltip) {
               return (
                 <Tooltip
