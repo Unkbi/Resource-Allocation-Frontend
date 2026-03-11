@@ -1698,8 +1698,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                         !permissions['UserAllocationView']?.u) ||
                       currentView.GroupBy.includes('Cost') ||
                       isObjectEqual(
-                        savedViews.find(view => view.Id === selectedView),
-                        currentView
+                        // Sahadev - Removed showDateHeader from comparison temporaily.
+                        // savedViews.find(view => view.Id === selectedView),
+                        // currentView
+                        (({ showDateHeader: _, ...rest }) => rest)(
+                          savedViews.find(view => view.Id === selectedView) ??
+                            {}
+                        ),
+                        (({ showDateHeader: _, ...rest }) => rest)(currentView)
                       )
                     }
                     onClick={handleSaveView}
