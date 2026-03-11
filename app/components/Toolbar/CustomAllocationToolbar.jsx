@@ -611,6 +611,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   );
   const showActuals = currentView?.showActuals ?? false;
   const removeContractorPT = currentView?.removeContractorPT ?? false;
+  const showDateHeader = currentView?.showDateHeader ?? false;
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { projects, calendarDate: projectsCalendar } = useSelector(
     state => state.projects
@@ -1162,6 +1163,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     dispatch(setRemoveContractorPT(!removeContractorPT));
   };
 
+  const handleShowDateHeaderToggle = () => {
+    dispatch(updateCurrentView({ showDateHeader: !showDateHeader }));
+  };
+
   return (
     <Box className="Toolbar" sx={{ display: 'flex', flexDirection: 'column' }}>
       {/*Top Toolbar*/}
@@ -1693,8 +1698,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                         !permissions['UserAllocationView']?.u) ||
                       currentView.GroupBy.includes('Cost') ||
                       isObjectEqual(
-                        savedViews.find(view => view.Id === selectedView),
-                        currentView
+                        // Sahadev - Removed showDateHeader from comparison temporaily.
+                        // savedViews.find(view => view.Id === selectedView),
+                        // currentView
+                        (({ showDateHeader: _, ...rest }) => rest)(
+                          savedViews.find(view => view.Id === selectedView) ??
+                            {}
+                        ),
+                        (({ showDateHeader: _, ...rest }) => rest)(currentView)
                       )
                     }
                     onClick={handleSaveView}
@@ -2071,6 +2082,42 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               </FormControl>
             </>
           )}
+          <Box
+            sx={{
+              borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+              ml: '20px',
+              height: '34px',
+              position: 'relative',
+              top: '10px',
+            }}
+          ></Box>
+          <ToolBox2>
+            <Stack direction="row" sx={{ alignItems: 'center' }}>
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#344665',
+                }}
+              >
+                Weeks
+              </Typography>
+              <Switch
+                size="small"
+                checked={showDateHeader}
+                onChange={handleShowDateHeaderToggle}
+              />
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#344665',
+                }}
+              >
+                Date
+              </Typography>
+            </Stack>
+          </ToolBox2>
         </Box>
 
         <Box
