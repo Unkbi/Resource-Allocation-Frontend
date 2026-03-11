@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Tooltip, styled, IconButton,Button, Box, Menu } from '@mui/material';
+import { Tooltip, styled, IconButton, Button, Box, Menu } from '@mui/material';
 import {
   GridToolbarContainer,
   useGridApiContext,
@@ -63,25 +63,6 @@ export default function ReportBuilderDataGridToolbar({
 }: ReportBuilderDataGridToolbarProps) {
   const apiRef = useGridApiContext();
   const [columnsAnchorEl, setColumnsAnchorEl] = useState<null | HTMLElement>(null);
-  const [filterCount, setFilterCount] = useState(0);
-
-  // Track filter count
-  useEffect(() => {
-    if (apiRef?.current) {
-      const updateFilterCount = () => {
-        const filters = apiRef.current.state.filter.filterModel.items;
-        // Count filters that have a value (including 0, false, empty array, etc.)
-        const activeCount = filters.filter((f: any) => f.value !== null && f.value !== undefined).length;
-        setFilterCount(activeCount);
-      };
-      updateFilterCount();
-      const unsubscribe = apiRef.current.subscribeEvent(
-        'filterModelChange',
-        updateFilterCount
-      );
-      return unsubscribe;
-    }
-  }, [apiRef]);
 
   const handleToggleFullscreen = () => {
     onToggleFullscreen?.();
@@ -93,15 +74,6 @@ export default function ReportBuilderDataGridToolbar({
 
   const handleCloseColumns = () => {
     setColumnsAnchorEl(null);
-  };
-
-  const handleOpenFilter = (event: React.MouseEvent<HTMLElement>) => {
-    // Use the DataGrid's built-in filter panel
-    apiRef?.current?.showFilterPanel();
-  };
-
-  const handleCloseFilter = () => {
-    apiRef?.current?.hideFilterPanel();
   };
 
 
@@ -117,75 +89,75 @@ export default function ReportBuilderDataGridToolbar({
       }}
     >
       {/* Hidden filter button for DataGrid integration */}
-      <Box sx={{ display: 'none' }}>
+      {/* <Box sx={{ display: 'block' }}>
         <GridToolbarFilterButton />
-      </Box>
+      </Box> */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        {/* ************* Part of save reports feature****************  */}
+        {tab === 'aisummary' && (
+          <>
+            <Box
+              sx={{
+                fontSize: 14,
+                fontWeight: 400,
+                color: '#2B5BA6',
+              }}
+            >
+              Projects Summaries
+            </Box>
+            <Box
+              sx={{
+                width: '1px',
+                height: 40,
+                bgcolor: '#CEDCE9',
+              }}
+            />
+          </>
+        )}
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
+            fontSize: 14,
+            fontWeight: 400,
+            color: '#6A7282',
           }}
         >
-  {/* ************* Part of save reports feature****************  */}
-          {tab === 'aisummary' && (
-            <>
-          <Box
-            sx={{
-              fontSize: 14,
-              fontWeight: 400,
-              color: '#2B5BA6',
-            }}
-          >
-            Projects Summaries
-          </Box>
-          <Box
-            sx={{
-              width: '1px',
-              height: 40,
-              bgcolor: '#CEDCE9',
-            }}
-          />
-          </>
-            )}
-          <Box
-            sx={{
-              fontSize: 14,
-              fontWeight: 400,
-              color: '#6A7282',
-            }}
-          >
-            {`Total Records: ${GridRowCount ?? 0}`}
-          </Box>
+          {`Total Records: ${GridRowCount ?? 0}`}
         </Box>
+      </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
-         {tab === 'aisummary' && (
+        {tab === 'aisummary' && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              paddingRight: 2,
+            }}
+          >
+            <InfoOutlinedIcon sx={{ fontSize: 14, color: '#1C2D5F8F' }} />
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                paddingRight: 2,
+                fontSize: 14,
+                fontWeight: 400,
+                color: '#1C2D5F',
               }}
             >
-              <InfoOutlinedIcon sx={{fontSize: 14, color: '#1C2D5F8F'}}/>
-              <Box
-                sx={{
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: '#1C2D5F',
-                }}
-              >
-                Click the underlined score to view the weekly AI summary.
-              </Box>
+              Click the underlined score to view the weekly AI summary.
             </Box>
-          )}
+          </Box>
+        )}
 
-  {/* ************* Part of save reports feature****************  */}
-         
-         <Tooltip title="Save Report">
+        {/* ************* Part of save reports feature****************  */}
+
+        {/* <Tooltip title="Save Report">
           <SmallIconButton onClick={handleOpenColumns} aria-label="save report">
             <img
               src="/images/icons/SaveIcon.svg"
@@ -193,40 +165,65 @@ export default function ReportBuilderDataGridToolbar({
               style={{ width: 36, height: 40 }}
             />
           </SmallIconButton>
-        </Tooltip>
+        </Tooltip> */}
 
-        <Tooltip title="Filter">
-          <SmallIconButton 
-            onClick={handleOpenFilter} 
-            aria-label="filter"
-            sx={{
-              position: 'relative',
-              '&::after': filterCount > 0 ? {
-                content: `"${filterCount}"`,
-                position: 'absolute',
-                top: 2,
-                right: 2,
-                backgroundColor: '#152E75',
-                color: '#fff',
-                borderRadius: '50%',
-                width: 16,
-                height: 16,
-                display: 'flex',
-                alignItems: 'center',
+        <GridToolbarFilterButton
+          slotProps={{
+            tooltip: { title: 'Filters' },
+            button: {
+              variant: 'outlined',
+              sx: {
+                backgroundColor: '#fff',
+                minWidth: 'unset',
+                width: '36px',
+                height: '33px',
+                padding: '16px',
                 justifyContent: 'center',
-                fontSize: 10,
-                fontWeight: 600,
-              } : {},
-            }}
-          >
-            <img
-              src="/images/icons/NewFilterIcon.svg"
-              alt="filter"
-              style={{ width: 36, height: 40 }}
-            />
-          </SmallIconButton>
-        </Tooltip>
-       
+                alignItems: 'center',
+                flexShrink: 0,
+                borderRadius: '6px',
+                border: '1px solid rgb(214, 220, 225)',
+                boxShadow: '0px 0px 2px 0px rgba(0, 0, 0, 0.25)',
+                '& .MuiButton-startIcon': { 
+                  marginRight: '0px', 
+                  marginLeft: '0px',
+                  margin: '0px',
+                },
+                '& .MuiBadge-root span': { 
+                  top: '-15px', 
+                  right: '0px',
+                  backgroundColor: '#152E75',
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  minWidth: 16,
+                  height: 16,
+                },
+                '& .MuiBadge-root svg': { display: 'none' },
+                // Hide the button text, keep only icon
+                '& .MuiButton-text': {
+                  display: 'none',
+                },
+                fontSize: 0,
+                '& > span:not(.MuiButton-startIcon)': {
+                  display: 'none',
+                },
+              },
+              component: props => (
+                <Button
+                  {...props}
+                  startIcon={
+                    <img
+                      src="/images/icons/NewFilterIcon.svg"
+                      alt="filter"
+                      style={{ width: 36, height: 40 }}
+                    />
+                  }
+                />
+              ),
+            },
+          }}
+        />
 
         <Tooltip title="Columns">
           <SmallIconButton onClick={handleOpenColumns} aria-label="columns">
@@ -285,7 +282,7 @@ export default function ReportBuilderDataGridToolbar({
       >
         <GridColumnsPanel sx={{ ...ColumnManagementStyles }} />
       </Menu>
-    
+
     </GridToolbarContainer>
   );
 }
