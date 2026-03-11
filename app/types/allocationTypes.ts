@@ -84,6 +84,8 @@ export interface AllocationGridView {
   WeekPlus: number | null;
   WeekMinus: number | null;
   Filters: ToolbarFilters[] | null;
+  removeContractorPT: boolean;
+  showActuals: boolean;
 }
 
 export interface AllColumns {
@@ -100,7 +102,6 @@ export interface AllocationGridViewState {
   view: string | null;
   splitView: boolean;
   splitViewCurrentProject: ProjectsTableRow | null;
-  showActuals: boolean;
   loading: boolean;
   error: string | null;
   columns: AllColumns;
@@ -134,6 +135,8 @@ export interface GetUsersSavedViewsResponse {
   Filters: string[] | null;
   WeekMinus: number | null;
   __parent__: boolean | null;
+  RemoveContractorPT: boolean | null;
+  ShowActuals: boolean | null;
 }
 
 export interface AllAllocations {

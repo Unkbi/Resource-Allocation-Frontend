@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, Tooltip } from '@mui/material';
+import { Box, Skeleton, Tooltip } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
   gridExpandedSortedRowIdsSelector,
@@ -16,10 +16,12 @@ import {
   getMondayOfWeek,
   getUpdatedFiltersOnMyProjectsAllProjects,
   getUpdatedFiltersOnMyTeamsAllTeams,
+  getUpdatedFiltersOnRemoveContractorPT,
   getWeekNumber,
   isWeekKey,
   isMyProjectsValid,
   isMyTeamsValid,
+  isRemoveContractorPTValid,
   getTeamForResource,
   isCurrentOrPastWeek,
   isCurrentWeek,
@@ -125,6 +127,8 @@ function AllocationGrid({
     columns: _columns,
   } = useSelector(state => state.allocationView);
 
+  const removeContractorPT = currentView?.removeContractorPT ?? false;
+
   const dispatch = useDispatch();
   const { teams, teamsResources, teamAllocations } = useSelector(
     state => state.teams
@@ -154,7 +158,8 @@ function AllocationGrid({
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
-  const { userPreferences } = useSelector(state => state.userPreferences);
+  const { userPreferences, preferenceChanging } =
+    useSelector(state => state.userPreferences) ?? {};
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
@@ -558,8 +563,20 @@ function AllocationGrid({
           })
         );
       }
+
+      // Check if removeContractorPT is selected, if yes, then check if the filter still exists
+      // If not, then reset removeContractorPT to false
+      if (currentView?.removeContractorPT) {
+        if (!isRemoveContractorPTValid(currentView?.Filters)) {
+          dispatch(
+            updateCurrentView({
+              removeContractorPT: false,
+            })
+          );
+        }
+      }
     }
-  }, [currentView?.Filters, user, email, resources]);
+  }, [currentView?.Filters, user, email, resources, dispatch]);
 
   useEffect(() => {
     if (email && resources) {
@@ -668,6 +685,22 @@ function AllocationGrid({
     currentView?.WeekPlus,
     currentView?.WeekMinus,
   ]);
+
+  useEffect(() => {
+    const updatedFilters = getUpdatedFiltersOnRemoveContractorPT(
+      currentView?.Filters || [],
+      currentView?.removeContractorPT
+    );
+
+    // Only dispatch if filters actually changed
+    if (updatedFilters !== currentView?.Filters) {
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
+    }
+  }, [currentView?.removeContractorPT, dispatch]);
 
   const handleAddProject = (e, project, curRow) => {
     const checkEntryExists = (data, resourceId, projectName, projectId) => {
@@ -800,7 +833,8 @@ function AllocationGrid({
     if (
       userPreferences?.Allocation_Preference === PERCENTAGES &&
       (projectViewsGrouping.includes(currentView?.GroupBy) ||
-        params.rowNode?.children[0].startsWith('auto-generated'))
+        params.rowNode?.children[0].startsWith('auto-generated') ||
+        viewId === 'topProject')
     ) {
       let value;
       let actuals = Math.round(
@@ -975,7 +1009,9 @@ function AllocationGrid({
             getAllRowsForView(viewId),
             allocationTheme,
             type,
+            removeContractorPT,
             projects,
+            resources,
             projectTypes,
             isCellEditable
           );
@@ -996,6 +1032,26 @@ function AllocationGrid({
           const shouldShowActuals = showActuals;
 
           const cellContent = (() => {
+            if (preferenceChanging) {
+              return (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                  }}
+                >
+                  <Skeleton
+                    variant="rounded"
+                    width="70%"
+                    height={14}
+                    sx={{ borderRadius: '4px' }}
+                  />
+                </Box>
+              );
+            }
             if (showTooltip) {
               return (
                 <Tooltip
@@ -1881,7 +1937,9 @@ function AllocationGrid({
           getAllRowsForView(viewId),
           allocationTheme,
           type,
+          removeContractorPT,
           projects,
+          resources,
           projectTypes,
           isCellEditable,
           groupBy

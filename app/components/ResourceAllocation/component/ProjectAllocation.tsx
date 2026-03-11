@@ -137,8 +137,8 @@ function ProjectAllocation({
   } = useAllocationGrid('projectAllocation');
   const { getAllRows: getAllTeamViewRows } =
     useAllocationGrid('teamAllocation');
-  const { showActuals } = useSelector(
-    (state: RootState) => state.allocationView
+  const showActuals = useSelector(
+    (state: RootState) => state.allocationView.currentView?.showActuals ?? false
   );
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
   const { allResourcesDetail } = useSelector(

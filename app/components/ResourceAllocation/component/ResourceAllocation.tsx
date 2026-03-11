@@ -80,8 +80,8 @@ function ResourceAllocation({
     (state: RootState) => state.resources.resources
   );
   const { location } = useSelector((state: RootState) => state.allSettings);
-  const { showActuals } = useSelector(
-    (state: RootState) => state.allocationView
+  const showActuals = useSelector(
+    (state: RootState) => state.allocationView.currentView?.showActuals ?? false
   );
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations

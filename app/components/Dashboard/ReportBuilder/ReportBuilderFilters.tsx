@@ -43,6 +43,7 @@ import { isFilterEnabled, isPeriodRequired } from './reportFilterConfig';
 import { isSummaryFilterEnabled, isSummaryPeriodRequired } from './summaryFilterConfig';
 import { ReportType, SummaryType } from '@/app/types/dashboardTypes';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_ROLES } from '@/app/redux/actions/rbacActions';
 
 const StyledChip = styled(Chip)(({ theme }) => ({
   height: '32px',
@@ -108,6 +109,8 @@ export interface ReportFilters {
   resourceLocations: string[];
   resourceWorkLocationGroup: string[];
   projectStatuses: string[];
+  userStatuses: string[];
+  userRoles: string[];
   show_actuals?: boolean; // For custom tab
 }
 
@@ -217,6 +220,7 @@ function ReportBuilderFilters({
   const { resources } = useSelector((state: RootState) => state.resources);
   const { organisations } = useSelector((state: RootState) => state.organisations);
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { user: rbacUsers, roles } = useSelector((state: RootState) => state.rbac);
 
   // Create a dummy formik instance for StyledAutocomplete
   const formikProps = useFormik({
@@ -257,7 +261,12 @@ function ReportBuilderFilters({
     if (projectTypes.length === 0) {
       dispatch({ type: FETCH_PROJECT_TYPES });
     }
-  }, [dispatch, projectTypeGroups.length, teams?.length, projects?.length, resources?.length, portfolios?.length, organisations?.length, projectTypes.length]);
+
+    if(!roles || roles.length === 0)
+    {
+      dispatch({type: FETCH_ROLES});
+    }
+  }, [dispatch, projectTypeGroups.length, teams?.length, projects?.length, resources?.length, portfolios?.length, organisations?.length, projectTypes.length, roles?.length]);
 
   // Helper function to sort options alphabetically by label
   const sortOptions = (options: Array<{ label: string; value: string }>) => {
@@ -271,6 +280,7 @@ function ReportBuilderFilters({
     { label: 'Project & Period', value: 'project_period', group: 'Two Dimension Views' },
     { label: 'Resource Only', value: 'resource_only', group: 'Single Dimension Views' },
     { label: 'Project Only', value: 'project_only', group: 'Single Dimension Views' },
+    { label: 'User Activity Report', value: 'user_activity', group: 'Single Dimension Views' },
   ];
 
   // Prepare options from Redux data
@@ -440,6 +450,28 @@ function ReportBuilderFilters({
     { value: '_BLANK_', label: '(Blanks)' }
   ];
 
+  // User Status Options (from RBAC users)
+  const userStatusOptions = [
+    ...sortOptions(
+      [...new Set(rbacUsers?.map((user: any) => user.status).filter(Boolean))].map((status: string) => ({
+        value: status,
+        label: status,
+      }))
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
+
+  // User Roles Options (from RBAC roles)
+  const userRoleOptions = [
+    ...sortOptions(
+      roles?.map((role: any) => ({
+        value: role.name,
+        label: role.name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
+
   // Report filter labels for FilterChips component
   const reportFilterLabels: Record<string, string> = {
     period: 'Period',
@@ -457,6 +489,8 @@ function ReportBuilderFilters({
     resourceLocations: 'Resource Location',
     resourceWorkLocationGroup: 'Resource Location Group',
     projectStatuses: 'Project Status',
+    userStatuses: 'User Status',
+    userRoles: 'Role',
     show_actuals: 'Show Actuals',
   };
 
@@ -502,6 +536,10 @@ function ReportBuilderFilters({
             return resourceWorkLocationGroupOptions.find(opt => opt.value === val)?.label || val;
           case 'projectStatuses':
             return projectStatusOptions.find(opt => opt.value === val)?.label || val;
+          case 'userStatuses':
+            return userStatusOptions.find(opt => opt.value === val)?.label || val;
+          case 'userRoles':
+            return userRoleOptions.find(opt => opt.value === val)?.label || val;
           default:
             return val;
         }
@@ -583,7 +621,7 @@ function ReportBuilderFilters({
       if (!value || 
           (Array.isArray(value) && value.length === 0) ||
           (typeof value === 'string' && value === 'resourceProjectPeriod' && key === 'reportType') || key === 'summaryType' ||
-          (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'))) {
+          (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'|| filters.reportType === 'userActivity'))) {
         return;
       }
       
@@ -1048,6 +1086,30 @@ function ReportBuilderFilters({
           options={projectStatusOptions}
           selected={filters.projectStatuses}
           onChange={(value) => handleFilterChange('projectStatuses', value)}
+          formikProps={formikProps}
+        />
+        )}
+
+        {checkFilterEnabled( 'userStatuses') && (
+        <FilterSection
+          disabled={false}
+          title="User Status"
+          name="userStatuses"
+          options={userStatusOptions}
+          selected={filters.userStatuses}
+          onChange={(value) => handleFilterChange('userStatuses', value)}
+          formikProps={formikProps}
+        />
+        )}
+
+        {checkFilterEnabled( 'userRoles') && (
+        <FilterSection
+          disabled={false}
+          title="Roles"
+          name="userRoles"
+          options={userRoleOptions}
+          selected={filters.userRoles}
+          onChange={(value) => handleFilterChange('userRoles', value)}
           formikProps={formikProps}
         />
         )}
