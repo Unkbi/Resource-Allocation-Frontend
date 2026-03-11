@@ -2132,8 +2132,16 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           <Button
             onClick={handleLegendBox}
             sx={{
-              height: '43px',
+              height: '40px',
               width: '90px',
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              background: '#FFF',
+              boxShadow: '0px 1px 0px rgba(0,0,0,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              p: 0,
               '&:hover': {
                 backgroundColor: 'transparent',
               },
@@ -2146,6 +2154,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   : '/images/icons/LegendButton.svg'
               }
               alt="Legend"
+              style={{
+                padding: '1.5px 1px 1.5px 0px',
+              }}
             />
           </Button>
           <GridToolbarContainer
