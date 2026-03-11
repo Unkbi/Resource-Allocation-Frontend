@@ -1,7 +1,7 @@
-import { RootState } from "@/app/redux/store";
-import React from "react";
-import { useSelector } from "react-redux";
-import { Box, Typography, Skeleton, IconButton } from "@mui/material";
+import { RootState } from '@/app/redux/store';
+import React from 'react';
+import { useSelector } from 'react-redux';
+import { Box, Typography, Skeleton, IconButton } from '@mui/material';
 
 interface LegendBarProps {
   onClose: () => void;
@@ -21,10 +21,10 @@ const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
       alignItems="center"
       justifyContent="space-between"
       width="100%"
+      padding="13px 12px"
     >
       {/* Left side content */}
       <Box display="flex" alignItems="center" gap={4} flexWrap="wrap">
-        
         {/* Allocation */}
         <Box display="flex" alignItems="center" gap={1}>
           <Typography variant="body2" fontWeight={600} fontSize={12}>
@@ -40,13 +40,14 @@ const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
                   key={index}
                   sx={{
                     backgroundColor: item.Color,
-                    padding: "4px 12px",
+                    padding: '4px 12px',
                     minWidth: 80,
-                    textAlign: "center",
+                    textAlign: 'center',
                   }}
                 >
-                  <Typography variant="caption" fontWeight={600} fontSize={10}> 
-                    {item.Label || 'ColorLabel'} : {toPercent(item.From)} - {toPercent(item.To)}
+                  <Typography variant="caption" fontWeight={600} fontSize={10}>
+                    {item.Label || 'ColorLabel'} : {toPercent(item.From)} -{' '}
+                    {toPercent(item.To)}
                   </Typography>
                 </Box>
               ))}
@@ -54,16 +55,14 @@ const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
           )}
         </Box>
 
-        <Box
-          sx={{
-            borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
-            height: '34px',
-            position: 'relative',
-          }}></Box>
-
         {/* Actuals */}
         <Box display="flex" alignItems="center" gap={1}>
-          <Typography variant="body2" fontWeight={600} fontSize={12}>
+          <Typography
+            variant="body2"
+            fontWeight={600}
+            fontSize={12}
+            sx={{ marginRight: '12px' }}
+          >
             Actuals
           </Typography>
 
@@ -72,22 +71,35 @@ const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
           ) : (
             <Box
               sx={{
-                display: "flex",
-                borderRadius: "8px",
-                overflow: "hidden",
-                border: "1px solid #E5E7EB",
+                display: 'flex',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                border: '1px solid #E5E7EB',
               }}
             >
-              <Box sx={{ background: "#F0FFEC", px: 2, py: "3px" }}>
-                <Typography sx={{color:'#22BE48', fontSize: 10,fontWeight:600}}>On-Target</Typography>
+              <Box sx={{ background: '#F0FFEC', px: 2, py: '3px' }}>
+                <Typography
+                  sx={{ color: '#22BE48', fontSize: 10, fontWeight: 600 }}
+                >
+                  On-Target
+                </Typography>
               </Box>
 
-              <Box sx={{ background: "#E0ECFF", px: 2, py: "3px"}}>
-                <Typography sx={{color:'#4C89EE', fontSize: 10 , fontWeight:600}}>Over-Achieved</Typography>
+              <Box sx={{ background: '#E0ECFF', px: 2, py: '3px' }}>
+                <Typography
+                  sx={{ color: '#4C89EE', fontSize: 10, fontWeight: 600 }}
+                >
+                  Over-Achieved
+                </Typography>
               </Box>
 
-              <Box sx={{ background: "#FFF5F5", px: 2, py: "3px" }}>
-                 <Typography sx={{color:'#B91C1C',fontSize: 10 , fontWeight:600}}> Under-Achieved </Typography>
+              <Box sx={{ background: '#FFF5F5', px: 2, py: '3px' }}>
+                <Typography
+                  sx={{ color: '#B91C1C', fontSize: 10, fontWeight: 600 }}
+                >
+                  {' '}
+                  Under-Achieved{' '}
+                </Typography>
               </Box>
             </Box>
           )}
@@ -95,7 +107,11 @@ const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
       </Box>
 
       {/* Close Button */}
-      <IconButton size="small" onClick={onClose}>
+      <IconButton
+        size="small"
+        onClick={onClose}
+        sx={{ position: 'absolute', right: 8, top: 130 }}
+      >
         <img src="/images/icons/CloseRemoveBtn.svg" alt="Close" />
       </IconButton>
     </Box>

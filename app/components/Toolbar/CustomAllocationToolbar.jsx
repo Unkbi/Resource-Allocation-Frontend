@@ -2093,7 +2093,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               },
             }}
           >
-            <img src="/images/icons/legendBtn.svg" alt="Legend" />
+            <img src="/images/icons/LegendButton.svg" alt="Legend" />
           </Button>
           <GridToolbarContainer
             ref={setFilterButtonEl}
@@ -2239,9 +2239,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         </Box>
       </Box>
       {showLegend && (
-        <Box sx={{ height: '54px', padding: '11px 21px 1px 11px' }}>
           <LegendBar onClose={() => setShowLegend(false)} />
-        </Box>
       )}
       <ConfirmDialog
         open={deleteDialogOpen}
