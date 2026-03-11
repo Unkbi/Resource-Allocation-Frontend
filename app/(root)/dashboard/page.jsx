@@ -2589,7 +2589,7 @@ export default function ExecutiveDashboardPage() {
                     {
                       min: 0,
                       width: config.yAxis?.width || 50,
-                      valueFormatter: value => `${value}%`,
+                      valueFormatter: value => `${value}`,
                       labelStyle: config.yAxis?.labelStyle,
                     },
                   ]}
