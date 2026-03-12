@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/app/redux/store';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import {GridColDef } from '@mui/x-data-grid-premium';
-import { StyledDataGrid, ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
+import { StyledDataGrid, ColumnManagementStyles, FilterPanelStyles } from '../../AllocationTable/styles/StyledDataGrid';
 import { formatAISummaryResponse, getScoreColor, WeekColumn, ProjectSummaryTableRow } from '@/app/utils/aiSummaryFormatter';
 import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
 import AISummaryDetailDialog from './AISummaryDetailDialog';
@@ -328,6 +328,18 @@ export default function AISummaryTab() {
                 columnsPanel: {
                   className: 'styleColumnMenu',
                   sx: ColumnManagementStyles,
+                },
+                panel: {
+                  className: 'parent-grid-panel',
+                  placement: 'bottom-end',
+                  sx: {
+                    transform: 'translate3d(-50px, 250px, 0px) !important',
+                    top: '40px !important',
+                  },
+                },
+                filterPanel: {
+                  columnsSort: 'asc',
+                  sx: FilterPanelStyles,
                 },
                 loadingOverlay: {
                   variant: 'skeleton',

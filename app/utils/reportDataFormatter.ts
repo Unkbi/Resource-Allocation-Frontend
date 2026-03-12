@@ -1,6 +1,6 @@
 import { ReportType } from '@/app/types/dashboardTypes';
 import { formatAPIResponse } from './authUtils';
-
+import { ReportFilters } from '../components/Dashboard/ReportBuilder/ReportBuilderFilters';
 /**
  * Formats nested API response data into flat structure for DataGrid
  * Handles all report types with their specific data structures
@@ -359,4 +359,94 @@ export const formatReportDataCustom = (
 
         return formatted;
     });
+};
+
+export const convertFiltersToGridModel = (
+  filters: Partial<ReportFilters>,
+  columns: any[]
+) => {
+  const filterItems: any[] = [];
+
+  // Map of filter keys to column fields (for common mappings)
+  const filterFieldMap: Record<string, string> = {
+    project: 'project_name',
+    team: 'team_name',
+    organization: 'organization_name',
+    resource: 'resource_name',
+    projectType: 'project_type_name',
+    projectTypeGroup: 'project_type_group_name',
+    portfolio: 'portfolio_name',
+    projectManager: 'project_manager_name',
+    allocationManager: 'allocation_manager_name',
+    resourceType: 'resource_type',
+    resourceStatuses: 'resource_status',
+    projectStatuses: 'project_status',
+    userStatuses: 'user_status',
+    userRoles: 'user_role',
+    resourceLocations: 'resource_location',
+    resourceWorkLocationGroup: 'resource_work_location_group',
+    plan: 'planned',
+    planned: 'planned',
+  };
+
+  // Process each filter
+  Object.entries(filters).forEach(([key, value]) => {
+    // Skip null/undefined values
+    if (value === null || value === undefined) return;
+
+    // First try the mapping, then check if key exists directly as a column field
+    let columnField = filterFieldMap[key];
+    if (!columnField) {
+      // Check if the key itself is a column field
+      const directColumn = columns.find(col => col.field === key);
+      if (directColumn) {
+        columnField = key;
+      }
+    }
+
+    if (!columnField) return;
+
+    // Check if the column exists in the grid
+    const column = columns.find(col => col.field === columnField);
+    if (!column) return;
+
+    // Check if value is an operator object (e.g., { operator: '>', value: 0 })
+    const isOperatorObject = 
+      value && 
+      typeof value === 'object' && 
+      !Array.isArray(value) && 
+      'operator' in value && 
+      'value' in value;
+
+    if (isOperatorObject) {
+      // Custom operator filter (e.g., >, <, >=, <=)
+      const operatorValue = value as { operator: string; value: any };
+      filterItems.push({
+        field: columnField,
+        operator: operatorValue.operator,
+        value: operatorValue.value,
+      });
+    } else if (Array.isArray(value) && value.length > 0) {
+      // Check if this is a numeric column
+      const isNumericColumn = column.type === 'number';
+      
+      // For numeric columns with single numeric value, use '=' operator
+      if (isNumericColumn && value.length === 1 && typeof value[0] === 'number') {
+        filterItems.push({
+          field: columnField,
+          operator: '=',
+          value: value[0],
+        });
+      } else {
+        // For array filters (multiple values or strings), use 'isAnyOf' operator
+        filterItems.push({
+          field: columnField,
+          operator: 'isAnyOf',
+          value: value,
+        });
+      }
+    }
+  });
+
+  return { items: filterItems };
 };

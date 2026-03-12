@@ -793,7 +793,7 @@ export default function ExecutiveDashboardPage() {
    * Helper function to navigate to report page with filters
    * Maps chart identifiers to appropriate report types and configurations
    */
-  const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null, weekData = null) => {
+  const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null, gridFilters = null, weekData = null) => {
     // Special case: Navigate to custom tab for custom allocation chart
     if (chartKey === 'custom_allocation_percentage') {
       navigateToReport(
@@ -886,6 +886,11 @@ export default function ExecutiveDashboardPage() {
     // Add additional filters if provided
     if (additionalFilters) {
       config.additionalFilters = additionalFilters;
+    }
+
+    // Add grid filters if provided
+    if (gridFilters && Object.keys(gridFilters).length > 0) {
+      config.gridFilters = gridFilters;
     }
 
     // Navigate with advanced filters and chart config
@@ -2732,15 +2737,46 @@ export default function ExecutiveDashboardPage() {
                   sx={{
                     cursor: 'pointer',
                   }}
-                  onAxisClick={(event, axisData)=>{
-                    const { dataIndex } = axisData || {};
-                    if (dataIndex !== undefined && periodData[dataIndex]) {
-                      const periodStart = periodData[dataIndex].period_start;
+                  onItemClick={(event, itemData) => {
+                    // Handle click on bar segments
+                    if (itemData && itemData.seriesId !== undefined && itemData.dataIndex !== undefined) {
+                      const categoryKey = itemData.seriesId;
+                      const periodStart = periodData[itemData.dataIndex]?.period_start;
+                      
+                      if (!periodStart) return;
+                      
                       const endDate = dayjs(periodStart).add(6, 'day').format('YYYY-MM-DD');
+                      
+                      // Prepare grid filters based on category
+                      let gridFilters = {};
+                      
+                      if (categoryKey === 'Personal Time') {
+                        // Filter by project name "Personal Time"
+                        gridFilters = {
+                          project: ['Personal Time']
+                        };
+                      } else if (categoryKey === 'Other Work') {
+                        // Filter by project name "Other Work"
+                        gridFilters = {
+                          project: ['Other Work']
+                        };
+                      } else if (categoryKey === 'Unplanned Projects') {
+                        // For unplanned projects, filter where planned allocation = 0
+                        // The column field in DataGrid is 'planned', so we use that
+                        gridFilters = {
+                          planned: [0]
+                        };
+                      } else if (categoryKey === 'Approved Work') {
+                        // Filter approved work: planned allocation > 0
+                        gridFilters = {
+                          planned: { operator: '>', value: 0 }
+                        };
+                      }
+                      
                       navigateToReportWithFilters('actualsTrendWeekly', {
                         customStartDate: periodStart,
                         customEndDate: endDate
-                      });
+                      }, gridFilters);
                     }
                   }}
                 />
