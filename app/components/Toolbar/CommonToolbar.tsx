@@ -71,7 +71,7 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(
       dispatch(
         openDialog({
           title,
-          submitButtonText: formType === 'add_allocation' ? 'Update' : 'Add',
+          submitButtonText: formType === 'add_allocation' ? 'Add' : 'Add',
           cancelButtonText: 'Cancel',
           primarySecondButtonText,
           formType,
@@ -84,7 +84,7 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(
       {
         icon: '/images/icons/AllocationIcon.svg',
         alt: 'Allocation Icon',
-        title: 'Update Allocation',
+        title: 'Add Allocation',
         type: 'add_allocation',
         entity: 'Allocation',
       },

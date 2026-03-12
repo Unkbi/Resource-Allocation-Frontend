@@ -1100,7 +1100,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     {
       icon: '/images/icons/AllocationIcon.svg',
       alt: 'Allocation Icon',
-      title: 'Update Allocation',
+      title: 'Add Allocation',
       type: 'add_allocation',
       entity: 'Allocation',
     },
@@ -1148,7 +1148,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     dispatch(
       openDialog({
         title: title,
-        submitButtonText: formType === 'add_allocation' ? 'Update' : 'Add',
+        submitButtonText: formType === 'add_allocation' ? 'Add' : 'Add',
         cancelButtonText: 'Cancel',
         primarySecondButtonText: primarySecondButtonText ?? '',
         formType: formType,
