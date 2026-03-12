@@ -845,3 +845,41 @@ export function isResourceWithinDate(resource, monday) {
 
 export const formatDateMMDDYYYY = date =>
   date ? format(parseISO(date), USA_DATE_FORMAT) : '';
+
+export const formatDateTime = value => {
+    if (!value) return '';
+
+    const date = parseISO(value);
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+
+    const hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    const AM_PM = hours >= 12 ? 'PM' : 'AM';
+
+    let hour12 = hours % 12;
+    if (hour12 === 0) hour12 = 12;
+
+    const hourStr = String(hour12).padStart(2, '0');
+
+    return `${month}/${day}/${year}  ${hourStr}:${minutes} ${AM_PM}`;
+  };
+
+ export const formatDateRanges = value => {
+    if (!value) return '';
+
+    const date = parseISO(value);
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+
+    return `${month}/${day}/${year}`;
+  };

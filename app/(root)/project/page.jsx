@@ -13,6 +13,9 @@ import {
 import { useEffect, useState } from 'react';
 import {
   calculateWeekRanges,
+  formatDate,
+  formatDateRanges,
+  formatDateTime,
   generateDateWeekMath,
   generateRandomColor,
   getInitials,
@@ -309,6 +312,11 @@ function Project({ permissions, loadingPermissions }) {
         __last_modified_by: users?.find(
           user => user.id === item?.__last_modified_by
         )?.Name,
+        __created: formatDateTime(project.__created),
+        __last_modified: formatDateTime(project.__last_modified),
+        StartDate: formatDateRanges(project.StartDate),
+        EndDate: formatDateRanges(project.EndDate),
+        Status: project.Status,
       };
     });
   };
@@ -784,55 +792,18 @@ function Project({ permissions, loadingPermissions }) {
       headerName: 'Start Date',
       flex: 1,
       minWidth: 120,
-      renderCell: params => {
-        if (params && params.value) {
-          const date = parseISO(params.value);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          return `${month}/${day}/${year}`;
-        }
-        return '';
-      },
     },
     {
       field: 'EndDate',
       headerName: 'End Date',
       flex: 1,
       minWidth: 120,
-      renderCell: params => {
-        if (params && params.value) {
-          const date = parseISO(params.value);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          return `${month}/${day}/${year}`;
-        }
-        return '';
-      },
     },
     {
       field: '__created',
       headerName: 'Created On',
       flex: 1,
       minWidth: 160,
-      renderCell: params => {
-        if (params && params.value) {
-          const date = parseISO(params.value);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
-          const hours = date.getHours();
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const AM__PM = hours >= 12 ? 'PM' : 'AM';
-          let hour12 = hours % 12;
-          if (hour12 === 0) hour12 = 12;
-          const hourStr = String(hour12).padStart(2, '0');
-          return `${month}/${day}/${year}  ${hourStr}:${minutes} ${AM__PM}`;
-        }
-        return '';
-      },
     },
     {
       field: '__created_by',
@@ -859,23 +830,6 @@ function Project({ permissions, loadingPermissions }) {
       headerName: 'Last Modified On',
       flex: 1,
       minWidth: 160,
-      renderCell: params => {
-        if (params && params.value) {
-          const date = parseISO(params.value);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
-          const hours = date.getHours(); 
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const AM__PM = hours >= 12 ? 'PM' : 'AM';
-          let hour12 = hours % 12;
-          if (hour12 === 0) hour12 = 12;
-          const hourStr = String(hour12).padStart(2, '0');
-          return `${month}/${day}/${year} ${hourStr}:${minutes} ${AM__PM}`;
-        }
-        return '';
-      },
     },
     {
       field: '__last_modified_by',

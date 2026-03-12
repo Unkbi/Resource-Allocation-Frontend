@@ -10,6 +10,8 @@ import {
   IconButton,
   Chip,
   Badge,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import { StyledInput } from '../Input/StyledInput';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -101,6 +103,7 @@ export default function AccessTable({
     initialState.columns?.columnVisibilityModel || {}
   );
   const [filterCount, setFilterCount] = useState(0);
+  const [exportAnchor, setExportAnchor] = useState<HTMLElement | null>(null);
 
   // Track filter count
   React.useEffect(() => {
@@ -720,19 +723,14 @@ export default function AccessTable({
                     />
                     </IconButton>
                     <IconButton
-                      onClick={() =>
-                        apiRef?.current?.exportDataAsCsv({
-                          fileName: `${title}_data`,
-                        })
-                      }
+                      onClick={e => setExportAnchor(e.currentTarget)}
                       sx={{
                         width: 40,
                         height: 38,
                         borderRadius: '6px',
                         border: '1px solid #E2E8F0',
                         boxShadow: '0px 1px 1px rgba(0,0,0,0.25)',
-                      }}
-                    >
+                      }}>
                       <img
                         src="/images/icons/ExportIcon.svg"
                         alt="export"
@@ -856,7 +854,32 @@ export default function AccessTable({
           </Box>
         )
       ) : null}
-
+      <Menu
+        anchorEl={exportAnchor}
+        open={Boolean(exportAnchor)}
+        onClose={() => setExportAnchor(null)}
+      >
+        <MenuItem
+          onClick={() => {
+            apiRef?.current?.exportDataAsCsv({
+              fileName: `${title}_data`,
+            });
+            setExportAnchor(null);
+          }}
+        >
+          Export CSV
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            apiRef?.current?.exportDataAsExcel({
+              fileName: `${title}_data`,
+            });
+            setExportAnchor(null);
+          }}>
+          Export Excel
+        </MenuItem>
+      </Menu>
+      
       <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
         <DataGridPremium
           rows={filteredRows}

@@ -455,23 +455,36 @@ function RoleManagementPage({
   };
 
   const modifyRolesData = (userRoles: Role[] | null) =>
-    userRoles?.map(role => ({ ...role, id: role.name })) || [];
+    userRoles?.map(role => ({ ...role, id: role.name,Status: 'Active',})) || [];
   const modifyRoleAssignmentsData = (
     userRoleAssignments: RoleAssignment[] | null
   ) =>
     userRoleAssignments?.map(assignment => ({
       ...assignment,
       id: assignment.__path__,
+      Role: assignment.Role?.replace('agentlang.auth$Role/', '') || '',
+      Status: 'Active',
     })) || [];
   const modifyPrivilegesData = (userPrivileges: Privilege[] | null) =>
-    userPrivileges?.map(privilege => ({ ...privilege, id: privilege.id })) ||
-    [];
+    userPrivileges?.map(privilege => {
+    const value = Array.isArray(privilege.resourceFqName)
+      ? privilege.resourceFqName[0]
+      : privilege.resourceFqName;
+
+    return {
+      ...privilege,
+      id: privilege.id,
+      resourceFqName: value?.split('/')?.pop() || '',
+    };
+  }) ?? [];
   const modifyPrivilegeAssignmentsData = (
     userPrivilegeAssignments: PrivilegeAssignment[] | null
   ) =>
     userPrivilegeAssignments?.map(assignment => ({
       ...assignment,
       id: assignment.__path__,
+      Role: assignment.Role?.split('/').pop() || '',
+      Permission: assignment.Permission?.split('Permission/').pop() || '',
     })) || [];
 
   const filteredRoleAssignmentData =
@@ -735,11 +748,7 @@ function RoleManagementPage({
       headerName: 'Entity',
       flex: 1,
       renderCell: (params: any) => {
-        const value = Array.isArray(params.value)
-          ? params.value[0]
-          : params.value;
-        const lastPart = value?.split('/')?.pop();
-        return <Typography sx={commonCellStyle}>{lastPart}</Typography>;
+        return <Typography sx={commonCellStyle}>{params.value}</Typography>;
       },
     },
     {
@@ -850,7 +859,7 @@ function RoleManagementPage({
       headerName: 'Role',
       flex: 0.5,
       renderCell: (params: any) => {
-        const roleName = params.value?.split('/')[1];
+        const roleName = params.value;
         const handleNameClick = () => {
           if (permissions!['Permission'].u) {
             handleEditPrivilegeAssignments(params.row);
