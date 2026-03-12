@@ -1432,6 +1432,14 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     '& .secondGroupsRow': {
       backgroundColor: '#F0F7FF',
     },
+    '& .allocation-outside-range': {
+      backgroundColor: '#F66B58',
+      borderBottom: '3px solid #D95545',
+    },
+    '& .allocation-outside-range-secondGroup': {
+      backgroundColor: '#F66B5866',
+      borderBottom: '1px solid #D95545',
+    },
     '& .firstGroupsRow-project': {
       backgroundColor: groupBy === 'project' ? 'rgb(233, 239, 248)' : '#F0F7FF',
       fontWeight: groupBy === 'project' ? 'bold' : '',
