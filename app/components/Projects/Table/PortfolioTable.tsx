@@ -3,9 +3,9 @@ import {
   FilterPanelStyles,
   StyledDataGrid,
 } from '../../AllocationTable/styles/StyledDataGrid';
-import { GridApi, GridColDef, GridColumnMenu, GridColumnMenuProps, GridToolbarProps } from '@mui/x-data-grid-premium';
+import { GridApi, GridColDef, GridColumnMenu, GridColumnMenuProps, GridColumnVisibilityModel, GridToolbarProps } from '@mui/x-data-grid-premium';
 import ProjectToolbar from '../../Toolbar/ProjectToolbar';
-import { JSXElementConstructor, useEffect, useState } from 'react';
+import { JSXElementConstructor, useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import {  CrudPermissions ,withRBAC } from '../../HOC/withRBAC';
 import { Portfolio } from '@/app/types';
@@ -49,6 +49,9 @@ const PortfolioTable = ({
   const [filterModel, setFilterModel] = useState({
     items: [],
   });
+  const [search, setSearch] = useState('');
+  const [columnVisibilityModel, setColumnVisibilityModel] =
+  useState<GridColumnVisibilityModel>({});
   const globalFilters = useSelector((state: any) => state.filters.Portfolio);
   
   useEffect(() => {
@@ -72,6 +75,27 @@ const PortfolioTable = ({
     dispatch(updatePageFilters('Portfolio', filterData));
   };
 
+   const filteredRows = useMemo(() => {
+        if (!rows) return [];
+    
+        if (!search.trim()) return rows;
+    
+        const lowerSearch = search.toLowerCase();
+    
+        const visibleFields = columns
+          .filter(col => columnVisibilityModel[col.field] !== false)
+          .map(col => col.field);
+    
+        return rows.filter(row =>
+          visibleFields.some(field => {
+            const value = (row as any)[field];
+            if (value === null || value === undefined) return false;
+            return String(value).toLowerCase().includes(lowerSearch);
+          })
+        );
+      }, [rows, search, columns, columnVisibilityModel]);
+    
+
 
   return (
     <Box
@@ -84,11 +108,13 @@ const PortfolioTable = ({
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={permissions['Portfolio']?.r ? rows : []}
+        rows={permissions['Portfolio']?.r ? filteredRows : []}
         hideFooter
         loading={loading}
         filterModel={filterModel}
         onFilterModelChange={handleFilterModelChange}
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={setColumnVisibilityModel}
         initialState={{
           sorting: {
             sortModel: [{ field: 'Name', sort: 'asc' }],
@@ -133,6 +159,8 @@ const PortfolioTable = ({
             setFilterButtonEl,
             value: value,
             onChange: onChange,
+            search: search,
+            setSearch,
           },
           columnsPanel: {
             className: 'styleColumnMenu',

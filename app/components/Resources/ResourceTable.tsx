@@ -8,12 +8,13 @@ import {
   GridColDef,
   GridColumnMenu,
   GridColumnMenuProps,
+  GridColumnVisibilityModel,
   GridToolbarProps,
 } from '@mui/x-data-grid-premium';
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
-import { JSXElementConstructor, useEffect, useState } from 'react';
+import { JSXElementConstructor, useEffect, useMemo, useState } from 'react';
 import { Resource } from '@/app/types';
-import { Box } from '@mui/material';
+import { Box, TextField } from '@mui/material';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import { useDispatch, useSelector } from 'react-redux';
 import { updatePageFilters } from '@/app/redux/actions/filterAction';
@@ -54,6 +55,9 @@ const ResourceTable = ({
   const [filterModel, setFilterModel] = useState({
     items: [],
   });
+  const [search, setSearch] = useState('');
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState<GridColumnVisibilityModel>({});
+  
   const globalFilters = useSelector((state: any) => state.filters.Resource);
   
   useEffect(() => {
@@ -77,6 +81,26 @@ const ResourceTable = ({
     dispatch(updatePageFilters('Resource', filterData));
   };
 
+  const filteredRows = useMemo(() => {
+    if (!rows) return [];
+
+    if (!search.trim()) return rows;
+
+    const lowerSearch = search.toLowerCase();
+
+    const visibleFields = columns
+      .filter(col => columnVisibilityModel[col.field] !== false)
+      .map(col => col.field);
+
+    return rows.filter(row =>
+      visibleFields.some(field => {
+        const value = (row as any)[field];
+        if (value === null || value === undefined) return false;
+        return String(value).toLowerCase().includes(lowerSearch);
+      })
+    );
+  }, [rows, search, columns, columnVisibilityModel]);
+
   return (
     <Box
       sx={{
@@ -88,12 +112,15 @@ const ResourceTable = ({
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={permissions['Resource'].r ? rows : []}
+        rows={permissions['Resource'].r ? filteredRows : []}
+        // rows={filteredRows}
         hideFooter={true}
         hideFooterSelectedRowCount={true}
         loading={loading}
         filterModel = {filterModel}
-        onFilterModelChange = {handleFilterModelChange}
+        onFilterModelChange={handleFilterModelChange}
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={setColumnVisibilityModel}
         initialState={{
           sorting: {
             sortModel: [{ field: 'FullName', sort: 'asc' }],
@@ -116,7 +143,7 @@ const ResourceTable = ({
         slots={{
           toolbar:
             ResourceToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
-          columnMenu: CustomColumnMenu,
+            columnMenu: CustomColumnMenu,
         }}
         localeText={{
           toolbarFilters: '',
@@ -147,6 +174,8 @@ const ResourceTable = ({
             setFilterButtonEl,
             value: value,
             onChange: onChange,
+            search: search,
+            setSearch,
           },
           columnsPanel: {
             className: 'styleColumnMenu',

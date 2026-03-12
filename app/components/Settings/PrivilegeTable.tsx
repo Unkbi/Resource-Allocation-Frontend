@@ -1,10 +1,11 @@
 'use client';
 
 import { Box } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridColumnVisibilityModel } from '@mui/x-data-grid';
 import SettingsToolbar from '../Toolbar/SettingsToolbar';
 import { DataGridPremium } from '@mui/x-data-grid-premium';
 import { FilterPanelStyles } from '../AllocationTable/styles/StyledDataGrid';
+import { useState, useMemo } from 'react';
 
 interface AccessTableProps {
   title: string;
@@ -41,6 +42,26 @@ export default function PrivilegeTable({
   apiRef,
   loading = false,
 }: AccessTableProps) {
+   const [search, setSearch] = useState('');
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState<GridColumnVisibilityModel>({});
+
+  const filteredRows = useMemo(() => {
+      if (!data) return [];
+      if (!search.trim()) return data;
+      const lowerSearch = search.toLowerCase();
+  
+      const visibleFields = columns
+        .filter(col => columnVisibilityModel[col.field] !== false)
+        .map(col => col.field);
+  
+      return data.filter(row =>
+        visibleFields.some(field => {
+          const value = (row as any)[field];
+          if (value === null || value === undefined) return false;
+          return String(value).toLowerCase().includes(lowerSearch);
+        })
+      );
+    }, [data, search, columns, columnVisibilityModel]);
   const PrivilegeToolbar = () => (
     <SettingsToolbar
       title={title}
@@ -54,8 +75,10 @@ export default function PrivilegeTable({
     >
       <Box sx={{ width: '100%', height: 'calc(100vh - 248px)' }}>
         <DataGridPremium
-          rows={data}
+          rows={filteredRows}
           columns={columns}
+          columnVisibilityModel={columnVisibilityModel}
+          onColumnVisibilityModelChange={setColumnVisibilityModel}
           hideFooter
           disableRowSelectionOnClick
           apiRef={apiRef}
@@ -95,10 +118,17 @@ export default function PrivilegeTable({
               },
               sx: FilterPanelStyles,
             },
-          }}
+            toolbar: toolbarType === 'filter' ? ({
+                          title,
+                          buttonLabel,
+                          onButtonClick: onAdd,
+                          search,
+                          setSearch,
+                        } as any) : undefined,
+                      }}
           slots={{
-            toolbar: toolbarType === 'filter' ? PrivilegeToolbar : undefined,
-          }}
+            toolbar: toolbarType === 'filter' ? (SettingsToolbar as any) : undefined,
+          }}          
           localeText={{
             toolbarFilters: '',
           }}
