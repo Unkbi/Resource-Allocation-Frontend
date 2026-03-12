@@ -168,15 +168,6 @@ export default function ReportBuilderDataGridToolbar({
           gap: 2,
         }}
       >
-        {/* ************* Part of save reports feature****************  */}
-        <Box
-          sx={{
-            fontSize: 14,
-            fontWeight: 400,
-            color: '#6A7282',
-          }}
-        >
-  {/* ************* Part of save reports feature****************  */}
           {(() => {
             // Check if currentLoadedReport belongs to the current tab
             if (currentLoadedReport) {
@@ -252,7 +243,6 @@ export default function ReportBuilderDataGridToolbar({
           >
             {`Total Records: ${GridRowCount ?? 0}`}
           </Box>
-        </Box>
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
