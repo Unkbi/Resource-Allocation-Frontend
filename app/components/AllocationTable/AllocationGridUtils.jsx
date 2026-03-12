@@ -571,7 +571,9 @@ export const getFinalColumns = (
     state => state.allocationView
   );
   const { scalarSettings } = useSelector(state => state.allSettings);
-  const { userPreferences } = useSelector(state => state.userPreferences);
+  const { userPreferences } = useSelector(state => state.userPreferences) ?? {};
+  const { currentView } = useSelector(state => state.allocationView);
+  const showDateHeader = currentView?.showDateHeader ?? false;
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
@@ -579,7 +581,8 @@ export const getFinalColumns = (
     endDate,
     isFormatWithK,
     scalarSettings,
-    userPreferences
+    userPreferences,
+    showDateHeader
   );
 
   const handleAddClick = params => {
@@ -599,8 +602,8 @@ export const getFinalColumns = (
     } else {
       dispatch(
         openDialog({
-          title: 'Update Allocation',
-          submitButtonText: 'Update',
+          title: 'Add Allocation',
+          submitButtonText: 'Add',
           cancelButtonText: 'Cancel',
           formType: 'add_allocation',
           initialData: {

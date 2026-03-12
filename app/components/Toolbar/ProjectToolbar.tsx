@@ -1,4 +1,4 @@
-import { Box, Tabs, Tab, styled, Button } from '@mui/material';
+import { Box, Tabs, Tab, styled, Button, TextField } from '@mui/material';
 import { SyntheticEvent } from 'react';
 import {
   GridToolbarColumnsButton,
@@ -15,6 +15,8 @@ import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import FilterButtonWithCount from './FilterButtonWithCount';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/app/redux/store';
+import React from 'react';
+import { StyledInput } from '../Input';
 
 interface ProjectToolbarProps {
   setFilterButtonEl?: (el: HTMLElement | null) => void;
@@ -24,6 +26,8 @@ interface ProjectToolbarProps {
     newValue: 'project' | 'portfolio' | 'businessImpact'
   ) => void;
   permissions: Record<string, CrudPermissions>;
+  search?: string;
+  setSearch?: (val: string) => void;
 }
 
 const commonButtonStyles = {
@@ -105,6 +109,8 @@ const ProjectToolbar = ({
   value,
   onChange = () => {},
   permissions,
+  search,
+  setSearch
 }: ProjectToolbarProps) => {
   const dispatch = useDispatch();
   const { scalarSettings } = useSelector(
@@ -195,6 +201,19 @@ const ProjectToolbar = ({
 
         <Box className="line" sx={{ marginRight: '16px', height: '64px' }}>
           <img src="/images/icons/LinePeople.svg" />
+        </Box>
+
+         <Box sx={{ px: 2, py: 1 , mt:0.7 }}>
+          <StyledInput
+            as={TextField}
+            size="small"
+            placeholder="Search across columns..."
+             value={search ?? ''}
+            sx={{ width: 230 }}
+            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+              setSearch?.(e.target.value)
+            }
+          />
         </Box>
 
         <Box

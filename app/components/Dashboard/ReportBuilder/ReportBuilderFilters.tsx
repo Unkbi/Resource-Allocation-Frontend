@@ -173,6 +173,7 @@ interface ReportBuilderFiltersProps {
   onResetFilters: () => void;
   mode?: 'reports' | 'aisummary' | 'custom'; // Mode to determine which filters to show
   permissions?: Record<string, CrudPermissions>
+  customReportType?: 'percentageAllocation' | 'allocationCapacity'; // For custom tab
 }
 
 function ReportBuilderFilters({
@@ -183,6 +184,7 @@ function ReportBuilderFilters({
   onResetFilters,
   mode = 'reports',
   permissions,
+  customReportType,
 }: ReportBuilderFiltersProps) {
   const dispatch = useDispatch<AppDispatch>();
   
@@ -621,7 +623,7 @@ function ReportBuilderFilters({
       if (!value || 
           (Array.isArray(value) && value.length === 0) ||
           (typeof value === 'string' && value === 'resourceProjectPeriod' && key === 'reportType') || key === 'summaryType' ||
-          (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'))) {
+          (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'|| filters.reportType === 'userActivity'))) {
         return;
       }
       
@@ -1115,8 +1117,8 @@ function ReportBuilderFilters({
         )}
         </Box>
 
-        {/* Show Actuals Checkbox - Only for Custom Tab */}
-        {mode === 'custom' && (
+        {/* Show Actuals Checkbox - Only for Custom Tab and not for Allocation Capacity */}
+        {mode === 'custom' && customReportType !== 'allocationCapacity' && (
           <Box sx={{ mt: 1 }}>
             <FormControlLabel
               control={

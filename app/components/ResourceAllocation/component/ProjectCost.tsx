@@ -68,7 +68,7 @@ const ProjectCost = ({
   const { setRows, ready } = useAllocationGrid('main');
   
   const { totalAllocationCosts } = useSelector(
-    (state: RootState) => state.allocationTotals);
+    (state: RootState) => state.allocationTotals) ?? {};
 
   useEffect(() => {
     if (projectTypes.length === 0) {
@@ -135,8 +135,8 @@ const ProjectCost = ({
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
       openDialog({
-        title: 'Update Allocation',
-        submitButtonText: 'Update',
+        title: 'Add Allocation',
+        submitButtonText: 'Add',
         cancelButtonText: 'Cancel',
         formType: 'add_allocation',
         initialData: {

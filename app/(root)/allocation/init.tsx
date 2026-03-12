@@ -102,7 +102,7 @@ function AllocationInit({
   );
 
   const { totalAllocations,
-    totalAllocationsTillDate } = useSelector((state: RootState) => state.allocationTotals);
+    totalAllocationsTillDate } = useSelector((state: RootState) => state.allocationTotals) ?? {};
 
   useEffect(() => {
     if (loadingPermissions) return;

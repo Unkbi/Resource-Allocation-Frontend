@@ -7,9 +7,10 @@ import { useSelector } from 'react-redux';
 import { parseISO } from 'date-fns/parseISO';
 import { RootState } from '@/app/redux/store';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
-import { GridColDef } from '@mui/x-data-grid-premium';
-import { StyledDataGrid, ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
+import { GridColDef, useGridApiRef } from '@mui/x-data-grid-premium';
+import { StyledDataGrid, ColumnManagementStyles, FilterPanelStyles } from '../../AllocationTable/styles/StyledDataGrid';
 import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
+import { convertFiltersToGridModel } from '@/app/utils/reportDataFormatter';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { ChartContainer } from '@mui/x-charts/ChartContainer';
 import { BarPlot } from '@mui/x-charts/BarChart';
@@ -48,7 +49,7 @@ const AllocCapTooltip = () => {
                 )}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4, mt: 0.5 }}>
                     <Typography sx={{ fontSize: 12, color: '#64748b' }}>Alloc</Typography>
-                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{Number(alloc.toFixed(2))}</Typography>
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{alloc}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
                     <Typography sx={{ fontSize: 12, color: '#64748b' }}>Cap</Typography>
@@ -159,13 +160,15 @@ interface CustomTabProps {
     showActuals: boolean;
     APIFilters: any;
     customReportType?: 'percentageAllocation' | 'allocationCapacity';
+    customFilters?: any;
+    gridFilters?: any; // Specific filters to apply to DataGrid only
 }
 
-export default function CustomTab({ showActuals, APIFilters, customReportType = 'percentageAllocation' }: CustomTabProps) {
+export default function CustomTab({ showActuals, APIFilters, customReportType = 'percentageAllocation', customFilters, gridFilters }: CustomTabProps) {
     const router = useRouter();
     const { currentReport, loading, error, allocationCapacityReport, allocationCapacityLoading, allocationCapacityError } = useSelector(
         (state: RootState) => state.customReport as any
-    );
+    ) ?? {};
     const { projectTypeGroups, projectTypes } = useSelector((state: RootState) => state.allSettings);
     const { organisations } = useSelector((state: RootState) => state.organisations);
     const { teams } = useSelector((state: RootState) => state.teams);
@@ -173,6 +176,8 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
     const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
     const [persistedLayouts, setPersistedLayouts] = useState<any>(null);
     const suppressSaveRef = useRef(true);
+    const gridApiRef = useGridApiRef();
+    const gridApiRefAllocCap = useGridApiRef();
 
     const STORAGE_KEY = 'custom_report_chart_layout';
     const ALLOC_CAP_STORAGE_KEY = 'alloc_cap_chart_layout';
@@ -383,7 +388,7 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
         navigateToReport(
             {}, // No advanced filters from current context
             {
-                reportType: 'resourceProjectPeriod',
+                reportType: params.field === 'total_allocation' ? 'projectPeriod': 'resourceProjectPeriod',
                 period: 'custom',
                 customStartDate,
                 customEndDate,
@@ -475,6 +480,9 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                 type: 'number',
                 headerAlign: 'left',
                 align: 'right',
+                valueFormatter: (value: any) => {
+                    return Number(value).toFixed(2);
+                },
                 renderCell: (params: any) => {
                     return (
                         <Box
@@ -505,6 +513,9 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                 type: 'number',
                 headerAlign: 'left',
                 align: 'right',
+                valueFormatter: (value: any) => {
+                    return Number(value).toFixed(2);
+                },
                 renderCell: (params: any) => {
                     return (
                         <Box
@@ -535,6 +546,9 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                 type: 'number',
                 headerAlign: 'left',
                 align: 'right',
+                valueFormatter: (value: any) => {
+                    return Number(value).toFixed(2);
+                },
                 renderCell: (params: any) => {
                     const value = params.value;
                     return (
@@ -733,6 +747,7 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
         const gridData = allocationCapacityReport?.GridData || [];
         return gridData.map((item: any, index: number) => ({
             id: `${item.Project?.Id}- ${item.Metrics?.Period || ''}-${index}`,
+            projectId: item.Project?.Id || '',
             project: item.Project?.Name || '',
             portfolio: item.Portfolio?.Name || '',
             project_type: item.ProjectType?.Name || '',
@@ -757,7 +772,29 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
         { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160, flex: 1.2, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value}</Typography> },
         { field: 'period', headerName: 'Period', minWidth: 120, flex: 1, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value}</Typography> },
         { field: 'yearweek', headerName: 'Year - Week', minWidth: 80, flex: 0.6, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value}</Typography> },
-        { field: 'total_allocation', headerName: 'Total Allocation', minWidth: 100, flex: 1, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%' }}>{Number(params.value).toFixed(2)}</Typography> },
+        { field: 'total_allocation', headerName: 'Total Allocation', minWidth: 100, flex: 1, type: 'number', headerAlign: 'left', align: 'right', valueFormatter: (value: any) => {
+                return Number(value).toFixed(2);
+            }, renderCell: (params: any) => {
+                    return (
+                        <Box
+                            onClick={(event) => handleClick(event, params)}
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                alignItems: 'center',
+                                width: '100%',
+                                height: '100%',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    opacity: 0.8,
+                                    textDecoration: 'underline',
+                                },
+                            }}
+                        >
+                            {params.value}
+                        </Box>
+                    );
+                }, },
         // { field: 'total_actuals', headerName: 'Total Actuals', minWidth: 120, flex: 1, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%' }}>{Number(params.value).toFixed(2)}</Typography> },
         // { field: 'variance', headerName: 'Variance', minWidth: 110, flex: 0.9, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%', color: params.value < 0 ? '#ef4444' : params.value > 0 ? '#10b981' : 'inherit' }}>{Number(params.value).toFixed(2)}</Typography> },
         // { field: 'allocation_percentage', headerName: 'Allocation %', minWidth: 120, flex: 1, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => <Typography sx={{ fontSize: '14px', textAlign: 'right', width: '100%' }}>{Number(params.value).toFixed(2)}%</Typography> },
@@ -766,6 +803,56 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
         // { field: 'project_manager', headerName: 'Project Manager', minWidth: 150, flex: 1.2, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value || '-'}</Typography> },
         // { field: 'project_sponsor', headerName: 'Project Sponsor', minWidth: 150, flex: 1.2, renderCell: (params: any) => <Typography sx={{ fontSize: '14px' }}>{params.value || '-'}</Typography> },
     ], []);
+
+    // Apply filters to percentage allocation DataGrid when data is loaded
+    useEffect(() => {
+        // Use gridFilters if provided (from chart clicks), otherwise fall back to customFilters
+        const filtersToApply = gridFilters || customFilters;
+        if (!filtersToApply || !gridApiRef.current) return;
+
+        const applyFilters = async () => {
+            try {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const columns = gridApiRef.current.getAllColumns();
+                const filterModel = convertFiltersToGridModel(filtersToApply, columns);
+                
+                if (filterModel.items.length > 0) {
+                    gridApiRef.current.setFilterModel(filterModel);
+                }
+            } catch (error) {
+                console.error('Error applying DataGrid filters in CustomTab:', error);
+            }
+        };
+
+        if (customReportType === 'percentageAllocation' && rows.length > 0) {
+            applyFilters();
+        }
+    }, [rows, gridFilters, customFilters, customReportType, gridApiRef]);
+
+    // Apply filters to allocation capacity DataGrid when data is loaded
+    useEffect(() => {
+        // Use gridFilters if provided (from chart clicks), otherwise fall back to customFilters
+        const filtersToApply = gridFilters || customFilters;
+        if (!filtersToApply || !gridApiRefAllocCap.current) return;
+
+        const applyFilters = async () => {
+            try {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const columns = gridApiRefAllocCap.current.getAllColumns();
+                const filterModel = convertFiltersToGridModel(filtersToApply, columns);
+                
+                if (filterModel.items.length > 0) {
+                    gridApiRefAllocCap.current.setFilterModel(filterModel);
+                }
+            } catch (error) {
+                console.error('Error applying DataGrid filters to AllocCap:', error);
+            }
+        };
+
+        if (customReportType === 'allocationCapacity' && allocCapRows.length > 0) {
+            applyFilters();
+        }
+    }, [allocCapRows, gridFilters, customFilters, customReportType, gridApiRefAllocCap]);
 
     const allocCapacityCharts: Record<string, React.ReactElement> = {
         allocationCapacityChart: (
@@ -989,6 +1076,7 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                         }}
                     >
                         <StyledDataGrid
+                            apiRef={gridApiRefAllocCap}
                             rows={allocCapRows}
                             columns={allocCapColumns}
                             hideFooter
@@ -1006,6 +1094,18 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                                     tab: 'custom',
                                 } as any,
                                 columnsPanel: { className: 'styleColumnMenu', sx: ColumnManagementStyles },
+                                panel: {
+                                    className: 'parent-grid-panel',
+                                    placement: 'bottom-end',
+                                    sx: {
+                                        transform: 'translate3d(-50px, 250px, 0px) !important',
+                                        top: '40px !important',
+                                    },
+                                },
+                                filterPanel: {
+                                    columnsSort: 'asc',
+                                    sx: FilterPanelStyles,
+                                },
                                 loadingOverlay: { variant: 'skeleton', noRowsVariant: 'skeleton' },
                             }}
                             sx={{
@@ -1072,6 +1172,7 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                         }}
                     >
                         <StyledDataGrid
+                            apiRef={gridApiRef}
                             rows={rows}
                             columns={columns}
                             hideFooter
@@ -1108,6 +1209,18 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                                 columnsPanel: {
                                     className: 'styleColumnMenu',
                                     sx: ColumnManagementStyles,
+                                },
+                                panel: {
+                                    className: 'parent-grid-panel',
+                                    placement: 'bottom-end',
+                                    sx: {
+                                        transform: 'translate3d(-50px, 250px, 0px) !important',
+                                        top: '40px !important',
+                                    },
+                                },
+                                filterPanel: {
+                                    columnsSort: 'asc',
+                                    sx: FilterPanelStyles,
                                 },
                                 loadingOverlay: {
                                     variant: 'skeleton',

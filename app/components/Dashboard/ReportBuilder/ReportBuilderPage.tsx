@@ -8,6 +8,7 @@ import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchReport } from '@/app/redux/actions/dashboardAction';
 import { RootState } from '@/app/redux/store';
+import { useGridApiRef } from '@mui/x-data-grid-premium';
 import {
   ReportType,
   ReportUIFilters,
@@ -18,6 +19,7 @@ import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import {
   ColumnManagementStyles,
+  FilterPanelStyles,
   StyledDataGrid,
 } from '../../AllocationTable/styles/StyledDataGrid';
 
@@ -35,6 +37,7 @@ import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import { FETCH_SAVED_REPORTS, fetchSavedReports } from '@/app/redux/actions/savedReportsActions';
 import { setCurrentLoadedReport } from '@/app/redux/reducers/savedReportsReducer';
 import { calculateDateRange } from '@/app/utils/dateUtils';
+import { convertFiltersToGridModel } from '@/app/utils/reportDataFormatter';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
@@ -179,6 +182,17 @@ const parseQueryParams = (
     filters.userRoles = parseArrayParam(userRoles);
   }
 
+  // Parse gridFilters (separate from report generation filters)
+  const gridFiltersParam = searchParams.get('gridFilters');
+  if (gridFiltersParam) {
+    try {
+      const parsed = JSON.parse(gridFiltersParam);
+      (filters as any).gridFilters = parsed;
+    } catch (e) {
+      console.error('Failed to parse gridFilters:', e);
+    }
+  }
+
   // Parse custom date range
   const customStartDate = searchParams.get('customStartDate');
   const customEndDate = searchParams.get('customEndDate');
@@ -205,6 +219,7 @@ function ReportBuilderPage({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const hasQueryParams = Boolean(searchParams && searchParams.toString());
+  const gridApiRef = useGridApiRef();
 
   // Get active tab from URL or default to 'reports'
   const activeTabFromUrl = searchParams?.get('tab') || 'reports';
@@ -336,9 +351,13 @@ function ReportBuilderPage({
 
   const [APIFilters, setAPIFilters] = useState<any>(null);
   const [customReportType, setCustomReportType] = useState<'percentageAllocation' | 'allocationCapacity'>('percentageAllocation');
+  const hasSetAllocationCapacityDefault = useRef(false);
 
   // Ref to track if we've already attempted initial sessionStorage load
   const hasAttemptedInitialLoadRef = useRef(false);
+
+  // State to track filters that should be applied to DataGrid
+  const [gridFiltersToApply, setGridFiltersToApply] = useState<any>(null);
 
   // Check if all necessary data is loaded
   const isDataLoaded =
@@ -349,6 +368,32 @@ function ReportBuilderPage({
     (projectTypeGroups?.length ?? 0) > 0 &&
     (organisations?.length ?? 0) > 0 &&
     (portfolios?.length ?? 0) > 0;
+
+  // Effect to apply filters to DataGrid after report data is available
+  useEffect(() => {
+    
+    if (!gridFiltersToApply || !reportData.length || !gridApiRef.current ) {
+      return;
+    }
+    // Small delay to ensure DataGrid is fully initialized
+    const timer = setTimeout(() => {
+      try {
+        const columns = gridApiRef.current.getAllColumns();
+        const filterModel = convertFiltersToGridModel(gridFiltersToApply, columns);
+        
+        if (filterModel.items.length > 0) {
+          gridApiRef.current.setFilterModel(filterModel);
+          // Clear after successfully applying
+          setGridFiltersToApply(null);
+        }
+
+      } catch (error) {
+        console.error('Error applying DataGrid filters:', error);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [reportData, gridApiRef, activeTab]);
 
   // Helper function to prepare API payload from filters
   const prepareApiPayload = (filters: ReportUIFilters) => {
@@ -412,6 +457,30 @@ function ReportBuilderPage({
         fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload })
       );
       setShowData(true);
+      
+      // Store filters for DataGrid application
+      // Check if there are specific gridFilters from URL (from chart clicks), otherwise use report filters
+      const gridFiltersFromUrl = (pendingQueryFilters as any)?.gridFilters;
+      const gridFilters = gridFiltersFromUrl || {
+        project: filters.project,
+        team: filters.team,
+        organization: filters.organization,
+        resource: filters.resource,
+        projectType: filters.projectType,
+        projectTypeGroup: filters.projectTypeGroup,
+        portfolio: filters.portfolio,
+        projectManager: filters.projectManager,
+        allocationManager: filters.allocationManager,
+        resourceType: filters.resourceType,
+        resourceStatuses: filters.resourceStatuses,
+        projectStatuses: filters.projectStatuses,
+        userStatuses: filters.userStatuses,
+        userRoles: filters.userRoles,
+        resourceLocations: filters.resourceLocations,
+        resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
+      };
+      setGridFiltersToApply(gridFilters);
+      
       // Save the last generated report to sessionStorage
       sessionStorage.setItem(
         'last_generated_report',
@@ -869,6 +938,11 @@ function ReportBuilderPage({
       };
 
       setCustomFilters(customFiltersFromQuery);
+      
+      // Store gridFilters from URL for custom reports
+      if ((pendingQueryFilters as any)?.gridFilters) {
+        setGridFiltersToApply((pendingQueryFilters as any).gridFilters);
+      }
 
       // Set custom report type from query params
       const reportTypeFromQuery = pendingQueryFilters.reportType;
@@ -933,6 +1007,11 @@ function ReportBuilderPage({
       userRoles: pendingQueryFilters.userRoles || [],
     };
     setFilters(mergedFilters);
+    
+    // Store gridFilters separately if they exist in URL
+    if ((pendingQueryFilters as any)?.gridFilters) {
+      setGridFiltersToApply((pendingQueryFilters as any).gridFilters);
+    }
 
     // Prepare API filters
     const [start, end] = mergedFilters.customDateRange || [];
@@ -1077,6 +1156,7 @@ function ReportBuilderPage({
     }
   }, [aiSummaryState, activeTab, loadingPermissions]);
 
+  // Set default date range for allocation capacity on first selection only
   useEffect(() => {
     if (loadingPermissions) return;
     if (activeTab === 'custom' && customReportState) {
@@ -1105,8 +1185,31 @@ function ReportBuilderPage({
         period: 'custom',
         customDateRange: [startDate, endDate],
       }));
+    if (customReportType === 'allocationCapacity') {
+      // Only set defaults if this is the first time selecting allocation capacity
+      if (
+        !hasSetAllocationCapacityDefault.current &&
+        !pendingQueryFilters &&
+        !hasAppliedQueryParams
+      ) {
+        // Calculate 13-week range: 4 weeks past + current week + 8 weeks future
+        const currentMonday = dayjs().isoWeekday(1);
+        const startDate = currentMonday.subtract(4, 'week');
+        const endDate = currentMonday.add(8, 'week').isoWeekday(7);
+        
+        setCustomFilters(prev => ({
+          ...prev,
+          period: 'custom',
+          customDateRange: [startDate, endDate],
+        }));
+        
+        hasSetAllocationCapacityDefault.current = true;
+      }
+    } else {
+      // Reset the flag when switching away from allocation capacity
+      hasSetAllocationCapacityDefault.current = false;
     }
-  }, [customReportType, pendingQueryFilters, hasAppliedQueryParams, customFilters.customDateRange]);
+  }}, [customReportType, pendingQueryFilters, hasAppliedQueryParams]);
 
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
@@ -1684,6 +1787,7 @@ function ReportBuilderPage({
                   }}
                 >
                   <StyledDataGrid
+                    apiRef={gridApiRef}
                     key={filters.reportType}
                     rows={reportData}
                     columns={columns}
@@ -1732,6 +1836,18 @@ function ReportBuilderPage({
                       columnsPanel: {
                         className: 'styleColumnMenu',
                         sx: ColumnManagementStyles,
+                      },
+                      panel: {
+                        className: 'parent-grid-panel',
+                        placement: 'bottom-end',
+                        sx: {
+                          transform: 'translate3d(-50px, 250px, 0px) !important',
+                          top: '40px !important',
+                        },
+                      },
+                      filterPanel: {
+                        columnsSort: 'asc',
+                        sx: FilterPanelStyles,
                       },
                       loadingOverlay: {
                         variant: 'skeleton',
@@ -1856,6 +1972,7 @@ function ReportBuilderPage({
             onFiltersChange={handleCustomFiltersChange}
             onResetFilters={handleResetCustomFilters}
             mode="custom"
+            customReportType={customReportType}
           />
 
           <Box
@@ -1872,6 +1989,8 @@ function ReportBuilderPage({
               showActuals={customFilters.show_actuals || false}
               APIFilters={APIFilters}
               customReportType={customReportType}
+              customFilters={customFilters}
+              gridFilters={gridFiltersToApply}
             />
           </Box>
         </>

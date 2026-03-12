@@ -44,7 +44,7 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
   const [multipleProjectError, setMultipleProjectError] = useState(false);
   const [closeResourceMenu, setCloseResourceMenu] = useState(false);
   const [closeProjectMenu, setCloseProjectMenu] = useState(false);
-  const { userPreferences } = useSelector(state => state.userPreferences);
+  const { userPreferences } = useSelector(state => state.userPreferences) ?? {};
   const dispatch = useDispatch();
 
   const warnings = getProjectRangeWarnings(values, projects);

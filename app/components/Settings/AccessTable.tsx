@@ -142,30 +142,45 @@ export default function AccessTable({
   ];
 
   const filteredRows = useMemo(() => {
-    if (!data) return [];
+  if (!data) return [];
 
-    let filtered = data;
+  let filtered = data;
 
-    if (title === 'Resources' && activeQuickFilter !== 'All') {
-      filtered = filtered.filter((row: any) => {
-        return row.userStatus === activeQuickFilter;
-      });
-    }
 
-    // Apply search filter
-    if (search) {
-      filtered = filtered.filter((row: any) => {
-        return (
-          (row.Name &&
-            String(row.Name).toLowerCase().includes(search.toLowerCase())) ||
-          (row.email &&
-            String(row.email).toLowerCase().includes(search.toLowerCase()))
-        );
-      });
-    }
+  if (title === 'Resources' && activeQuickFilter !== 'All') {
+    filtered = filtered.filter((row: any) => {
+      return row.userStatus === activeQuickFilter;
+    });
+  }
 
-    return filtered;
-  }, [data, search, activeQuickFilter, title]);
+  // Dynamic Search Across Visible Columns
+  if (search.trim()) {
+    const lowerSearch = search.toLowerCase();
+
+    // Get visible column fields
+    const visibleFields = columns
+      .filter(col => columnVisibilityModel[col.field] !== false)
+      .map(col => col.field);
+
+    filtered = filtered.filter((row: any) =>
+      visibleFields.some(field => {
+        const value = row[field];
+        if (value === null || value === undefined) return false;
+
+        return String(value).toLowerCase().includes(lowerSearch);
+      })
+    );
+  }
+
+  return filtered;
+}, [
+  data,
+  search,
+  activeQuickFilter,
+  title,
+  columns,
+  columnVisibilityModel,
+]);
 
   const handleQuickFilterChange = (filterValue: string) => {
     setActiveQuickFilter(filterValue);
@@ -552,7 +567,7 @@ export default function AccessTable({
                   as={TextField}
                   name="Location"
                   size="small"
-                  placeholder="Search by Name /or email"
+                  placeholder="Search across columns..."
                   value={search}
                   sx={{ width: 230 }}
                   onChange={(e: any) => setSearch(e.target.value)}
@@ -563,7 +578,7 @@ export default function AccessTable({
                 as={TextField}
                 name="Location"
                 size="small"
-                placeholder="Search by Name /or email"
+                placeholder="Search across columns..."
                 value={search}
                 sx={{ width: 230 }}
                 onChange={(e: any) => setSearch(e.target.value)}

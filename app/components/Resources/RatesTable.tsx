@@ -8,10 +8,11 @@ import {
   GridColDef,
   GridColumnMenu,
   GridColumnMenuProps,
+  GridColumnVisibilityModel,
   GridToolbarProps,
 } from '@mui/x-data-grid-premium';
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
-import { JSXElementConstructor, useEffect, useState } from 'react';
+import { JSXElementConstructor, useEffect, useMemo, useState } from 'react';
 import { Team } from '@/app/types';
 import { Box } from '@mui/material';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
@@ -55,6 +56,8 @@ const RatesTable = ({
   const [filterModel, setFilterModel] = useState({
     items: [],
   });
+  const [search, setSearch] = useState('');
+  const [columnVisibilityModel, setColumnVisibilityModel] =  useState<GridColumnVisibilityModel>({});
   const globalFilters = useSelector((state: any) => state.filters.Rates);
   
   useEffect(() => {
@@ -78,6 +81,27 @@ const RatesTable = ({
     dispatch(updatePageFilters('Rates', filterData));
   };
 
+    const filteredRows = useMemo(() => {
+      if (!rows) return [];
+  
+      if (!search.trim()) return rows;
+  
+      const lowerSearch = search.toLowerCase();
+  
+      const visibleFields = columns
+        .filter(col => columnVisibilityModel[col.field] !== false)
+        .map(col => col.field);
+  
+      return rows.filter(row =>
+        visibleFields.some(field => {
+          const value = (row as any)[field];
+          if (value === null || value === undefined) return false;
+          return String(value).toLowerCase().includes(lowerSearch);
+        })
+      );
+    }, [rows, search, columns, columnVisibilityModel]);
+  
+
   return (
     <Box
       sx={{
@@ -90,12 +114,14 @@ const RatesTable = ({
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={permissions['EmployeeRate'].r ? rows : []}
+        rows={permissions['EmployeeRate'].r ? filteredRows : []}
         hideFooter={true}
         hideFooterSelectedRowCount={true}
         loading={loading}
         filterModel={filterModel}
         onFilterModelChange={handleFilterModelChange}
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={setColumnVisibilityModel}
         initialState={{
           sorting: {
             sortModel: [{ field: 'Team', sort: 'asc' }],
@@ -140,6 +166,8 @@ const RatesTable = ({
             setFilterButtonEl,
             value: value,
             onChange: onChange,
+            search: search,
+            setSearch,
           },
           columnsPanel: {
             className: 'styleColumnMenu',

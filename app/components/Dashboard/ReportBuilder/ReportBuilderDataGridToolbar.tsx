@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Tooltip, styled, IconButton,Button, Box, Menu } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Tooltip, styled, IconButton, Button, Box, Menu } from '@mui/material';
 import {
   GridToolbarContainer,
   useGridApiContext,
   GridToolbarColumnsButton,
+  GridToolbarFilterButton,
   GridToolbarProps,
   GridColumnsPanel,
   useGridSelector,
@@ -14,11 +15,11 @@ import { download, mkConfig } from 'export-to-csv';
 import ReportBuilderExport from './ReportBuilderExport';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
-import { ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
 import { useDispatch, useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { RootState } from '@/app/redux/store';
 import { ReportType } from '@/app/types/dashboardTypes';
+import { ColumnManagementStyles, FilterPanelStyles } from '../../AllocationTable/styles/StyledDataGrid';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 interface ReportBuilderDataGridToolbarExtraProps {
@@ -160,11 +161,19 @@ export default function ReportBuilderDataGridToolbar({
         px: 3
       }}
     >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        {/* ************* Part of save reports feature****************  */}
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
+            fontSize: 14,
+            fontWeight: 400,
+            color: '#6A7282',
           }}
         >
   {/* ************* Part of save reports feature****************  */}
@@ -244,6 +253,7 @@ export default function ReportBuilderDataGridToolbar({
             {`Total Records: ${GridRowCount ?? 0}`}
           </Box>
         </Box>
+      </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
@@ -278,6 +288,64 @@ export default function ReportBuilderDataGridToolbar({
             />
           </SmallIconButton>
         </Tooltip>
+
+        <GridToolbarFilterButton
+          slotProps={{
+            tooltip: { title: 'Filters' },
+            button: {
+              variant: 'outlined',
+              sx: {
+                backgroundColor: '#fff',
+                minWidth: 'unset',
+                width: '36px',
+                height: '33px',
+                padding: '16px',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexShrink: 0,
+                borderRadius: '6px',
+                border: '1px solid rgb(214, 220, 225)',
+                boxShadow: '0px 0px 2px 0px rgba(0, 0, 0, 0.25)',
+                '& .MuiButton-startIcon': { 
+                  marginRight: '0px', 
+                  marginLeft: '0px',
+                  margin: '0px',
+                },
+                '& .MuiBadge-root span': { 
+                  top: '-15px', 
+                  right: '0px',
+                  backgroundColor: '#152E75',
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  minWidth: 16,
+                  height: 16,
+                },
+                '& .MuiBadge-root svg': { display: 'none' },
+                // Hide the button text, keep only icon
+                '& .MuiButton-text': {
+                  display: 'none',
+                },
+                fontSize: 0,
+                '& > span:not(.MuiButton-startIcon)': {
+                  display: 'none',
+                },
+              },
+              component: props => (
+                <Button
+                  {...props}
+                  startIcon={
+                    <img
+                      src="/images/icons/NewFilterIcon.svg"
+                      alt="filter"
+                      style={{ width: 36, height: 40 }}
+                    />
+                  }
+                />
+              ),
+            },
+          }}
+        />
 
         <Tooltip title="Columns">
           <SmallIconButton onClick={handleOpenColumns} aria-label="columns">
@@ -336,7 +404,7 @@ export default function ReportBuilderDataGridToolbar({
       >
         <GridColumnsPanel sx={{ ...ColumnManagementStyles }} />
       </Menu>
-    
+
     </GridToolbarContainer>
   );
 }

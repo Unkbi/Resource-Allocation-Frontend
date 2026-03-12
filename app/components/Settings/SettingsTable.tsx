@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { JSXElementConstructor, useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import {
   ColumnManagementStyles,
   FilterPanelStyles,
 } from '../AllocationTable/styles/StyledDataGrid';
 import SettingsToolbar from '../Toolbar/SettingsToolbar';
-import { DataGridPremium } from '@mui/x-data-grid-premium';
+import { DataGridPremium, GridColumnVisibilityModel, GridToolbarProps } from '@mui/x-data-grid-premium';
 interface AccessTableProps {
   title: string;
   data: any[];
@@ -25,7 +25,9 @@ export default function SettingsTable({
   columns = [],
   loading = false,
 }: AccessTableProps) {
-  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState<GridColumnVisibilityModel>({});
+  const [search, setSearch] = useState('');
+    
 
   const handleColumnVisibilityModelChange = (newModel: any) => {
     setColumnVisibilityModel(newModel);
@@ -42,11 +44,31 @@ export default function SettingsTable({
     return getTogglableColumns(columns);
   };
 
+  const filteredRows = useMemo(() => {
+    if (!search.trim()) return data;
+    const lowerSearch = search.toLowerCase();
+
+    const visibleFields = columns
+      .filter(col => columnVisibilityModel[col.field] !== false)
+      .map(col => col.field);
+
+    return data.filter(row =>
+      visibleFields.some(field => {
+        const value = row[field];
+        if (value === null || value === undefined) return false;
+        return String(value).toLowerCase().includes(lowerSearch);
+      })
+    );
+  }, [data, search, columns, columnVisibilityModel]);
+
+
   const Toolbar = () => (
     <SettingsToolbar
       title={title}
       buttonLabel={buttonLabel}
       onButtonClick={onAdd}
+      search={search}
+      setSearch={setSearch}
     />
   );
 
@@ -56,7 +78,7 @@ export default function SettingsTable({
     >
       <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
         <DataGridPremium
-          rows={data}
+          rows={filteredRows}
           columns={columns}
           getRowId={row => row.id ?? row.Name ?? JSON.stringify(row)}
           disableColumnMenu
@@ -75,6 +97,13 @@ export default function SettingsTable({
               variant: 'skeleton',
               noRowsVariant: 'skeleton',
             },
+            toolbar: {
+              title,
+              buttonLabel,
+              onButtonClick: onAdd,
+              search,
+              setSearch,
+            } as any,
             panel: {
               className: 'parent-grid-panel',
               placement: 'bottom-end',
@@ -110,7 +139,7 @@ export default function SettingsTable({
             },
           }}
           slots={{
-            toolbar: Toolbar,
+            toolbar: SettingsToolbar  as unknown as JSXElementConstructor<GridToolbarProps>,
           }}
           localeText={{
             toolbarFilters: '',

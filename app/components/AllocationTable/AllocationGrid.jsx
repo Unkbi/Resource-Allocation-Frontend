@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, Tooltip } from '@mui/material';
+import { Box, Skeleton, Tooltip } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
   gridExpandedSortedRowIdsSelector,
@@ -158,7 +158,8 @@ function AllocationGrid({
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
-  const { userPreferences } = useSelector(state => state.userPreferences);
+  const { userPreferences, preferenceChanging } =
+    useSelector(state => state.userPreferences) ?? {};
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
@@ -245,8 +246,8 @@ function AllocationGrid({
       setCellSelectionModel({});
       dispatch(
         openDialog({
-          title: 'Update Allocation',
-          submitButtonText: 'Update',
+          title: 'Add Allocation',
+          submitButtonText: 'Add',
           cancelButtonText: 'Cancel',
           formType: 'add_allocation',
           initialData: {
@@ -1031,6 +1032,26 @@ function AllocationGrid({
           const shouldShowActuals = showActuals;
 
           const cellContent = (() => {
+            if (preferenceChanging) {
+              return (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                  }}
+                >
+                  <Skeleton
+                    variant="rounded"
+                    width="70%"
+                    height={14}
+                    sx={{ borderRadius: '4px' }}
+                  />
+                </Box>
+              );
+            }
             if (showTooltip) {
               return (
                 <Tooltip
@@ -1378,7 +1399,7 @@ function AllocationGrid({
       dispatch(
         showToastAction(
           true,
-          `Updating allocation for ${formattedNewRow.resource}...`,
+          `Adding allocation for ${formattedNewRow.resource}...`,
           'info'
         )
       );
@@ -1433,13 +1454,13 @@ function AllocationGrid({
           allUpdatedRows = Object.values(formateUpdate);
         }
       } catch (error) {
-        console.error('Error updating allocations:', error);
+        console.error('Error adding allocations:', error);
         dispatch(
           showToastAction(
             true,
             error?.response?.data
               ? error?.response?.data
-              : `Error updating allocation for ${formattedNewRow.resource}.`,
+              : `Error adding allocation for ${formattedNewRow.resource}.`,
             'error'
           )
         );
@@ -1449,7 +1470,7 @@ function AllocationGrid({
       dispatch(
         showToastAction(
           true,
-          `Successfully updated allocation for ${formattedNewRow.resource}...`,
+          `Successfully added allocation for ${formattedNewRow.resource}...`,
           'success'
         )
       );
