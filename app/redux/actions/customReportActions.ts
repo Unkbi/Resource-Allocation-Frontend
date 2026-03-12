@@ -7,6 +7,7 @@ export const FETCH_CUSTOM_REPORT_SUCCESS = 'FETCH_CUSTOM_REPORT_SUCCESS';
 export const FETCH_CUSTOM_REPORT_FAILURE = 'FETCH_CUSTOM_REPORT_FAILURE';
 export const RESET_CUSTOM_REPORT = 'RESET_CUSTOM_REPORT';
 export const SET_CUSTOM_REPORT_FILTERS = 'SET_CUSTOM_REPORT_FILTERS';
+export const SET_CUSTOM_REPORT_UI_FILTERS = 'SET_CUSTOM_REPORT_UI_FILTERS';
 
 // Allocation Capacity Report Actions
 export const FETCH_ALLOCATION_CAPACITY_REQUEST = 'FETCH_ALLOCATION_CAPACITY_REQUEST';
@@ -14,9 +15,10 @@ export const FETCH_ALLOCATION_CAPACITY_SUCCESS = 'FETCH_ALLOCATION_CAPACITY_SUCC
 export const FETCH_ALLOCATION_CAPACITY_FAILURE = 'FETCH_ALLOCATION_CAPACITY_FAILURE';
 export const RESET_ALLOCATION_CAPACITY = 'RESET_ALLOCATION_CAPACITY';
 
-export const fetchCustomReportRequest = (filters: CustomReportFilters) => ({
+export const fetchCustomReportRequest = (filters: CustomReportFilters, uiFilters?: any) => ({
   type: FETCH_CUSTOM_REPORT_REQUEST,
   payload: filters,
+  meta: { uiFilters },
 });
 
 export const fetchCustomReportSuccess = (data: CustomReportResponse) => ({
@@ -38,9 +40,15 @@ export const setCustomReportFilters = (filters: CustomReportFilters) => ({
   payload: filters,
 });
 
-export const fetchAllocationCapacityRequest = (filters: any) => ({
+export const setCustomReportUIFilters = (uiFilters: any, requestPayload: any) => ({
+  type: SET_CUSTOM_REPORT_UI_FILTERS,
+  payload: { uiFilters, requestPayload },
+});
+
+export const fetchAllocationCapacityRequest = (filters: any, uiFilters?: any) => ({
   type: FETCH_ALLOCATION_CAPACITY_REQUEST,
   payload: filters,
+  meta: { uiFilters },
 });
 
 export const fetchAllocationCapacitySuccess = (data: any) => ({

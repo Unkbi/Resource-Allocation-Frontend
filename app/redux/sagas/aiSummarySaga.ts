@@ -6,6 +6,7 @@ import {
 import {
   startSummaryLoading,
   setSummaryData,
+  setSummaryFilters,
   setSummaryError,
   startHistoryLoading,
   setHistoryData,
@@ -49,6 +50,12 @@ function* fetchProjectSummarySaga(
     
     // Build API payload using service function
     const apiPayload = buildSummaryPayload(filtersWithDates);
+    
+    // Store the uiFilters and requestPayload before making API call
+    yield put(setSummaryFilters({
+      uiFilters: filtersWithDates,
+      requestPayload: apiPayload,
+    }));
     
     const data: any = yield call(getProjectSummary, apiPayload);
     

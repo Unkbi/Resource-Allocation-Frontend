@@ -1090,6 +1090,7 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                                     isFullscreen: isFullscreenGrid,
                                     onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
                                     GridRowCount: allocCapRows.length,
+                                    reportType: customReportType || 'allocationCapacity',
                                     tab: 'custom',
                                 } as any,
                                 columnsPanel: { className: 'styleColumnMenu', sx: ColumnManagementStyles },
@@ -1202,6 +1203,7 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
                                     isFullscreen: isFullscreenGrid,
                                     onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
                                     GridRowCount: rows.length,
+                                    reportType: customReportType || 'percentageAllocation',
                                     tab: 'custom',
                                 } as any,
                                 columnsPanel: {

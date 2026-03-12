@@ -14,6 +14,15 @@ import { CustomReportResponse } from '@/app/types/customReportTypes';
 
 function* fetchCustomReportSaga(action: any): Generator<any, void, any> {
   try {
+    // Store the UI filters and request payload
+    yield put({
+      type: 'SET_CUSTOM_REPORT_UI_FILTERS',
+      payload: {
+        uiFilters: action.meta?.uiFilters || {},
+        requestPayload: action.payload,
+      },
+    });
+    
     const response: CustomReportResponse = yield call(fetchCustomReport, action.payload);
     yield put(fetchCustomReportSuccess(response));
   } catch (error: any) {
@@ -23,6 +32,15 @@ function* fetchCustomReportSaga(action: any): Generator<any, void, any> {
 
 function* fetchAllocationCapacitySaga(action: any): Generator<any, void, any> {
   try {
+    // Store the UI filters and request payload
+    yield put({
+      type: 'SET_CUSTOM_REPORT_UI_FILTERS',
+      payload: {
+        uiFilters: action.meta?.uiFilters || {},
+        requestPayload: action.payload,
+      },
+    });
+    
     const response: any = yield call(fetchAllocationCapacityReport, action.payload);
     yield put(fetchAllocationCapacitySuccess(response));
   } catch (error: any) {

@@ -15,6 +15,10 @@ import { download, mkConfig } from 'export-to-csv';
 import ReportBuilderExport from './ReportBuilderExport';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import { useDispatch, useSelector } from 'react-redux';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { RootState } from '@/app/redux/store';
+import { ReportType } from '@/app/types/dashboardTypes';
 import { ColumnManagementStyles, FilterPanelStyles } from '../../AllocationTable/styles/StyledDataGrid';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
@@ -22,6 +26,7 @@ interface ReportBuilderDataGridToolbarExtraProps {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   GridRowCount?: number;
+  reportType?: ReportType;
   tab?: string;
 }
 
@@ -59,10 +64,20 @@ export default function ReportBuilderDataGridToolbar({
   isFullscreen,
   onToggleFullscreen,
   GridRowCount,
+  reportType,
   tab,
 }: ReportBuilderDataGridToolbarProps) {
   const apiRef = useGridApiContext();
+  const dispatch = useDispatch();
   const [columnsAnchorEl, setColumnsAnchorEl] = useState<null | HTMLElement>(null);
+
+  // Get the current report filters from Redux based on tab
+  const reportSlice = useSelector((state: RootState) => state.dashboard.report);
+  const aiSummaryState = useSelector((state: RootState) => state.aiSummary);
+  const customReportState = useSelector((state: RootState) => state.customReport);
+  const currentLoadedReport = useSelector((state: RootState) => state.savedReports.currentLoadedReport);
+  
+  const currentReport = reportType ? reportSlice?.[reportType] : null;
 
   const handleToggleFullscreen = () => {
     onToggleFullscreen?.();
@@ -76,6 +91,64 @@ export default function ReportBuilderDataGridToolbar({
     setColumnsAnchorEl(null);
   };
 
+  const handleSaveReport = () => {
+    // Get currently visible columns from the DataGrid
+    const allColumns = apiRef.current.getAllColumns();
+    const columnVisibilityModel = apiRef.current.state.columns.columnVisibilityModel;
+    
+    // Filter visible columns (columns are visible by default unless explicitly hidden)
+    const visibleColumns = allColumns
+      .filter(col => {
+        // Column is visible if not in the model or if explicitly set to true
+        return columnVisibilityModel[col.field] !== false;
+      })
+      .map(col => col.field);
+
+    let dialogData: any = {
+      columns: visibleColumns,
+      tab: tab,
+    };
+
+    // Handle different tabs
+    if (tab === 'reports') {
+      const filters = currentReport?.uiFilters || {};
+      
+      dialogData = {
+        ...dialogData,
+        filters: filters,
+        reportType: reportType,
+      };
+    } else if (tab === 'aisummary') {
+      // For AI Summary, get filters from aiSummaryState
+      const filters = aiSummaryState?.uiFilters || {};
+      
+      dialogData = {
+        ...dialogData,
+        filters: filters,
+        summaryType: filters?.summaryType || 'project',
+        reportType: 'aisummary', // Use a consistent identifier for AI Summary
+      };
+    } else if (tab === 'custom') {
+      // For Custom Reports, get filters from customReportState
+      const filters = customReportState?.uiFilters || {};
+      
+      dialogData = {
+        ...dialogData,
+        filters: filters,
+        reportType: filters?.reportType || 'percentageAllocation',
+      };
+    }
+
+    dispatch(
+      openDialog({
+        title: 'Save Report',
+        submitButtonText: 'Save',
+        cancelButtonText: 'Cancel',
+        formType: 'save_reports',
+        initialData: dialogData,
+      })
+    );
+  }
 
   return (
     <GridToolbarContainer
@@ -88,10 +161,6 @@ export default function ReportBuilderDataGridToolbar({
         px: 3
       }}
     >
-      {/* Hidden filter button for DataGrid integration */}
-      {/* <Box sx={{ display: 'block' }}>
-        <GridToolbarFilterButton />
-      </Box> */}
       <Box
         sx={{
           display: 'flex',
@@ -100,26 +169,6 @@ export default function ReportBuilderDataGridToolbar({
         }}
       >
         {/* ************* Part of save reports feature****************  */}
-        {tab === 'aisummary' && (
-          <>
-            <Box
-              sx={{
-                fontSize: 14,
-                fontWeight: 400,
-                color: '#2B5BA6',
-              }}
-            >
-              Projects Summaries
-            </Box>
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                bgcolor: '#CEDCE9',
-              }}
-            />
-          </>
-        )}
         <Box
           sx={{
             fontSize: 14,
@@ -127,45 +176,118 @@ export default function ReportBuilderDataGridToolbar({
             color: '#6A7282',
           }}
         >
-          {`Total Records: ${GridRowCount ?? 0}`}
+  {/* ************* Part of save reports feature****************  */}
+          {(() => {
+            // Check if currentLoadedReport belongs to the current tab
+            if (currentLoadedReport) {
+              const reportType = currentLoadedReport.ReportType;
+              let belongsToCurrentTab = false;
+              
+              if (tab === 'reports') {
+                belongsToCurrentTab = reportType !== 'aisummary' && 
+                                     reportType !== 'percentageAllocation' && 
+                                     reportType !== 'allocationCapacity';
+              } else if (tab === 'aisummary') {
+                belongsToCurrentTab = reportType === 'aisummary';
+              } else if (tab === 'custom') {
+                belongsToCurrentTab = reportType === 'percentageAllocation' || 
+                                     reportType === 'allocationCapacity';
+              }
+              
+              if (belongsToCurrentTab) {
+                return (
+                  <>
+                    <Box
+                      sx={{
+                        fontSize: 14,
+                        fontWeight: 400,
+                        color: '#2B5BA6',
+                      }}
+                    >
+                      {currentLoadedReport.Name}
+                    </Box>
+                    <Box
+                      sx={{
+                        width: '1px',
+                        height: 40,
+                        bgcolor: '#CEDCE9',
+                      }}
+                    />
+                  </>
+                );
+              }
+            }
+            
+            if (tab === 'aisummary') {
+              return (
+                <>
+                  <Box
+                    sx={{
+                      fontSize: 14,
+                      fontWeight: 400,
+                      color: '#2B5BA6',
+                    }}
+                  >
+                    Projects Summaries
+                  </Box>
+                  <Box
+                    sx={{
+                      width: '1px',
+                      height: 40,
+                      bgcolor: '#CEDCE9',
+                    }}
+                  />
+                </>
+              );
+            }
+            
+            return null;
+          })()}
+          <Box
+            sx={{
+              fontSize: 14,
+              fontWeight: 400,
+              color: '#6A7282',
+            }}
+          >
+            {`Total Records: ${GridRowCount ?? 0}`}
+          </Box>
         </Box>
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 
-        {tab === 'aisummary' && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              paddingRight: 2,
-            }}
-          >
-            <InfoOutlinedIcon sx={{ fontSize: 14, color: '#1C2D5F8F' }} />
+  {/* ************* Part of save reports feature****************  */}
+         {tab === 'aisummary' && (
             <Box
               sx={{
-                fontSize: 14,
-                fontWeight: 400,
-                color: '#1C2D5F',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                paddingRight: 2,
               }}
             >
-              Click the underlined score to view the weekly AI summary.
+              <InfoOutlinedIcon sx={{fontSize: 14, color: '#1C2D5F8F'}}/>
+              <Box
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 400,
+                  color: '#1C2D5F',
+                }}
+              >
+                Click the underlined score to view the weekly AI summary.
+              </Box>
             </Box>
-          </Box>
-        )}
-
-        {/* ************* Part of save reports feature****************  */}
-
-        {/* <Tooltip title="Save Report">
-          <SmallIconButton onClick={handleOpenColumns} aria-label="save report">
+          )}
+        <Tooltip title="Save Report">
+          <SmallIconButton onClick={handleSaveReport} aria-label="save report">
             <img
               src="/images/icons/SaveIcon.svg"
               alt="save report"
               style={{ width: 36, height: 40 }}
             />
           </SmallIconButton>
-        </Tooltip> */}
+        </Tooltip>
 
         <GridToolbarFilterButton
           slotProps={{

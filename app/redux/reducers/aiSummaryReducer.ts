@@ -13,6 +13,8 @@ const initialState: AISummaryState = {
   error: null,
   loadingHistory: false,
   historyError: null,
+  uiFilters: null,
+  requestPayload: null,
 };
 
 const aiSummarySlice = createSlice({
@@ -29,6 +31,11 @@ const aiSummarySlice = createSlice({
       state.currentSummary = action.payload;
       state.loading = false;
       state.error = null;
+    },
+    
+    setSummaryFilters: (state, action: PayloadAction<{ uiFilters: any; requestPayload: any }>) => {
+      state.uiFilters = action.payload.uiFilters;
+      state.requestPayload = action.payload.requestPayload;
     },
     
     setSummaryError: (state, action: PayloadAction<string>) => {
@@ -75,6 +82,7 @@ const aiSummarySlice = createSlice({
 export const {
   startSummaryLoading,
   setSummaryData,
+  setSummaryFilters,
   setSummaryError,
   clearSummary,
   startHistoryLoading,

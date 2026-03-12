@@ -34,6 +34,8 @@ import { fetchCustomReportRequest, fetchAllocationCapacityRequest } from '@/app/
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import ErrorPage from '../../ErrorPage/ErrorPage';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_SAVED_REPORTS, fetchSavedReports } from '@/app/redux/actions/savedReportsActions';
+import { setCurrentLoadedReport } from '@/app/redux/reducers/savedReportsReducer';
 import { calculateDateRange } from '@/app/utils/dateUtils';
 import { convertFiltersToGridModel } from '@/app/utils/reportDataFormatter';
 
@@ -300,7 +302,7 @@ function ReportBuilderPage({
   const [reportGenerated, setReportGenerated] = useState(false);
   const [showData, setShowData] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
-  const [savedReports, setSavedReports] = useState<
+  const [SavedReports, setSavedReports] = useState<
     {
       name: string;
       reportType: ReportType;
@@ -326,6 +328,10 @@ function ReportBuilderPage({
   const reportSlice = useSelector((state: RootState) => state.dashboard.report);
   const currentReport = reportSlice?.[filters.reportType as ReportType];
   const aiSummaryState = useSelector((state: RootState) => state.aiSummary);
+  
+  // Get saved reports from Redux
+  const { savedReports, loading: savedReportsLoading } = useSelector((state: RootState) => state.savedReports);
+  
   const customReportState = useSelector(
     (state: RootState) => state.customReport
   );
@@ -337,6 +343,7 @@ function ReportBuilderPage({
   const { portfolios } = useSelector((state: RootState) => state.portfolios);
   const { teams } = useSelector((state: RootState) => state.teams);
   const { resources } = useSelector((state: RootState) => state.resources);
+  const { user: userData } = useSelector((state: RootState) => state.user as any);
   const { organisations } = useSelector(
     (state: RootState) => state.organisations
   );
@@ -416,6 +423,9 @@ function ReportBuilderPage({
     setIsLoading(true);
     setShowData(false);
     setFiltersExpanded(false);
+    
+    // Clear the loaded report since we're generating a new one
+    dispatch(setCurrentLoadedReport(null));
 
     // Serialize custom date range for UI filters stored in redux
     const [start, end] = filters.customDateRange || [];
@@ -494,6 +504,9 @@ function ReportBuilderPage({
     setIsLoading(true);
     setShowData(false);
     setFiltersExpanded(false);
+    
+    // Clear the loaded report since we're generating a new one
+    dispatch(setCurrentLoadedReport(null));
 
     if (summaryFilters.summaryType === 'project') {
       // Serialize custom date range for UI filters
@@ -605,6 +618,9 @@ function ReportBuilderPage({
     setIsLoading(true);
     setShowData(false);
     setFiltersExpanded(false);
+    
+    // Clear the loaded report since we're generating a new one
+    dispatch(setCurrentLoadedReport(null));
 
     const customStart = customFilters.customDateRange
       ? customFilters?.customDateRange[0]?.format('MMM DD, YYYY')
@@ -632,11 +648,25 @@ function ReportBuilderPage({
 
     setAPIFilters(apiFilters);
 
+    // Prepare uiFilters to store in Redux
+    const uiFilters = {
+      reportType: customReportType,
+      period: customFilters.period,
+      customStartDate: start,
+      customEndDate: end,
+      project: customFilters.project,
+      projectTypeGroup: customFilters.projectTypeGroup,
+      projectType: customFilters.projectType,
+      team: customFilters.team,
+      organization: customFilters.organization,
+      show_actuals: customFilters.show_actuals,
+    };
+
     try {
       if (customReportType === 'allocationCapacity') {
-        dispatch(fetchAllocationCapacityRequest(apiFilters));
+        dispatch(fetchAllocationCapacityRequest(apiFilters, uiFilters));
       } else {
-        dispatch(fetchCustomReportRequest(apiFilters));
+        dispatch(fetchCustomReportRequest(apiFilters, uiFilters));
       }
       setShowData(true);
     } catch (error) {
@@ -1128,6 +1158,33 @@ function ReportBuilderPage({
 
   // Set default date range for allocation capacity on first selection only
   useEffect(() => {
+    if (loadingPermissions) return;
+    if (activeTab === 'custom' && customReportState) {
+      setIsLoading(customReportState.loading);
+      if (!customReportState.loading && (customReportState.currentReport || customReportState.allocationCapacityReport)) {
+        setReportGenerated(true);
+        setShowData(true);
+      }
+    }
+  }, [customReportState, activeTab, loadingPermissions]);
+
+  useEffect(() => {
+    if (
+      customReportType === 'allocationCapacity' &&
+      !pendingQueryFilters &&
+      !hasAppliedQueryParams &&
+      !customFilters.customDateRange
+    ) {
+      // Calculate 13-week range: 4 weeks past + current week + 8 weeks future
+      const currentMonday = dayjs().isoWeekday(1);
+      const startDate = currentMonday.subtract(4, 'week');
+      const endDate = currentMonday.add(8, 'week').isoWeekday(7);
+      
+      setCustomFilters(prev => ({
+        ...prev,
+        period: 'custom',
+        customDateRange: [startDate, endDate],
+      }));
     if (customReportType === 'allocationCapacity') {
       // Only set defaults if this is the first time selecting allocation capacity
       if (
@@ -1152,28 +1209,18 @@ function ReportBuilderPage({
       // Reset the flag when switching away from allocation capacity
       hasSetAllocationCapacityDefault.current = false;
     }
-  }, [customReportType, pendingQueryFilters, hasAppliedQueryParams]);
+  }}, [customReportType, pendingQueryFilters, hasAppliedQueryParams]);
 
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
   const hiddenColumns = getHiddenColumns(filters.reportType as ReportType);
-  // Save/Load reports via localStorage
-  const STORAGE_KEY = 'saved_reports';
-  const loadSavedReports = () => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      setSavedReports(Array.isArray(parsed) ? parsed : []);
-      if (searchParams && searchParams.toString()) {
-        setIsInitializing(true); // Mark that we're initializing with query params
-      }
-    } catch {
-      setSavedReports([]);
-    }
-  };
+  
+  // Fetch saved reports from API on component mount
   useEffect(() => {
-    loadSavedReports();
-  }, []);
+    if (userData && 'id' in userData && userData.id) {
+      dispatch({ type: FETCH_SAVED_REPORTS, payload: {userId : userData.id } });
+    }
+  }, [userData, dispatch]);
 
   const handleSaveReport = (name: string) => {
     const [start, end] = filters.customDateRange || [];
@@ -1205,42 +1252,237 @@ function ReportBuilderPage({
       uiFilters,
       createdAt: new Date().toISOString(),
     };
-    const next = [...savedReports.filter(r => r.name !== name), entry];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    const next = [...SavedReports.filter(r => r.name !== name), entry];
+    // localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     setSavedReports(next);
   };
 
-  const handleLoadReport = (name: string) => {
-    const entry = savedReports.find(r => r.name === name);
-    if (!entry) return;
-    const f = entry.uiFilters;
-    // Restore UI filters in component state
-    setFilters({
-      reportType: f.reportType,
-      period: f.period,
-      customDateRange:
-        f.customStartDate && f.customEndDate
-          ? [dayjs(f.customStartDate), dayjs(f.customEndDate)]
-          : undefined,
-      team: f.team || [],
-      organization: f.organization || [],
-      resourceType: f.resourceType || [],
-      resource: f.resource || [],
-      projectType: f.projectType || [],
-      projectTypeGroup: f.projectTypeGroup || [],
-      project: f.project || [],
-      portfolio: f.portfolio || [],
-      projectManager: f.projectManager || [],
-      allocationManager: f.allocationManager || [],
-      resourceStatuses: f.resourceStatuses || [],
-      resourceLocations: f.resourceLocations || [],
-      resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
-      projectStatuses: f.projectStatuses || [],
-      userStatuses: f.userStatuses || [],
-      userRoles: f.userRoles || [],
-    });
-    // Dispatch fetch with restored filters
-    dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
+  const handleLoadReport = (reportId: string) => {
+    const report = savedReports.find(r => r.Id === reportId);
+    if (!report) return;
+    
+    // Convert saved filters back to UI filters format
+    let savedFilters = report.Filters as any;
+    if (typeof savedFilters === 'string') {
+      try {
+        savedFilters = JSON.parse(savedFilters);
+      } catch (e) {
+        console.error('Failed to parse report filters:', e);
+        savedFilters = {};
+      }
+    }
+    
+    // Determine which tab this report belongs to
+    const isAISummary = report.ReportType === 'aisummary';
+    const isCustom = report.ReportType === 'percentageAllocation' || report.ReportType === 'allocationCapacity';
+    
+    if (isAISummary) {
+      // Handle AI Summary report
+      const summaryType = savedFilters.summaryType || 'project';
+      
+      setSummaryFilters({
+        reportType: 'resourceProjectPeriod', // Dummy value
+        summaryType: summaryType as SummaryType,
+        period: savedFilters.period || 'last_week',
+        customDateRange:
+          savedFilters.customStartDate && savedFilters.customEndDate
+            ? [dayjs(savedFilters.customStartDate), dayjs(savedFilters.customEndDate)]
+            : undefined,
+        team: savedFilters.team || [],
+        organization: savedFilters.organization || [],
+        resourceType: savedFilters.resourceType || [],
+        resource: savedFilters.resource || [],
+        projectType: savedFilters.projectType || [],
+        projectTypeGroup: savedFilters.projectTypeGroup || [],
+        project: savedFilters.project || [],
+        portfolio: savedFilters.portfolio || [],
+        projectManager: savedFilters.projectManager || [],
+        allocationManager: savedFilters.allocationManager || [],
+        resourceStatuses: savedFilters.resourceStatuses || [],
+        resourceLocations: savedFilters.resourceLocations || [],
+        resourceWorkLocationGroup: savedFilters.resourceWorkLocationGroup || [],
+        projectStatuses: savedFilters.projectStatuses || [],
+        userStatuses: savedFilters.userStatuses || [],
+        userRoles: savedFilters.userRoles || [],
+      });
+      
+      // Prepare and dispatch AI Summary request
+      const [start, end] = savedFilters.customStartDate && savedFilters.customEndDate
+        ? [dayjs(savedFilters.customStartDate), dayjs(savedFilters.customEndDate)]
+        : [];
+      
+      const summaryUiFilters = {
+        summaryType,
+        period: savedFilters.period || 'last_week',
+        customStartDate: start ? start.format('YYYY-MM-DD') : undefined,
+        customEndDate: end ? end.format('YYYY-MM-DD') : undefined,
+        ...savedFilters,
+      };
+
+      setIsLoading(true);
+      setFiltersExpanded(false);
+      
+      dispatch(fetchProjectSummary(summaryUiFilters));
+      
+    } else if (isCustom) {
+      // Handle Custom report
+      setCustomReportType(report.ReportType as 'percentageAllocation' | 'allocationCapacity');
+      
+      const customStart = savedFilters.customStartDate
+        ? dayjs(savedFilters.customStartDate).format('MMM DD, YYYY')
+        : undefined;
+      const customEnd = savedFilters.customEndDate
+        ? dayjs(savedFilters.customEndDate).format('MMM DD, YYYY')
+        : undefined;
+      
+      const { start, end } = calculateDateRange(
+        savedFilters.period || 'last_week',
+        customStart,
+        customEnd
+      );
+      
+      setCustomFilters({
+        reportType: report.ReportType as ReportType,
+        period: savedFilters.period || 'last_week',
+        customDateRange:
+          savedFilters.customStartDate && savedFilters.customEndDate
+            ? [dayjs(savedFilters.customStartDate), dayjs(savedFilters.customEndDate)]
+            : undefined,
+        team: savedFilters.team || [],
+        organization: savedFilters.organization || [],
+        resourceType: savedFilters.resourceType || [],
+        resource: savedFilters.resource || [],
+        projectType: savedFilters.projectType || [],
+        projectTypeGroup: savedFilters.projectTypeGroup || [],
+        project: savedFilters.project || [],
+        portfolio: savedFilters.portfolio || [],
+        projectManager: savedFilters.projectManager || [],
+        allocationManager: savedFilters.allocationManager || [],
+        resourceStatuses: savedFilters.resourceStatuses || [],
+        resourceLocations: savedFilters.resourceLocations || [],
+        resourceWorkLocationGroup: savedFilters.resourceWorkLocationGroup || [],
+        projectStatuses: savedFilters.projectStatuses || [],
+        userStatuses: savedFilters.userStatuses || [],
+        userRoles: savedFilters.userRoles || [],
+        show_actuals: savedFilters.show_actuals || false,
+      });
+      
+      // Set loading state
+      setIsLoading(true);
+      setFiltersExpanded(false);
+      
+      const apiFilters: any = {
+        Projects: savedFilters.project || [],
+        ProjectTypeGroups: savedFilters.projectTypeGroup || [],
+        ProjectTypes: savedFilters.projectType || [],
+        Teams: savedFilters.team || [],
+        Organizations: savedFilters.organization || [],
+        ProjectStatuses: ['Active'],
+        StartDate: start || undefined,
+        EndDate: end || undefined,
+      };
+      
+      setAPIFilters(apiFilters);
+      
+      const uiFilters = {
+        reportType: report.ReportType,
+        period: savedFilters.period || 'last_week',
+        customStartDate: start,
+        customEndDate: end,
+        project: savedFilters.project || [],
+        projectTypeGroup: savedFilters.projectTypeGroup || [],
+        projectType: savedFilters.projectType || [],
+        team: savedFilters.team || [],
+        organization: savedFilters.organization || [],
+        show_actuals: savedFilters.show_actuals || false,
+      };
+      
+      if (report.ReportType === 'allocationCapacity') {
+        dispatch(fetchAllocationCapacityRequest(apiFilters, uiFilters));
+      } else {
+        dispatch(fetchCustomReportRequest(apiFilters, uiFilters));
+      }
+      
+    } else {
+      // Handle regular Reports tab
+      setFilters({
+        reportType: report.ReportType as ReportType,
+        period: savedFilters.period || 'last_week',
+        customDateRange:
+          savedFilters.customStartDate && savedFilters.customEndDate
+            ? [dayjs(savedFilters.customStartDate), dayjs(savedFilters.customEndDate)]
+            : undefined,
+        team: savedFilters.Teams || savedFilters.team || [],
+        organization: savedFilters.Organizations || savedFilters.organization || [],
+        resourceType: savedFilters.ResourceTypes || savedFilters.resourceType || [],
+        resource: savedFilters.Resources || savedFilters.resource || [],
+        projectType: savedFilters.ProjectTypes || savedFilters.projectType || [],
+        projectTypeGroup: savedFilters.ProjectTypeGroups || savedFilters.projectTypeGroup || [],
+        project: savedFilters.Projects || savedFilters.project || [],
+        portfolio: savedFilters.Portfolios || savedFilters.portfolio || [],
+        projectManager: savedFilters.ProjectManagers || savedFilters.projectManager || [],
+        allocationManager: savedFilters.AllocationManagers || savedFilters.allocationManager || [],
+        resourceStatuses: savedFilters.ResourceStatuses || savedFilters.resourceStatuses || [],
+        resourceLocations: savedFilters.ResourceLocations || savedFilters.resourceLocations || [],
+        resourceWorkLocationGroup: savedFilters.ResourceWorkLocationGroup || savedFilters.resourceWorkLocationGroup || [],
+        projectStatuses: savedFilters.ProjectStatuses || savedFilters.projectStatuses || [],
+        userStatuses: savedFilters.UserStatuses || savedFilters.userStatuses || [],
+        userRoles: savedFilters.UserRoles || savedFilters.userRoles || [],
+      });
+      
+      // Prepare API filters from saved report
+      const [start, end] = 
+        savedFilters.customStartDate && savedFilters.customEndDate
+          ? [dayjs(savedFilters.customStartDate), dayjs(savedFilters.customEndDate)]
+          : [];
+      
+      const uiFilters: ReportUIFilters = {
+        reportType: report.ReportType as ReportType,
+        period: savedFilters.period || 'last_week',
+        customStartDate: start ? start.format('YYYY-MM-DD') : undefined,
+        customEndDate: end ? end.format('YYYY-MM-DD') : undefined,
+        team: savedFilters.Teams || savedFilters.team || [],
+        organization: savedFilters.Organizations || savedFilters.organization || [],
+        resourceType: savedFilters.ResourceTypes || savedFilters.resourceType || [],
+        resource: savedFilters.Resources || savedFilters.resource || [],
+        projectType: savedFilters.ProjectTypes || savedFilters.projectType || [],
+        projectTypeGroup: savedFilters.ProjectTypeGroups || savedFilters.projectTypeGroup || [],
+        project: savedFilters.Projects || savedFilters.project || [],
+        portfolio: savedFilters.Portfolios || savedFilters.portfolio || [],
+        projectManager: savedFilters.ProjectManagers || savedFilters.projectManager || [],
+        allocationManager: savedFilters.AllocationManagers || savedFilters.allocationManager || [],
+        resourceStatuses: savedFilters.ResourceStatuses || savedFilters.resourceStatuses || [],
+        resourceLocations: savedFilters.ResourceLocations || savedFilters.resourceLocations || [],
+        resourceWorkLocationGroup: savedFilters.ResourceWorkLocationGroup || savedFilters.resourceWorkLocationGroup || [],
+        projectStatuses: savedFilters.ProjectStatuses || savedFilters.projectStatuses || [],
+        userStatuses: savedFilters.UserStatuses || savedFilters.userStatuses || [],
+        userRoles: savedFilters.UserRoles || savedFilters.userRoles || [],
+      };
+      
+      const apiPayload = prepareApiPayload(uiFilters);
+      
+      // Dispatch fetch with restored filters
+      dispatch(fetchReport({ reportType: report.ReportType as ReportType, uiFilters: apiPayload }));
+    }
+    
+    if (!isCustom) {
+      setShowData(true);
+      setReportGenerated(true);
+      setFiltersExpanded(false);
+    }
+    
+    // Set the current loaded report in Redux
+    dispatch(setCurrentLoadedReport(report));
+    
+    dispatch(
+      showToast({
+        open: true,
+        message: `Loaded report: ${report.Name}`,
+        type: 'success',
+        position: 'bottom-left',
+        autoHideTimer: 3000,
+      })
+    );
   };
 
   const getSelectedFiltersCount = () => {
@@ -1416,6 +1658,7 @@ function ReportBuilderPage({
             reportType={filters.reportType as ReportType}
             tab="reports"
             onGenerateReport={handleGenerateReport}
+            onLoadReport={handleLoadReport}
             onExport={handleExport}
             onShare={handleShare}
             isLoading={isLoading}
@@ -1587,6 +1830,7 @@ function ReportBuilderPage({
                         onToggleFullscreen: () =>
                           setIsFullscreenGrid(prev => !prev),
                         GridRowCount: reportData.length,
+                        reportType: filters.reportType,
                         tab: 'reports',
                       } as any,
                       columnsPanel: {
@@ -1646,6 +1890,7 @@ function ReportBuilderPage({
             reportType={summaryFilters.reportType as ReportType}
             tab="aisummary"
             onGenerateReport={handleGenerateSummary}
+            onLoadReport={handleLoadReport}
             onExport={handleExport}
             onShare={handleShare}
             isLoading={isLoading}
@@ -1710,6 +1955,7 @@ function ReportBuilderPage({
             reportType={customFilters.reportType as ReportType}
             tab="custom"
             onGenerateReport={handleGenerateCustomReport}
+            onLoadReport={handleLoadReport}
             onCustomReportTypeChange={setCustomReportType}
             customReportType={customReportType}
             onExport={handleExport}

@@ -38,6 +38,7 @@ import {
   addUserValidationSchema,
   addResourceToUserValidationSchema,
   addBusinessImpactValidationSchema,
+  saveReportsValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -158,6 +159,7 @@ import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
 import AddResourceToUserForm from '../../Forms/AddResourceToUserForm';
 import AddUserForm from '../../Forms/AddUserForm';
+import SaveReportsForm from '../../Forms/SaveReportsForm';
 import {
   formatAPIResponse,
   getUserAttributes,
@@ -191,6 +193,7 @@ import {
   CREATE_BUSINESS_IMPACT,
   UPDATE_BUSINESS_IMPACT,
 } from '@/app/redux/actions/businessImpactActions';
+import { CREATE_SAVED_REPORT, UPDATE_SAVED_REPORT } from '@/app/redux/actions/savedReportsActions';
 import { UPDATE_TOTAL_ALLOCATIONS } from '@/app/redux/actions/allocationTotalsAction';
 
 const initialValuesMap = {
@@ -476,6 +479,14 @@ const initialValuesMap = {
     Status: '',
     Currency: 'USD',
   },
+  save_reports: {
+    Name: '',
+    Description: '',
+  },
+  edit_reports: {
+    Name: '',
+    Description: '',
+  },
   follow_project: {
     isFollowing: true,
     weeklyAISummary: true,
@@ -680,6 +691,10 @@ const AllocationForm = () => {
         return addBusinessImpactValidationSchema;
       case 'edit_business_impact':
         return addBusinessImpactValidationSchema;
+      case 'save_reports':
+        return saveReportsValidationSchema([],initialData?.Name || '');
+      case 'edit_reports':
+        return saveReportsValidationSchema([],initialData?.Name || '');
       default:
         return null;
     }
@@ -3865,6 +3880,184 @@ const AllocationForm = () => {
 
         return;
       }
+      case 'save_reports': {
+        try {
+          // Get userId from Redux state
+          const userId = user?.id;
+          if (!userId) {
+            throw new Error('User ID not found');
+          }
+
+          // Determine report type based on tab
+          let reportType = initialData?.reportType || 'resourceProjectPeriod';
+          let filters = initialData?.filters || {};
+          
+          // Ensure filters is an object (parse if it's a string)
+          if (typeof filters === 'string') {
+            try {
+              filters = JSON.parse(filters);
+            } catch (e) {
+              console.error('Failed to parse filters:', e);
+              filters = {};
+            }
+          }
+          
+          // For AI Summary tab, handle summaryType
+          if (initialData?.tab === 'aisummary') {
+            // For AI Summary, we store the summaryType in the filters
+            // and use a consistent reportType identifier
+            reportType = 'aisummary';
+            filters = {
+              ...filters,
+              summaryType: initialData?.summaryType || filters?.summaryType || 'project',
+            };
+          } else if (initialData?.tab === 'custom') {
+            // For Custom Reports, ensure we have the correct reportType
+            reportType = initialData?.reportType || 'percentageAllocation';
+          }
+
+          // Prepare report data with all required fields
+          // NOTE: Filters must be sent as an object. If the backend stores it as a string,
+          // the frontend will parse it back to an object when loading.
+          const reportData = {
+            UserId: userId,
+            Name: cleanedValues.Name,
+            Description: cleanedValues.Description || '',
+            ReportType: reportType,
+            Filters: filters, // This should always be an object
+            GridFilters: {}, // Empty for now as per user requirements
+            Columns: initialData?.columns || [], // This now contains currently visible columns
+            IsDefault: false,
+          };
+
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: CREATE_SAVED_REPORT,
+              payload: {
+                reportData,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Report saved successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to save report:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to save report.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      case 'edit_reports': {
+        try {
+          const reportId = initialData?.id;
+           const userId = user?.id;
+
+           if (!userId) {
+            throw new Error('User ID not found');
+          }
+
+          // Determine report type based on tab
+          let reportType = initialData?.reportType || 'resourceProjectPeriod';
+          let filters = initialData?.filters || {};
+          
+          // Ensure filters is an object (parse if it's a string)
+          if (typeof filters === 'string') {
+            try {
+              filters = JSON.parse(filters);
+            } catch (e) {
+              console.error('Failed to parse filters:', e);
+              filters = {};
+            }
+          }
+          
+          // For AI Summary tab, handle summaryType
+          if (initialData?.tab === 'aisummary') {
+            // For AI Summary, we store the summaryType in the filters
+            // and use a consistent reportType identifier
+            reportType = 'aisummary';
+            filters = {
+              ...filters,
+              summaryType: initialData?.summaryType || filters?.summaryType || 'project',
+            };
+          } else if (initialData?.tab === 'custom') {
+            // For Custom Reports, ensure we have the correct reportType
+            reportType = initialData?.reportType || 'percentageAllocation';
+          }
+
+          // NOTE: Filters must be sent as an object. If the backend stores it as a string,
+          // the frontend will parse it back to an object when loading.
+          const reportData = {
+            Id: reportId,
+            UserId: userId,
+            Name: cleanedValues.Name,
+            Description: cleanedValues.Description || '',
+            ReportType: reportType,
+            Filters: filters, // This should always be an object
+            GridFilters: {}, // Empty for now as per user requirements
+            Columns: initialData?.columns || [], // This now contains currently visible columns
+            IsDefault: false,
+          };
+
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_SAVED_REPORT,
+              payload: {
+                reportId,
+                reportData,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Report updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to update report:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to update report.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      //   break;
+      // }
 
       case 'follow_project':
         // Determine object type from initialData (can be 'project' or 'team')
@@ -4696,6 +4889,20 @@ const AllocationForm = () => {
       case 'edit_business_impact':
         return (
           <AddBusinessImpactForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'save_reports':
+        return (
+          <SaveReportsForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_reports':
+        return (
+          <SaveReportsForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />

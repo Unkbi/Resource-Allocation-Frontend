@@ -25,6 +25,7 @@ import allSettingsReducer from './reducers/allSettingsReducer';
 import { RESET_STORE } from './actions/authActions';
 import businessImpactReducer from './reducers/businessImpactReducer';
 import aiSummaryReducer from './reducers/aiSummaryReducer';
+import savedReportsReducer from './reducers/savedReportsReducer';
 import filterReducer from './reducers/filterReducer';
 import { customReportReducer } from './reducers/customReportReducer';
 import userPreferencesReducer from './reducers/userPreferencesReducer';
@@ -74,6 +75,7 @@ export const makeStore = () => {
         allSettings: allSettingsReducer(state?.allSettings, action),
         businessImpact: businessImpactReducer(state?.businessImpact, action),
         aiSummary: aiSummaryReducer(state?.aiSummary, action),
+        savedReports: savedReportsReducer(state?.savedReports, action),
         filters: filterReducer(state?.filters, action),
         customReport: customReportReducer(state?.customReport, action),
         userPreferences: userPreferencesReducer(state?.userPreferences, action),

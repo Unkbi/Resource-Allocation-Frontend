@@ -21,6 +21,11 @@ interface Values {
   [key: string]: any;
 }
 
+interface SaveReport {
+    Name: string;
+    Description?: string;
+}
+
 export const addProjectValidationSchema = (
   projects: ProjectsPayload = {},
   initialName = ''
@@ -753,3 +758,32 @@ export const addBusinessImpactValidationSchema = Yup.object({
   // Description :Yup.string().required('Description is required'),
   Status: Yup.string().required('Status is required'),
 });
+
+export const saveReportsValidationSchema = (
+  savedReports: SaveReport[] = [],
+  initialName = ''
+) => {
+  const reportNames = Array.isArray(savedReports)
+    ? savedReports.map(report => report.Name?.toLowerCase().trim())
+    : [];
+
+  return Yup.object({
+    Name: Yup.string()
+      .required('Report Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Report Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          const trimmedValue = value.toLowerCase().trim();
+          const trimmedInitial = initialName.toLowerCase().trim();
+          if (initialName && trimmedValue === trimmedInitial) {
+            return true; // Allow same name when editing
+          }
+          return !reportNames.includes(trimmedValue);
+        }
+      ),
+    Description: Yup.string().max(255, 'Reached Max Characters'),
+  });
+};

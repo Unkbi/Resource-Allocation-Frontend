@@ -17,6 +17,8 @@ const initialState: CustomReportState & {
   allocationCapacityReport: any | null;
   allocationCapacityLoading: boolean;
   allocationCapacityError: string | null;
+  uiFilters: any | null;
+  requestPayload: any | null;
 } = {
   currentReport: null,
   loading: false,
@@ -27,6 +29,8 @@ const initialState: CustomReportState & {
   allocationCapacityReport: null,
   allocationCapacityLoading: false,
   allocationCapacityError: null,
+  uiFilters: null,
+  requestPayload: null,
 };
 
 export const customReportReducer = (state = initialState, action: any) => {
@@ -43,6 +47,12 @@ export const customReportReducer = (state = initialState, action: any) => {
         loading: false,
         currentReport: action.payload,
         error: null,
+      };
+    case 'SET_CUSTOM_REPORT_UI_FILTERS':
+      return {
+        ...state,
+        uiFilters: action.payload.uiFilters,
+        requestPayload: action.payload.requestPayload,
       };
     case FETCH_CUSTOM_REPORT_FAILURE:
       return {

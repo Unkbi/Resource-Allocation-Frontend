@@ -12,9 +12,15 @@ import {
   styled,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { KeyboardArrowDown } from '@mui/icons-material';
+import { Description, KeyboardArrowDown } from '@mui/icons-material';
 import { ReportType, SummaryType } from '@/app/types/dashboardTypes';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/app/redux/store';
+import { deleteSavedReport } from '@/app/redux/actions/savedReportsActions';
+import { showToast } from '@/app/redux/reducers/toastReducer';
+import ConfirmDialog from '../../Dialog/ConfirmDialog';
 
 interface ReportBuilderToolbarProps {
   reportType?: string;
@@ -25,6 +31,7 @@ interface ReportBuilderToolbarProps {
   customReportType?: 'percentageAllocation' | 'allocationCapacity';
   onExport?: (format: 'pdf' | 'excel') => void;
   onShare?: () => void;
+  onLoadReport?: (reportId: string) => void;
   tab: string;
   isLoading?: boolean;
   selectedFiltersCount?: number;
@@ -60,14 +67,6 @@ const StyledIconButton = styled(IconButton)({
   },
 });
 
-// Saved reports data
-const savedReports = [
-  { id: 1, name: 'My Reports' },
-  { id: 2, name: 'Resource Productivity Report' },
-  { id: 3, name: 'Team Productivity Analysis' },
-  { id: 4, name: 'Monthly Revenue Breakdown' },
-];
-
 function ReportBuilderToolbar({
   reportType = 'resourceProjectPeriod',
   onGenerateReport,
@@ -77,15 +76,53 @@ function ReportBuilderToolbar({
   customReportType = 'percentageAllocation',
   onExport,
   onShare,
+  onLoadReport,
   tab,
   isLoading = false,
   selectedFiltersCount = 0,
   permissions,
 }: ReportBuilderToolbarProps) {
+  const dispatch = useDispatch();
+  
+  // Get saved reports from Redux
+  const { savedReports, loading: savedReportsLoading } = useSelector(
+    (state: RootState) => state.savedReports
+  );
+  
+  // Filter saved reports by current tab only (not by report type)
+  const filteredSavedReports = savedReports.filter(report => {
+    // Parse filters if they come as a string from the API
+    let filters = report?.Filters;
+    if (typeof filters === 'string') {
+      try {
+        filters = JSON.parse(filters);
+      } catch (e) {
+        console.error('Failed to parse report filters:', e);
+        filters = {};
+      }
+    }
+    
+    if (tab === 'reports') {
+      // For reports tab, show reports that are NOT aisummary or custom report types
+      return report?.ReportType !== 'aisummary' && 
+             report?.ReportType !== 'percentageAllocation' && 
+             report?.ReportType !== 'allocationCapacity';
+    } else if (tab === 'aisummary') {
+      // For AI Summary tab, show only AI summary reports
+      return report?.ReportType === 'aisummary';
+    } else if (tab === 'custom') {
+      // For Custom tab, show only custom reports (percentageAllocation or allocationCapacity)
+      return report?.ReportType === 'percentageAllocation' || report?.ReportType === 'allocationCapacity';
+    }
+    return true;
+  });
+  
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedReport, setSelectedReport] = useState(reportType);
   const [selectedSummary, setSelectedSummary] = useState('project');
-  const [selectedSavedReport, setSelectedSavedReport] = useState<number>(1);
+  const [selectedSavedReport, setSelectedSavedReport] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // Sync selectedReport with reportType prop when it changes
   useEffect(() => {
@@ -107,24 +144,116 @@ function ReportBuilderToolbar({
     handleMenuClose();
   };
 
-  const handleReportSelect = (reportId: number) => {
+  const handleReportSelect = (reportId: string) => {
     setSelectedSavedReport(reportId);
-    // TODO: Load report configuration
+    onLoadReport?.(reportId);
     handleMenuClose();
   };
 
-  const handleReportEdit = (reportId: number, event: React.MouseEvent) => {
+  const handleReportEdit = (reportId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    // TODO: Open edit dialog
+    const report = savedReports.find(r => r.Id === reportId);
+    if (!report) return;
+    
+    // Parse filters if they come as a string from the API
+    let filters = report.Filters;
+    if (typeof filters === 'string') {
+      try {
+        filters = JSON.parse(filters);
+      } catch (e) {
+        console.error('Failed to parse report filters:', e);
+        filters = {};
+      }
+    }
+    
+    // Prepare the same payload structure as save report
+    let editDialogData: any = {
+      id: report.Id,
+      Name: report.Name,
+      Description: report.Description || '',
+      filters: filters || {},
+      columns: report.Columns || [],
+      reportType: report.ReportType,
+      tab: tab,
+    };
+
+    // For AI Summary, extract summaryType from filters if it exists
+    if (tab === 'aisummary') {
+      editDialogData.summaryType = filters?.summaryType || 'project';
+    }
+    
+    dispatch(
+      openDialog({
+        title: 'Edit Report',
+        submitButtonText: 'Update',
+        cancelButtonText: 'Cancel',
+        formType: 'edit_reports',
+        initialData: editDialogData,
+      })
+    );
   };
 
-  const handleReportDelete = (reportId: number, event: React.MouseEvent) => {
+  const handleReportDelete = (reportId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    // TODO: Show confirmation dialog
+    
+    const report = savedReports.find(r => r.Id === reportId);
+    if (!report) return;
+    
+    // Open confirmation dialog
+    setReportToDelete({ id: reportId, name: report.Name });
+    setDeleteDialogOpen(true);
   };
 
-  const selectedReportName =
-    savedReports.find(r => r.id === selectedSavedReport)?.name || 'My Reports';
+  const handleConfirmDelete = () => {
+    if (!reportToDelete) return;
+    
+    dispatch(
+      deleteSavedReport(
+        reportToDelete.id,
+        () => {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Report deleted successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          // Reset selected if it was the deleted one
+          if (selectedSavedReport === reportToDelete.id) {
+            setSelectedSavedReport(null);
+          }
+          // Close dialog and reset state
+          setDeleteDialogOpen(false);
+          setReportToDelete(null);
+        },
+        (error) => {
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.response?.data?.exception || 'Failed to delete report.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          // Close dialog and reset state
+          setDeleteDialogOpen(false);
+          setReportToDelete(null);
+        }
+      ) as any
+    );
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setReportToDelete(null);
+  };
+
+  const selectedReportName = selectedSavedReport
+    ? savedReports.find(r => r.Id === selectedSavedReport)?.Name || 'My Reports'
+    : 'My Reports';
 
   return (
     <Box
@@ -377,46 +506,48 @@ function ReportBuilderToolbar({
       {/* Right side - Actions */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         {/* My Reports Dropdown */}
-        {/* <Button
-          variant="outlined"
-          onClick={handleMenuOpen}
-          startIcon={<img src="/images/icons/monitoring.svg" alt="reports" />}
-          endIcon={<KeyboardArrowDown sx={{ fontSize: '18px !important' }} />}
-          sx={{
-            height: 36,
-            minWidth: 140,
-            maxWidth: 200,
-            backgroundColor: '#ffffff',
-            color: '#344665',
-            textTransform: 'none',
-            fontSize: 13,
-            fontWeight: 500,
-            px: 2,
-            borderRadius: '6px',
-            border: '1px solid #CBD0DB',
-            boxShadow: 'none',
-            '&:hover': {
-              backgroundColor: '#F9FAFB',
-              borderColor: '#CBD0DB',
-              boxShadow: 'none',
-            },
-            '& .MuiButton-endIcon': {
-              marginLeft: 'auto',
-            },
-          }}
-        >
-          <Typography
+        {/* {tab === 'reports' && ( */}
+          <Button
+            variant="outlined"
+            onClick={handleMenuOpen}
+            startIcon={<img src="/images/icons/monitoring.svg" alt="reports" />}
+            endIcon={<KeyboardArrowDown sx={{ fontSize: '18px !important' }} />}
             sx={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              height: 36,
+              minWidth: 140,
+              maxWidth: 200,
+              backgroundColor: '#ffffff',
+              color: '#344665',
+              textTransform: 'none',
               fontSize: 13,
               fontWeight: 500,
+              px: 2,
+              borderRadius: '6px',
+              border: '1px solid #CBD0DB',
+              boxShadow: 'none',
+              '&:hover': {
+                backgroundColor: '#F9FAFB',
+                borderColor: '#CBD0DB',
+                boxShadow: 'none',
+              },
+              '& .MuiButton-endIcon': {
+                marginLeft: 'auto',
+              },
             }}
           >
-            {selectedReportName}
-          </Typography>
-        </Button> */}
+            <Typography
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                fontSize: 13,
+                fontWeight: 500,
+              }}
+            >
+              {selectedReportName}
+            </Typography>
+          </Button>
+        {/* )} */}
 
         <Menu
           anchorEl={menuAnchor}
@@ -434,11 +565,18 @@ function ReportBuilderToolbar({
             },
           }}
         >
-          {savedReports.map(report => (
-            <MenuItem
-              key={report.id}
-              onClick={() => handleReportSelect(report.id)}
-              selected={selectedSavedReport === report.id}
+          {filteredSavedReports.length === 0 ? (
+            <MenuItem disabled sx={{ fontSize: '13px', py: 1.5, px: 2 }}>
+              <Typography sx={{ fontSize: '13px', color: '#9CA3AF' }}>
+                No saved reports
+              </Typography>
+            </MenuItem>
+          ) : (
+            filteredSavedReports.map(report => (
+              <MenuItem
+                key={report.Id}
+                onClick={() => handleReportSelect(report.Id)}
+                selected={selectedSavedReport === report.Id}
               sx={{
                 fontSize: '13px',
                 py: 1.5,
@@ -460,55 +598,56 @@ function ReportBuilderToolbar({
                 position: 'relative',
               }}
             >
-              <Typography
-                component="span"
-                sx={{
-                  fontSize: '13px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  pr: 1,
-                  display: 'block',
-                  maxWidth: 'calc(100% - 48px)',
-                }}
-              >
-                {report.name}
-              </Typography>
-              <Box
-                className="action-buttons"
-                sx={{
-                  display: 'none',
-                  position: 'absolute',
-                  right: 8,
-                  gap: 0.5,
-                  backgroundColor: 'inherit',
-                }}
-              >
-                <IconButton
-                  size="small"
-                  sx={{ p: 0.5 }}
-                  onClick={e => handleReportEdit(report.id, e)}
+                <Typography
+                  component="span"
+                  sx={{
+                    fontSize: '13px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    pr: 1,
+                    display: 'block',
+                    maxWidth: 'calc(100% - 48px)',
+                  }}
                 >
-                  <img
-                    src="/images/icons/pencil_underline.svg"
-                    alt="edit"
-                    style={{ width: 16, height: 16 }}
-                  />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  sx={{ p: 0.5 }}
-                  onClick={e => handleReportDelete(report.id, e)}
+                  {report.Name}
+                </Typography>
+                <Box
+                  className="action-buttons"
+                  sx={{
+                    display: 'none',
+                    position: 'absolute',
+                    right: 8,
+                    gap: 0.5,
+                    backgroundColor: 'inherit',
+                  }}
                 >
-                  <img
-                    src="/images/icons/delete.svg"
-                    alt="delete"
-                    style={{ width: 16, height: 16 }}
-                  />
-                </IconButton>
-              </Box>
-            </MenuItem>
-          ))}
+                  <IconButton
+                    size="small"
+                    sx={{ p: 0.5 }}
+                    onClick={e => handleReportEdit(report.Id, e)}
+                  >
+                    <img
+                      src="/images/icons/pencil_underline.svg"
+                      alt="edit"
+                      style={{ width: 16, height: 16 }}
+                    />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    sx={{ p: 0.5 }}
+                    onClick={e => handleReportDelete(report.Id, e)}
+                  >
+                    <img
+                      src="/images/icons/delete.svg"
+                      alt="delete"
+                      style={{ width: 16, height: 16 }}
+                    />
+                  </IconButton>
+                </Box>
+              </MenuItem>
+            ))
+          )}
         </Menu>
 
         {/* Generate Report Button */}
@@ -553,6 +692,16 @@ function ReportBuilderToolbar({
                 : 'Generate Report'}
         </Button>
       </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onCancel={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Report"
+      >
+        {`Are you sure you want to delete "${reportToDelete?.name}"?`}
+      </ConfirmDialog>
     </Box>
   );
 }

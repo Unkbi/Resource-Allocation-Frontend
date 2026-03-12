@@ -29,6 +29,7 @@ const initialState: DashboardChartState = {
     percentageAllocation: { loading: false, data: [], error: null },
     allocationCapacity: { loading: false, data: [], error: null },
     userActivity: { loading: false, data: [], error: null },
+    aisummary: { loading: false, data: [], error: null },
   },
 };
 

@@ -16,6 +16,7 @@ import { userManagementSaga } from './userManagementSaga';
 import { businessImpactSaga } from './businessImpactSaga';
 import { bootstrapSaga } from './initBootstrapSaga';
 import { aiSummarySaga } from './aiSummarySaga';
+import savedReportsSaga from './savedReportsSaga';
 import { customReportSaga } from './customReportSaga';
 import { userPreferencesSaga } from './userPreferencesSaga';
 import { followSaga } from './followSaga';
@@ -41,6 +42,7 @@ export default function* rootSaga() {
     businessImpactSaga(),
     bootstrapSaga(),
     aiSummarySaga(),
+    savedReportsSaga(),
     customReportSaga(),
     userPreferencesSaga(),
     followSaga(),
