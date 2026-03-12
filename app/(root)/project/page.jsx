@@ -28,6 +28,9 @@ import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { deleteProject, getAllProjects } from '@/app/services/projectServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SettingsIcon from '@mui/icons-material/Settings';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import {
   COMPANY_DEFAULT_VIEW,
   setSplitView,
@@ -129,6 +132,8 @@ function Project({ permissions, loadingPermissions }) {
   );
   const { users } = useSelector(state => state.allSettings);
   const { projectTypes } = useSelector(state => state.allSettings);
+  const { followsByObjectId } = useSelector(state => state.follows) ?? {};
+  const { user } = useSelector(state => state.user);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(projects || null);
@@ -604,6 +609,39 @@ function Project({ permissions, loadingPermissions }) {
     router.replace('/allocation');
   };
 
+
+  const handleFollowSettings = params => {
+    router.push(`/settings?menu=${encodeURIComponent('projects&teams')}`);
+    handleMenuClose();  
+  };
+
+  const handleFollow = params => {
+    const projectId = params.row.Id;
+    const existingFollow = followsByObjectId?.[projectId];
+
+    // Always open the dialog, but pass existing follow data if available
+    // If already following, set isFollowing to false to show "Unfollow" state
+    const dialogData = {
+      ...params.row,
+      isFollowing: existingFollow ? false : true,
+      weeklyAISummary: existingFollow?.WeeklySummaryEnabled ?? true,
+      planChanges: existingFollow?.PlanChangesDailySummary ?? true,
+      actualsUpdates: existingFollow?.ActualsStatusDailySummary ?? true,
+      existingFollowId: existingFollow?.FollowId || null,
+    };
+
+    handleOpenDialog(
+      existingFollow ? 'Project Follow Preferences' : 'Project Follow Preferences',
+      'follow_project',
+      dialogData,
+      {
+        submitButtonText: 'Save Preferences',
+        cancelButtonText: 'Cancel',
+      }
+    );
+    handleMenuClose();
+  };
+
   const columns = [
     {
       field: 'Name',
@@ -623,24 +661,37 @@ function Project({ permissions, loadingPermissions }) {
                 }
               );
         };
+        const isFollowing = !!followsByObjectId?.[params.row.Id];
         return (
-          <Box
-            sx={{
-              display: 'inline-block',
-              maxWidth: '100%',
-              color: '#152E75',
-              cursor: 'pointer',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              minWidth: 0,
-              '&:hover': {
-                textDecoration: 'underline',
-              },
-            }}
-            onClick={handleNameClick}
-          >
-            <EllipsisNameCell value={params.value} showAvatar={false} />
+          <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0, width: '100%' }}>
+            <Box
+              sx={{
+                flex: '1 1 auto',
+                minWidth: 0,
+                color: '#152E75',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+              onClick={handleNameClick}
+            >
+              <EllipsisNameCell value={params.value} showAvatar={false} />
+            </Box>
+            {isFollowing && (
+              <VisibilityIcon
+                sx={{
+                  fontSize: 16,
+                  color: '#1C2D5F',
+                  flexShrink: 0,
+                  ml: 0.75,
+                  opacity: 0.8,
+                }}
+              />
+            )}
           </Box>
         );
       },
@@ -890,6 +941,91 @@ function Project({ permissions, loadingPermissions }) {
               paddingBottom: '4px',
             }}
           >
+            <MenuItem
+              sx={{
+                ...menuItemStyle,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: 0,
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
+              }}
+              disabled={isProjectInactive(params.row.Status)}
+            >
+              <Box
+                onClick={() => handleFollow(params)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flex: 1,
+                  padding: '6px 16px',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  },
+                }}
+              >
+                {followsByObjectId?.[params.row.Id] ? (
+                  <>
+                    <VisibilityOffIcon sx={{ fontSize: 18, color: '#1C2D5F' }} />
+                    <Typography
+                      sx={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#1C2D5F',
+                        paddingLeft: '10px',
+                      }}
+                    >
+                      Unfollow
+                    </Typography>
+                  </>
+                ) : (
+                  <>
+                    <VisibilityIcon sx={{ fontSize: 18, color: '#1C2D5F' }} />
+                    <Typography
+                      sx={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#1C2D5F',
+                        paddingLeft: '10px',
+                      }}
+                    >
+                      Follow
+                    </Typography>
+                  </>
+                )}
+              </Box>
+                <Box
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleFollowSettings(params);
+                  }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '6px 12px',
+                    cursor: 'pointer',
+                    borderLeft: '1px solid rgba(0, 0, 0, 0.12)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    },
+                  }}
+                >
+                  <SettingsIcon sx={{ fontSize: 18, color: '#1C2D5F' }} />
+                  <Typography
+                    sx={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#1C2D5F',
+                      paddingLeft: '10px',
+                    }}
+                  >
+                    Settings
+                  </Typography>
+                </Box>
+            </MenuItem>
             {permissions['Allocation']?.c && (
               <MenuItem
                 onClick={() => handleOpenSplitView(params)}

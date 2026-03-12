@@ -15,17 +15,20 @@ import {
 } from '@/app/types/dashboardTypes';
 import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import {
   ColumnManagementStyles,
   StyledDataGrid,
 } from '../../AllocationTable/styles/StyledDataGrid';
+
+dayjs.extend(isoWeek);
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import AISummaryTab from './AISummaryTab';
 import CustomTab from './CustomTab';
 import { fetchProjectSummary } from '@/app/redux/actions/aiSummaryAction';
-import { fetchCustomReportRequest } from '@/app/redux/actions/customReportActions';
+import { fetchCustomReportRequest, fetchAllocationCapacityRequest } from '@/app/redux/actions/customReportActions';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import ErrorPage from '../../ErrorPage/ErrorPage';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
@@ -162,12 +165,29 @@ const parseQueryParams = (
     filters.projectStatuses = parseArrayParam(projectStatuses);
   }
 
+  const userStatuses =
+    searchParams.get('userStatuses') || searchParams.get('UserStatuses');
+  if (userStatuses) {
+    filters.userStatuses = parseArrayParam(userStatuses);
+  }
+
+  const userRoles =
+    searchParams.get('userRoles') || searchParams.get('UserRoles');
+  if (userRoles) {
+    filters.userRoles = parseArrayParam(userRoles);
+  }
+
   // Parse custom date range
   const customStartDate = searchParams.get('customStartDate');
   const customEndDate = searchParams.get('customEndDate');
   if (customStartDate && customEndDate) {
     filters.customStartDate = customStartDate;
     filters.customEndDate = customEndDate;
+  }
+
+  const showActuals = searchParams.get('show_actuals');
+  if (showActuals === 'true') {
+    filters.show_actuals = true;
   }
 
   return filters;
@@ -209,6 +229,8 @@ function ReportBuilderPage({
     resourceLocations: [],
     resourceWorkLocationGroup: [],
     projectStatuses: [],
+    userStatuses: [],
+    userRoles: [],
   });
 
   // Separate filter state for AI Summary tab
@@ -231,11 +253,13 @@ function ReportBuilderPage({
     resourceLocations: [],
     resourceWorkLocationGroup: [],
     projectStatuses: [],
+    userStatuses: [],
+    userRoles: [],
   });
 
   // Separate filter state for Custom tab
   const [customFilters, setCustomFilters] = useState<ReportFilters>({
-    reportType: 'resourceProjectPeriod', // Dummy value
+    reportType: 'percentageAllocation', // Dummy value
     period: 'last_week',
     customDateRange: undefined,
     team: [],
@@ -252,6 +276,8 @@ function ReportBuilderPage({
     resourceLocations: [],
     resourceWorkLocationGroup: [],
     projectStatuses: [],
+    userStatuses: [],
+    userRoles: [],
     show_actuals: false,
   });
 
@@ -302,6 +328,7 @@ function ReportBuilderPage({
   const { projects } = useSelector((state: RootState) => state.projects);
 
   const [APIFilters, setAPIFilters] = useState<any>(null);
+  const [customReportType, setCustomReportType] = useState<'percentageAllocation' | 'allocationCapacity'>('percentageAllocation');
 
   // Ref to track if we've already attempted initial sessionStorage load
   const hasAttemptedInitialLoadRef = useRef(false);
@@ -366,6 +393,8 @@ function ReportBuilderPage({
       resourceLocations: filters.resourceLocations,
       resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
       projectStatuses: filters.projectStatuses,
+      userStatuses: filters.userStatuses,
+      userRoles: filters.userRoles,
     };
     const apiPayload = prepareApiPayload(uiFilters);
     try {
@@ -467,6 +496,8 @@ function ReportBuilderPage({
       resourceLocations: [],
       resourceWorkLocationGroup: [],
       projectStatuses: [],
+      userStatuses: [],
+      userRoles: [],
     });
   };
 
@@ -495,6 +526,8 @@ function ReportBuilderPage({
       resourceLocations: [],
       resourceWorkLocationGroup: [],
       projectStatuses: [],
+      userStatuses: [],
+      userRoles: [],
     });
   };
 
@@ -531,7 +564,11 @@ function ReportBuilderPage({
     setAPIFilters(apiFilters);
 
     try {
-      dispatch(fetchCustomReportRequest(apiFilters));
+      if (customReportType === 'allocationCapacity') {
+        dispatch(fetchAllocationCapacityRequest(apiFilters));
+      } else {
+        dispatch(fetchCustomReportRequest(apiFilters));
+      }
       setShowData(true);
     } catch (error) {
       console.error('Error generating custom report:', error);
@@ -552,7 +589,7 @@ function ReportBuilderPage({
 
   const handleResetCustomFilters = () => {
     setCustomFilters({
-      reportType: 'resourceProjectPeriod',
+      reportType: 'resourceProjectPeriod', // Default to resourceProjectPeriod for custom tab
       period: 'last_week',
       customDateRange: undefined,
       team: [],
@@ -569,6 +606,8 @@ function ReportBuilderPage({
       resourceLocations: [],
       resourceWorkLocationGroup: [],
       projectStatuses: [],
+      userStatuses: [],
+      userRoles: [],
       show_actuals: false,
     });
   };
@@ -748,6 +787,92 @@ function ReportBuilderPage({
     if (loadingPermissions) return;
     if (!pendingQueryFilters || hasAppliedQueryParams || !isDataLoaded) return;
 
+    // Check which tab we're on
+    const currentTab = searchParams?.get('tab') || 'reports';
+
+    // Handle Custom Tab
+    if (currentTab === 'custom') {
+      // Parse dates for custom tab
+      const customStart = pendingQueryFilters.customStartDate
+        ? dayjs(pendingQueryFilters.customStartDate).format('MMM DD, YYYY')
+        : undefined;
+      const customEnd = pendingQueryFilters.customEndDate
+        ? dayjs(pendingQueryFilters.customEndDate).format('MMM DD, YYYY')
+        : undefined;
+
+      // Calculate date range
+      const { start, end } = calculateDateRange(
+        pendingQueryFilters.period || 'last_week',
+        customStart,
+        customEnd
+      );
+
+      // Set custom filters from query params
+      const customFiltersFromQuery: ReportFilters = {
+        reportType: pendingQueryFilters.reportType || 'percentageAllocation',
+        period: pendingQueryFilters.period || 'last_week',
+        customDateRange:
+          pendingQueryFilters.customStartDate && pendingQueryFilters.customEndDate
+            ? [
+                dayjs(pendingQueryFilters.customStartDate),
+                dayjs(pendingQueryFilters.customEndDate),
+              ]
+            : undefined,
+        team: pendingQueryFilters.team || [],
+        organization: pendingQueryFilters.organization || [],
+        resourceType: pendingQueryFilters.resourceType || [],
+        resource: pendingQueryFilters.resource || [],
+        projectType: pendingQueryFilters.projectType || [],
+        projectTypeGroup: pendingQueryFilters.projectTypeGroup || [],
+        project: pendingQueryFilters.project || [],
+        portfolio: pendingQueryFilters.portfolio || [],
+        projectManager: pendingQueryFilters.projectManager || [],
+        allocationManager: pendingQueryFilters.allocationManager || [],
+        resourceStatuses: pendingQueryFilters.resourceStatuses || [],
+        resourceLocations: pendingQueryFilters.resourceLocations || [],
+        resourceWorkLocationGroup:
+          pendingQueryFilters.resourceWorkLocationGroup || [],
+        projectStatuses: pendingQueryFilters.projectStatuses || [],
+        userStatuses: pendingQueryFilters.userStatuses || [],
+        userRoles: pendingQueryFilters.userRoles || [],
+        show_actuals: pendingQueryFilters.show_actuals || false,
+      };
+
+      setCustomFilters(customFiltersFromQuery);
+
+      // Set custom report type from query params
+      const reportTypeFromQuery = pendingQueryFilters.reportType;
+      if (reportTypeFromQuery === 'allocationCapacity' || reportTypeFromQuery === 'percentageAllocation') {
+        setCustomReportType(reportTypeFromQuery);
+      }
+
+      // Prepare API filters for custom report
+      const apiFilters: any = {
+        Projects: customFiltersFromQuery.project,
+        ProjectTypeGroups: customFiltersFromQuery.projectTypeGroup,
+        ProjectTypes: customFiltersFromQuery.projectType,
+        Teams: customFiltersFromQuery.team,
+        Organizations: customFiltersFromQuery.organization,
+        ProjectStatuses: ['Active'],
+        StartDate: start || undefined,
+        EndDate: end || undefined,
+      };
+
+      setAPIFilters(apiFilters);
+
+      // Auto-generate custom report based on reportType
+      if (reportTypeFromQuery === 'allocationCapacity') {
+        dispatch(fetchAllocationCapacityRequest(apiFilters));
+      } else {
+        dispatch(fetchCustomReportRequest(apiFilters));
+      }
+      setHasAppliedQueryParams(true);
+      setFiltersExpanded(false);
+      setIsInitializing(false);
+      return;
+    }
+
+    // Handle Reports Tab (existing logic)
     // Data is loaded, now apply the query params
     const mergedFilters: ReportFilters = {
       reportType: pendingQueryFilters.reportType || 'resourceProjectPeriod',
@@ -774,6 +899,8 @@ function ReportBuilderPage({
       resourceWorkLocationGroup:
         pendingQueryFilters.resourceWorkLocationGroup || [],
       projectStatuses: pendingQueryFilters.projectStatuses || [],
+      userStatuses: pendingQueryFilters.userStatuses || [],
+      userRoles: pendingQueryFilters.userRoles || [],
     };
     setFilters(mergedFilters);
 
@@ -798,6 +925,8 @@ function ReportBuilderPage({
       resourceLocations: mergedFilters.resourceLocations,
       resourceWorkLocationGroup: mergedFilters.resourceWorkLocationGroup,
       projectStatuses: mergedFilters.projectStatuses,
+      userStatuses: mergedFilters.userStatuses,
+      userRoles: mergedFilters.userRoles,
     };
 
     const apiPayload = prepareApiPayload(uiFilters);
@@ -817,6 +946,7 @@ function ReportBuilderPage({
     isDataLoaded,
     dispatch,
     loadingPermissions,
+    searchParams,
   ]);
 
   // Effect 3: Load from sessionStorage only on initial page load (not on tab switch)
@@ -866,6 +996,8 @@ function ReportBuilderPage({
           resourceLocations: f.resourceLocations || [],
           resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
           projectStatuses: f.projectStatuses || [],
+          userStatuses: f.userStatuses || [],
+          userRoles: f.userRoles || [],
         });
 
         // Fetch the report data
@@ -915,6 +1047,26 @@ function ReportBuilderPage({
     }
   }, [aiSummaryState, activeTab, loadingPermissions]);
 
+  useEffect(() => {
+    if (
+      customReportType === 'allocationCapacity' &&
+      !pendingQueryFilters &&
+      !hasAppliedQueryParams &&
+      !customFilters.customDateRange
+    ) {
+      // Calculate 13-week range: 4 weeks past + current week + 8 weeks future
+      const currentMonday = dayjs().isoWeekday(1);
+      const startDate = currentMonday.subtract(4, 'week');
+      const endDate = currentMonday.add(8, 'week').isoWeekday(7);
+      
+      setCustomFilters(prev => ({
+        ...prev,
+        period: 'custom',
+        customDateRange: [startDate, endDate],
+      }));
+    }
+  }, [customReportType, pendingQueryFilters, hasAppliedQueryParams, customFilters.customDateRange]);
+
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
   const hiddenColumns = getHiddenColumns(filters.reportType as ReportType);
@@ -957,6 +1109,8 @@ function ReportBuilderPage({
       resourceLocations: filters.resourceLocations,
       resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
       projectStatuses: filters.projectStatuses,
+      userStatuses: filters.userStatuses,
+      userRoles: filters.userRoles,
     };
     const entry = {
       name,
@@ -995,6 +1149,8 @@ function ReportBuilderPage({
       resourceLocations: f.resourceLocations || [],
       resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
       projectStatuses: f.projectStatuses || [],
+      userStatuses: f.userStatuses || [],
+      userRoles: f.userRoles || [],
     });
     // Dispatch fetch with restored filters
     dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
@@ -1198,6 +1354,8 @@ function ReportBuilderPage({
                 resourceLocations: [],
                 resourceWorkLocationGroup: [],
                 projectStatuses: [],
+                userStatuses: [],
+                userRoles: [],
               });
               setFiltersExpanded(true);
             }}
@@ -1414,6 +1572,8 @@ function ReportBuilderPage({
                 resourceLocations: [],
                 resourceWorkLocationGroup: [],
                 projectStatuses: [],
+                userStatuses: [],
+                userRoles: [],
               });
               setFiltersExpanded(true);
             }}
@@ -1450,6 +1610,8 @@ function ReportBuilderPage({
             reportType={customFilters.reportType as ReportType}
             tab="custom"
             onGenerateReport={handleGenerateCustomReport}
+            onCustomReportTypeChange={setCustomReportType}
+            customReportType={customReportType}
             onExport={handleExport}
             onShare={handleShare}
             isLoading={customReportState.loading}
@@ -1479,6 +1641,7 @@ function ReportBuilderPage({
             <CustomTab
               showActuals={customFilters.show_actuals || false}
               APIFilters={APIFilters}
+              customReportType={customReportType}
             />
           </Box>
         </>

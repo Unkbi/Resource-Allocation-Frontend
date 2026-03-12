@@ -54,6 +54,7 @@ import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import ActualsErrorPage from '../ErrorPage/ActualsErrorPage';
 import {
   current,
+  DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
   FAR_FUTURE_DATE,
   FAR_PAST_DATE,
   FRACTIONS,
@@ -720,6 +721,9 @@ function ActualTable({
             actuals: 0,
             comments: '',
             type: OTHER_WORK,
+            __unit:
+              userPreferences?.Actuals_Allocation_Preference ||
+              DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
           };
           addNewRow(newOtherWorkRow);
           setHasOtherWork(true);
@@ -734,6 +738,9 @@ function ActualTable({
             actuals: 0,
             comments: '',
             type: PERSONAL_TIME,
+            __unit:
+              userPreferences?.Actuals_Allocation_Preference ||
+              DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
           };
           addNewRow(newPersonalTimeRow);
           setHasPersonalTime(true);
@@ -1412,10 +1419,10 @@ function ActualTable({
             }}
           >
             {userPreferences?.Actuals_Allocation_Preference === HOURS
-              ? 'Hours per week, 40 hrs = full-time'
-              : 'Allocation • 1.0 = full-time • 0.1 = 4 hrs'}
+              ? 'Hours per week • 40 hrs = full-time • min 2 hrs'
+              : 'Allocation • 1.0 = full-time (40 hrs) • min 0.05 (2 hrs)'}
           </Typography>
-          {/* <Stack direction="row" sx={{ ml: 2, alignItems: 'center' }}>
+          <Stack direction="row" sx={{ ml: 2, alignItems: 'center' }}>
             <Typography
               sx={{
                 fontSize: '0.875rem',
@@ -1444,7 +1451,7 @@ function ActualTable({
             >
               {FRACTIONS}
             </Typography>
-          </Stack> */}
+          </Stack>
         </Box>
       </Box>
       {showProjectMenu && (

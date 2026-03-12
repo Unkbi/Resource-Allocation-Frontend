@@ -20,6 +20,8 @@ export interface DashboardFilterPayload {
   ResourceLocations?: string[];
   ResourceWorkLocationGroup?: string[];
   ProjectStatuses?: string[];
+  UserStatuses?: string[];
+  UserRoles?: string[];
   StartDate?: string;
   EndDate?: string;
   Bucket?: string;
@@ -62,6 +64,9 @@ const CHART_API_MAPPING: Record<string, string> = {
   //Group 6: Actuals Trend Analytics
   actualsTrendWeekly: '/Resource/ExecuteActualsTrendWeeklyQuery',
 
+  //Group 10: Weekly Allocation vs Capacity
+  weeklyAllocationVsCapacity: '/Resource/GetWeeklyProjectsAllocationsCapacityByType',
+
   //Group 7: Team Engagement Analytics
   teamEngagementScore: '/Resource/ExecuteTeamEngagementScoreQuery',
 
@@ -85,6 +90,7 @@ export const REPORT_API_MAPPING: Record<string, string> = {
   resourcePeriod: '/Resource/GetAllResourcesWithPeriodActualsStatus',
   resourceProjectPeriod: '/Resource/GetAllocationActualsReport',
   resourceProjectPeriodCost: '/Resource/GetAllocationCostReport',
+  userActivity: '/Resource/GetAllUsersWithDetails',
 };
 
 /**
@@ -282,6 +288,20 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       ...baseFilters,
     },
 
+    // Group 10: Weekly Allocation vs Capacity
+    weeklyAllocationVsCapacity: {
+      Teams: filters.Teams || [],
+      Projects: filters.Projects || [],
+      Portfolios: filters.Portfolios || [],
+      ProjectTypes: filters.ProjectTypes || [],
+      ProjectTypeGroups: filters.ProjectTypeGroups || [],
+      ProjectManagers: filters.ProjectManagers || [],
+      Organizations: filters.Orgs || [],
+      ProjectStatuses: ['Active'],
+      StartDate: filters.StartDate,
+      EndDate: filters.EndDate,
+    },
+
   };
   return payloadConfigs[chartKey] || baseFilters;
 };
@@ -354,6 +374,12 @@ export const buildReportPayload = (uiFilters: any): DashboardFilterPayload => {
   if (isFilterEnabled(reportType, 'projectStatuses')) {
     payload.ProjectStatuses = sanitize(uiFilters?.projectStatuses);
   }
+  if (isFilterEnabled(reportType, 'userStatuses')) {
+    payload.UserStatuses = sanitize(uiFilters?.userStatuses);
+  }
+  if (isFilterEnabled(reportType, 'userRoles')) {
+    payload.UserRoles = sanitize(uiFilters?.userRoles);
+  }
   return payload;
 };
 
@@ -395,6 +421,10 @@ const extractChartData = (chartKey: string, apiResponse: any): any[] => {
     case 'totalHeadcount':
       return responseData.total_head_breakdown || [];
     
+    case 'weeklyAllocationVsCapacity':
+      // New API returns { WeeklyData: [...] } — unwrap it
+      return apiResponse?.WeeklyData || (Array.isArray(apiResponse) ? apiResponse : []);
+
     default:
       // For non-grouped charts, return the full response
       return apiResponse;

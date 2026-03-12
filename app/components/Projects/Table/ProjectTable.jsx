@@ -5,7 +5,7 @@ import {
 } from '../../AllocationTable/styles/StyledDataGrid';
 import { GridColumnMenu, useGridApiRef } from '@mui/x-data-grid-premium';
 import ProjectToolbar from '../../Toolbar/ProjectToolbar';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import { withRBAC } from '../../HOC/withRBAC';
 import { useDispatch } from 'react-redux';
@@ -37,7 +37,10 @@ const ProjectTable = ({
   const dispatch = useDispatch();
   const [filterModel, setFilterModel] = useState({
       items: [],
-    });
+  });
+  const [search, setSearch] = useState('');
+  const [columnVisibilityModel, setColumnVisibilityModel] =
+    useState({});
   const globalFilters = useSelector((state) => state.filters.Project);
   
    useEffect(() => {
@@ -62,6 +65,27 @@ const ProjectTable = ({
       }));
       dispatch(updatePageFilters('Project', filterData));
   };
+
+   const filteredRows = useMemo(() => {
+        if (!rows) return [];
+    
+        if (!search.trim()) return rows;
+    
+        const lowerSearch = search.toLowerCase();
+    
+        const visibleFields = columns
+          .filter(col => columnVisibilityModel[col.field] !== false)
+          .map(col => col.field);
+    
+        return rows.filter(row =>
+          visibleFields.some(field => {
+            const value = (row)[field];
+            if (value === null || value === undefined) return false;
+            return String(value).toLowerCase().includes(lowerSearch);
+          })
+        );
+      }, [rows, search, columns, columnVisibilityModel]);
+    
   
   return (
     <Box
@@ -74,11 +98,13 @@ const ProjectTable = ({
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={permissions['Project']?.r ? rows : []}
+        rows={permissions['Project']?.r ? filteredRows : []}
         hideFooter={true}
         loading={loading}
         filterModel={filterModel}
         onFilterModelChange={handleFilterModelChange}
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={setColumnVisibilityModel}
         initialState={{
           sorting: {
             sortModel: [{ field: 'Name', sort: 'asc' }],
@@ -126,6 +152,8 @@ const ProjectTable = ({
             setFilterButtonEl,
             value: value,
             onChange: onChange,
+            search: search,
+            setSearch,
           },
           columnsPanel: {
             className: 'styleColumnMenu',

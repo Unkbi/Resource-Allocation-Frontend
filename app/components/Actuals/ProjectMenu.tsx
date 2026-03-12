@@ -12,7 +12,10 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/app/redux/store';
 import { GridValidRowModel } from '@mui/x-data-grid-premium';
 import SearchIcon from '@mui/icons-material/Search';
-import { UNPLANNED_PROJECT } from '@/app/constants/constants';
+import {
+  DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
+  UNPLANNED_PROJECT,
+} from '@/app/constants/constants';
 
 interface Project {
   Id: string | number;
@@ -92,6 +95,9 @@ const ProjectMenu = ({
   const { projects } = useSelector((state: RootState) => state.projects);
   const [searchValue, setSearchValue] = useState('');
   const [selectedProjects, setSelectedProjects] = useState<Project[]>([]);
+  const { userPreferences } = useSelector(
+    (state: RootState) => state.userPreferences
+  );
 
   const existingProjectIds = existingRows
     .filter(row => row.id !== 'divider')
@@ -128,6 +134,9 @@ const ProjectMenu = ({
       actuals: 0,
       comments: '',
       type: UNPLANNED_PROJECT,
+      __unit:
+        userPreferences?.Actuals_Allocation_Preference ||
+        DEFAULT_ACTUALS_ALLOCATION_PREFERENCE,
     }));
 
     if (newRows.length > 0) {

@@ -322,6 +322,8 @@ export const DASHBOARD_ALL_ACCESS = [
   'unapprovedProjectAllocation',
   'projectHealthOverview',
   'projectFTE',
+  'custom_allocation_percentage',
+  'weeklyAllocationVsCapacity',
 ];
 
 export const TOTAL_ACTUALS_LESS_THAN_ONE = 'TOTAL_ACTUALS_LESS_THAN_ONE';
@@ -357,4 +359,6 @@ export const ACTUALS_ALLOCATION_PREFERENCE_OPTIONS = [
   FRACTIONS,
 ];
 export const DEFAULT_ACTUALS_ALLOCATION_PREFERENCE = FRACTIONS;
+export const ALLOCATION_PREFERENCE_OPTIONS = [PERCENTAGES, FRACTIONS];
+export const DEFAULT_ALLOCATION_PREFERENCE = FRACTIONS;
 export const STEP = 0.05;

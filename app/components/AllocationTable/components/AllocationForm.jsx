@@ -98,6 +98,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import {
   DATE_FORMAT,
+  PERCENTAGES,
   PORTFOLIO_DISPLAY_NAME,
   PROJECT_ACTIVE_STATUS,
   projectViewsGrouping,
@@ -185,10 +186,12 @@ import {
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import AddBusinessImpactForm from '../../Forms/AddBusinessImpactForm';
+import FollowForm from '../../Forms/FollowForm';
 import {
   CREATE_BUSINESS_IMPACT,
   UPDATE_BUSINESS_IMPACT,
 } from '@/app/redux/actions/businessImpactActions';
+import { UPDATE_TOTAL_ALLOCATIONS } from '@/app/redux/actions/allocationTotalsAction';
 
 const initialValuesMap = {
   add_project: {
@@ -278,6 +281,8 @@ const initialValuesMap = {
     showColumns: ['teams', 'resource', 'project', 'resourceType'],
     filters: [{ filed: 'teams', operator: 'contains', value: '' }],
     calendarBy: 'week',
+    showActuals: false,
+    removeContractorPT: false,
   },
   new_view: {
     groupBy: 'project',
@@ -288,6 +293,8 @@ const initialValuesMap = {
     showColumns: ['teams', 'resource', 'project', 'resourceType'],
     filters: [{ filed: 'teams', operator: 'contains', value: '' }],
     calendarBy: 'week',
+    showActuals: false,
+    removeContractorPT: false,
   },
   name_view: {
     groupBy: '',
@@ -301,6 +308,8 @@ const initialValuesMap = {
     name: '',
     description: '',
     isDefault: false,
+    showActuals: false,
+    removeContractorPT: false,
   },
   clone_resource: {
     Project: [],
@@ -467,6 +476,20 @@ const initialValuesMap = {
     Status: '',
     Currency: 'USD',
   },
+  follow_project: {
+    isFollowing: true,
+    weeklyAISummary: true,
+    dailySummary: true,
+    planChanges: true,
+    actualsUpdates: true,
+  },
+  follow_team: {
+    isFollowing: true,
+    weeklyAISummary: true,
+    dailySummary: true,
+    planChanges: false,
+    actualsUpdates: true,
+  },
 };
 
 const AllocationForm = () => {
@@ -490,6 +513,7 @@ const AllocationForm = () => {
   const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
+  const { followsByObjectId } = useSelector(state => state.follows) ?? {};
   const { startDate, endDate } = calendarDate || {};
   const { allocations } = useSelector(state => state.dataGrid);
   const { rowState } = useSelector(state => state.dataGrid);
@@ -506,6 +530,7 @@ const AllocationForm = () => {
   const privileges = useSelector(state => state.rbac.privileges);
   const { user: allUsers } = useSelector(state => state.rbac);
   const { scalarSettings } = useSelector(state => state.allSettings);
+  const { userPreferences } = useSelector(state => state.userPreferences) ?? {};
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const {
@@ -568,7 +593,7 @@ const AllocationForm = () => {
           initialData?.Email || ''
         );
       case 'add_allocation':
-        return addAllocationValidationSchema(scalarSettings);
+        return addAllocationValidationSchema(scalarSettings, userPreferences);
       case 'assign_allocation':
         return assignAllocationValidationSchema;
       case 'new_view':
@@ -1433,6 +1458,11 @@ const AllocationForm = () => {
         break;
 
       case 'add_allocation':
+        let allocationValue = values.AllocationEntered;
+        if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+          allocationValue = values.AllocationEntered / 100;
+        }
+
         try {
           const allMondays = generateAllMondays(
             values.StartDate || values.startDate,
@@ -1444,12 +1474,12 @@ const AllocationForm = () => {
 
           if (
             filteredProjects.some(p => !p.AllowOvertime) &&
-            values.AllocationEntered > 1.0
+            allocationValue > 1.0
           ) {
             dispatch(
               showToastAction(
                 true,
-                'Allocation cannot exceed 1.0 for projects that do not allow overtime.',
+                `Allocation cannot exceed ${userPreferences?.Allocation_Preference === PERCENTAGES ? '100%' : '1.0'} for projects that do not allow overtime.`,
                 'error',
                 4000
               )
@@ -1476,7 +1506,7 @@ const AllocationForm = () => {
                 );
 
                 // Perform Delete if AllocationEntered is 0
-                if (values?.AllocationEntered === 0) {
+                if (allocationValue === 0) {
                   if (allocation && allocation?.allocationId) {
                     deleteList.push({
                       Id: allocation?.allocationId,
@@ -1518,12 +1548,12 @@ const AllocationForm = () => {
                       ),
                   resource,
                   weekKey,
-                  values.AllocationEntered,
+                  allocationValue,
                   filteredProjects
                 );
                 if (newFinalTotal > Number(max_allocation_error)) {
                   errorMessages.push(
-                    `Total allocation for week ${weekKey} exceeds ${max_allocation_error} (${newFinalTotal.toFixed(2)}). Update skipped.`
+                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error) * 100 + '%' : max_allocation_error} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(newFinalTotal.toFixed(2) * 100) + '%' : newFinalTotal.toFixed(2)}). Update skipped.`
                   );
                   return null;
                 }
@@ -1533,7 +1563,7 @@ const AllocationForm = () => {
                   newFinalTotal <= Number(max_allocation_error)
                 ) {
                   warningMessages.push(
-                    `Total allocation for week ${weekKey} exceeds ${max_allocation_warning} (${newFinalTotal.toFixed(2)}).`
+                    `Total allocation for week ${weekKey} exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning} (${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(newFinalTotal.toFixed(2) * 100) + '%' : newFinalTotal.toFixed(2)}).`
                   );
                 }
 
@@ -1542,7 +1572,7 @@ const AllocationForm = () => {
                   allocation?.allocationId &&
                   allocation?.value
                 ) {
-                  if (allocation?.value !== values.AllocationEntered) {
+                  if (allocation?.value !== allocationValue) {
                     // This is for the Bulk Allocation API.
                     updateList.push({
                       Id: allocation?.allocationId,
@@ -1550,7 +1580,7 @@ const AllocationForm = () => {
                       Project: project.Id,
                       ProjectName: project.Name,
                       Period: allocation?.period,
-                      AllocationEntered: values.AllocationEntered,
+                      AllocationEntered: allocationValue,
                     });
                   }
                 } else {
@@ -1560,7 +1590,7 @@ const AllocationForm = () => {
                     Project: project.Id,
                     ProjectName: project.Name,
                     Period: format(monday, DATE_FORMAT),
-                    AllocationEntered: values.AllocationEntered,
+                    AllocationEntered: allocationValue,
                   });
                 }
               });
@@ -1588,7 +1618,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${max_allocation_error}. Please check and try again.`,
+                    `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
                   )
@@ -1722,6 +1752,8 @@ const AllocationForm = () => {
                   projects,
                   resources,
                   location,
+                  projectTypes,
+                  projectTypeGroups,
                   splitView,
                   bottomTeamAllocationGrid, // Update these rows when in spitView
                   teamAllocationGrid, // Update these rows when in teams, organisation, or resources views
@@ -1738,17 +1770,22 @@ const AllocationForm = () => {
                       ? currentView?.EndDate
                       : endDate
                 );
-
                 const blankRowsToBeRemoved = Object.values(formateUpdate).map(
                   row =>
                     getAllRowsForView(
-                      splitView ? 'bottomTeam' : 'teamAllocation'
+                      splitView
+                        ? 'bottomTeam'
+                        : teamsViewsGrouping.includes(currentView?.GroupBy)
+                          ? 'teamAllocation'
+                          : 'projectAllocation'
                     ).find(
                       r =>
-                        r.id.includes(row.teams) && r.id.includes(row.resource)
+                        (projectViewsGrouping.includes(currentView?.GroupBy) &&
+                          r.id.includes(row.project)) ||
+                        (r.id.includes(row.teams) &&
+                          r.id.includes(row.resource))
                     )
                 );
-
                 allUpdatedRows = [
                   ...Object.values(formateUpdate),
                   ...blankRowsToBeRemoved
@@ -1763,7 +1800,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Total allocation for the multiple selected weeks exceeds ${max_allocation_error}. Please check and try again.`,
+                    `Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_error * 100) + '%' : max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
                   )
@@ -1777,7 +1814,7 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    `Warning: Total allocation for the multiple selected weeks exceeds ${max_allocation_warning}.`,
+                    `Warning: Total allocation for the multiple selected weeks exceeds ${userPreferences?.Allocation_Preference === PERCENTAGES ? Math.round(max_allocation_warning * 100) + '%' : max_allocation_warning}.`,
                     'warning',
                     4000
                   )
@@ -1795,49 +1832,123 @@ const AllocationForm = () => {
                 ...new Set(new_resources.map(resource => resource?.team)),
               ];
               if (allUpdatedRows?.length > 0) {
-                if (splitView) {
-                  let allRowsForTopProjectAllocationGrid =
-                    topProjectAllocationGrid.getAllRows();
-                  // Update Allocation for Top Project Allocation Grid
-                  await updateRowsForView('topProject', [
-                    ...allUpdatedRows,
-                    ...allRowsForTopProjectAllocationGrid
-                      .filter(row => row.id.startsWith(row.projectId))
-                      .map(row => ({
-                        ...row,
-                        _action: 'delete',
-                      })),
-                  ]);
-                  // After completing filter to show only current selected Project
-                  allRowsForTopProjectAllocationGrid =
-                    topProjectAllocationGrid.getAllRows();
-                  topProjectAllocationGrid.setRows(
-                    filterAllocationsForSelectedProject(
-                      allRowsForTopProjectAllocationGrid,
-                      splitViewCurrentProject
-                    )
-                  );
+                // Get New Project Totals, for the projects Updated
+                const updatedProjects = [
+                  ...new Set(
+                    allUpdatedRows
+                      .filter(row => row.projectId)
+                      .map(row => row.projectId)
+                  ),
+                ];
+                try {
+                  const response = await new Promise((resolve, reject) => {
+                    dispatch({
+                      type: UPDATE_TOTAL_ALLOCATIONS,
+                      payload: {
+                        updatedProjects: updatedProjects,
+                        resolve,
+                        reject,
+                      },
+                    });
+                  });
 
-                  // Update Allocation for Bottom Team Allocation Grid
-                  updateRowsForView('bottomTeam', allUpdatedRows);
-                  updateRowsForView('projectAllocation', allUpdatedRows);
-                  updateRowsForView('teamAllocation', allUpdatedRows);
-                } else if (teamsViewsGrouping.includes(currentView?.GroupBy)) {
-                  updateRowsForView('teamAllocation', allUpdatedRows);
-                } else if (
-                  projectViewsGrouping.includes(currentView?.GroupBy)
-                ) {
-                  updateRowsForView('projectAllocation', allUpdatedRows);
-                } else {
+                  allUpdatedRows = allUpdatedRows.map(row => {
+                    const updatedProjectTotal =
+                      response.totalAllocation?.Projects?.find(
+                        p => p.Project === row.projectId
+                      );
+                    const updatedProjectTotalTillDate =
+                      response.totalAllocationTillDate?.Projects?.find(
+                        p => p.Project === row.projectId
+                      );
+                    const updatedResourceTotalTillDate =
+                      updatedProjectTotalTillDate?.ResourceTotals?.find(
+                        r => r.Resource === row.resourceId
+                      );
+                    if (updatedProjectTotal && updatedProjectTotalTillDate) {
+                      const updatedRow = {
+                        ...row,
+                        totalEffort:
+                          updatedProjectTotal?.ResourceTotals?.find(
+                            r => r.Resource === row.resourceId
+                          )?.TotalAllocationsEntered || 0,
+                        totalAllocationsTillDate: {
+                          actuals:
+                            updatedResourceTotalTillDate?.TotalActualsEntered ||
+                            0,
+                          value:
+                            updatedResourceTotalTillDate?.TotalAllocationsEntered ||
+                            0,
+                        },
+                      };
+                      return updatedRow;
+                    }
+                    return row;
+                  });
+
+                  if (splitView) {
+                    let allRowsForTopProjectAllocationGrid =
+                      topProjectAllocationGrid.getAllRows();
+                    // Update Allocation for Top Project Allocation Grid
+                    await updateRowsForView('topProject', [
+                      ...allUpdatedRows,
+                      ...allRowsForTopProjectAllocationGrid
+                        .filter(row => row.id.startsWith(row.projectId))
+                        .map(row => ({
+                          ...row,
+                          _action: 'delete',
+                        })),
+                    ]);
+                    // After completing filter to show only current selected Project
+                    allRowsForTopProjectAllocationGrid =
+                      topProjectAllocationGrid.getAllRows();
+                    topProjectAllocationGrid.setRows(
+                      filterAllocationsForSelectedProject(
+                        allRowsForTopProjectAllocationGrid,
+                        splitViewCurrentProject
+                      )
+                    );
+
+                    // Update Allocation for Bottom Team Allocation Grid
+                    updateRowsForView('bottomTeam', allUpdatedRows);
+                    updateRowsForView('projectAllocation', allUpdatedRows);
+                    updateRowsForView('teamAllocation', allUpdatedRows);
+                  } else if (
+                    teamsViewsGrouping.includes(currentView?.GroupBy)
+                  ) {
+                    updateRowsForView('teamAllocation', allUpdatedRows);
+                  } else if (
+                    projectViewsGrouping.includes(currentView?.GroupBy)
+                  ) {
+                    updateRowsForView('projectAllocation', allUpdatedRows);
+                  } else {
+                    dispatch(
+                      showToastAction(
+                        true,
+                        'Unable to update allocation grid for the current view. View grouping not recognized.',
+                        'error',
+                        4000
+                      )
+                    );
+                    return;
+                  }
+
                   dispatch(
                     showToastAction(
                       true,
-                      'Unable to update allocation grid for the current view. View grouping not recognized.',
-                      'error',
-                      4000
+                      `Successfully updated allocation for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
+                      'success'
                     )
                   );
-                  return;
+                } catch (error) {
+                  console.error('Error updating total allocations:', error);
+                  dispatch(
+                    showToastAction(
+                      true,
+                      `Error updating total allocations for ${new_resources?.map(newRes => newRes?.FullName).join(', ')}...`,
+                      'error'
+                    )
+                  );
                 }
 
                 dispatch(
@@ -1947,6 +2058,8 @@ const AllocationForm = () => {
               ...(values?.filters !== undefined && {
                 Filters: values.filters,
               }),
+              RemoveContractorPT: initialData?.removeContractorPT ?? values.removeContractorPT ?? false,
+              ShowActuals: initialData?.showActuals ?? values.showActuals ?? false,
             };
 
             // PUT request.
@@ -2000,6 +2113,8 @@ const AllocationForm = () => {
               Description: values.description,
               Filters: values.filters,
               UserId: userId,
+              RemoveContractorPT: initialData?.removeContractorPT ?? values.removeContractorPT ?? false,
+              ShowActuals: initialData?.showActuals ?? values.showActuals ?? false,
             };
 
             // POST request to save the view.
@@ -2052,6 +2167,8 @@ const AllocationForm = () => {
               Columns: values.showColumns,
               ShowBy: values.showBy,
               Filters: values.filters,
+              RemoveContractorPT: values.removeContractorPT ?? false,
+              ShowActuals: values.showActuals ?? false,
             };
 
             // PUT request to update the view
@@ -3405,7 +3522,7 @@ const AllocationForm = () => {
           const postData = {
             users: [userItem],
           };
-          
+
           dispatch(
             showToast({
               open: true,
@@ -3415,7 +3532,7 @@ const AllocationForm = () => {
               autoHideTimer: 5000,
             })
           );
-          
+
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: SEND_INVITATION,
@@ -3491,7 +3608,7 @@ const AllocationForm = () => {
           const postData = {
             users: [...finalData],
           };
-          
+
           dispatch(
             showToast({
               open: true,
@@ -3501,7 +3618,7 @@ const AllocationForm = () => {
               autoHideTimer: 8000,
             })
           );
-          
+
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: SEND_INVITATION,
@@ -3577,15 +3694,15 @@ const AllocationForm = () => {
         };
 
         dispatch(
-            showToast({
-              open: true,
-              message: `Updating the changes for ${initialData.Name} `,
-              type: 'info',
-              position: 'bottom-left',
-              autoHideTimer: 5000,
-            })
+          showToast({
+            open: true,
+            message: `Updating the changes for ${initialData.Name} `,
+            type: 'info',
+            position: 'bottom-left',
+            autoHideTimer: 5000,
+          })
         );
-        
+
         try {
           const result = await new Promise((resolve, reject) => {
             dispatch({
@@ -3748,6 +3865,222 @@ const AllocationForm = () => {
 
         return;
       }
+
+      case 'follow_project':
+        // Determine object type from initialData (can be 'project' or 'team')
+        const objectType = initialData?.objectType || 'PROJECT';
+        const followpostData = {
+          ObjectType: objectType.toUpperCase(),
+          ObjectId: initialData.Id,
+          User: user?.id,
+          WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+          PlanChangesDailySummary: cleanedValues.planChanges,
+          ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+        };
+
+        try {
+          // Check if already following
+          const existingFollow = followsByObjectId?.[initialData.Id];
+
+          // If toggle is OFF (unfollow), trigger unfollow action
+          if (!cleanedValues.isFollowing && existingFollow?.FollowId) {
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UNFOLLOW',
+                payload: {
+                  payload: { FollowId: existingFollow.FollowId },
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `Unfollowed ${objectType.toLowerCase()} successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else if (existingFollow && existingFollow.FollowId) {
+            // Update existing follow preferences
+            const updatePayload = {
+              FollowId: existingFollow.FollowId,
+              WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+              PlanChangesDailySummary: cleanedValues.planChanges,
+              ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+            };
+
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UPDATE_FOLLOW_PREFERENCES',
+                payload: {
+                  payload: updatePayload,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `${objectType === 'PROJECT' ? 'Project' : 'Team'} follow preferences updated successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            // Create new follow
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'CREATE_FOLLOW',
+                payload: {
+                  payload: followpostData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `Now following this ${objectType.toLowerCase()}`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+
+          dispatch(closeDialog());
+          dispatch({ type: 'FETCH_FOLLOWS', payload: user?.id });
+          setFormValue({});
+        } catch (error) {
+          console.error('Failed to save follow preferences:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: error?.message || 'Failed to save follow preferences',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+
+      case 'follow_team':
+        const followTeamData = {
+          ObjectType: 'TEAM',
+          ObjectId: initialData.Id,
+          User: user?.id,
+          WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+          PlanChangesDailySummary: cleanedValues.planChanges,
+          ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+        };
+
+        try {
+          // Check if already following
+          const existingTeamFollow = followsByObjectId?.[initialData.Id];
+
+          // If toggle is OFF (unfollow), trigger unfollow action
+          if (!cleanedValues.isFollowing && existingTeamFollow?.FollowId) {
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UNFOLLOW',
+                payload: {
+                  payload: { FollowId: existingTeamFollow.FollowId },
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Unfollowed team successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else if (existingTeamFollow && existingTeamFollow.FollowId) {
+            // Update existing follow preferences
+            const updatePayload = {
+              FollowId: existingTeamFollow.FollowId,
+              WeeklySummaryEnabled: cleanedValues.weeklyAISummary,
+              PlanChangesDailySummary: cleanedValues.planChanges,
+              ActualsStatusDailySummary: cleanedValues.actualsUpdates,
+            };
+
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UPDATE_FOLLOW_PREFERENCES',
+                payload: {
+                  payload: updatePayload,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Team follow preferences updated successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            // Create new follow
+            await new Promise((resolve, reject) => {
+              dispatch({
+                type: 'CREATE_FOLLOW',
+                payload: {
+                  payload: followTeamData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Now following this team',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+
+          dispatch(closeDialog());
+          dispatch({ type: 'FETCH_FOLLOWS', payload: user?.id });
+          setFormValue({});
+        } catch (error) {
+          console.error('Failed to save team follow preferences:', error);
+          dispatch(closeDialog());
+          dispatch(
+            showToast({
+              open: true,
+              message:
+                error?.message || 'Failed to save team follow preferences',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
 
       default:
         return;
@@ -3958,12 +4291,15 @@ const AllocationForm = () => {
           }
 
           // If result is empty, return immediately
-          if (response === null || !Array.isArray(response) || response.length === 0) {
+          if (
+            response === null ||
+            !Array.isArray(response) ||
+            response.length === 0
+          ) {
             setHistoryStatus('no-data');
             setHistoryData([]);
             return;
           }
-
 
           // Helper functions
           const getUserInitials = email => {
@@ -4023,9 +4359,7 @@ const AllocationForm = () => {
                 const yearStart = parseISO(
                   new Date(temp.getFullYear(), 0, 1).toISOString()
                 );
-                weekNumber = Math.ceil(
-                  ((temp - yearStart) / 86400000 + 1) / 7
-                );
+                weekNumber = Math.ceil(((temp - yearStart) / 86400000 + 1) / 7);
               }
             }
 
@@ -4053,14 +4387,18 @@ const AllocationForm = () => {
                 Math.floor(new Date(Timestamp)?.getTime() / 1000)
               ),
               action,
-              fromVersion: AllocationEnteredFromValue !== undefined ? String(AllocationEnteredFromValue) : '',
-              toVersion: AllocationEnteredToValue !== undefined ? String(AllocationEnteredToValue) : '',
+              fromVersion:
+                AllocationEnteredFromValue !== undefined
+                  ? String(AllocationEnteredFromValue)
+                  : '',
+              toVersion:
+                AllocationEnteredToValue !== undefined
+                  ? String(AllocationEnteredToValue)
+                  : '',
               byUser: `${modifingUserDetails?.firstName || ''} ${
                 modifingUserDetails?.lastName || ''
               }`,
-              _timestampRaw: Math.floor(
-                new Date(Timestamp)?.getTime() / 1000
-              ),
+              _timestampRaw: Math.floor(new Date(Timestamp)?.getTime() / 1000),
             };
           });
 
@@ -4360,6 +4698,22 @@ const AllocationForm = () => {
           <AddBusinessImpactForm
             formikProps={formikProps}
             setFormValue={setFormValue}
+          />
+        );
+      case 'follow_project':
+        return (
+          <FollowForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+            objectType="project"
+          />
+        );
+      case 'follow_team':
+        return (
+          <FollowForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+            objectType="team"
           />
         );
       default:

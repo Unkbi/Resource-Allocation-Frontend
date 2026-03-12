@@ -12,7 +12,6 @@ import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Location } from '@/app/types';
 import {
-  calculateTotalEffort,
   formatDateMMDDYYYY,
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
@@ -20,6 +19,7 @@ import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
   getFirstChild,
   initSortAllocations,
+  injectBlankProjectRows,
   normalizeRow,
 } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
@@ -29,6 +29,7 @@ import {
 } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 interface PortfolioAllocationProps {
   startDate: string | null;
@@ -57,6 +58,7 @@ function PortfolioAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const { location } = useSelector((state: RootState) => state.allSettings);
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
@@ -67,13 +69,14 @@ function PortfolioAllocation({
     useAllocationGrid('teamAllocation');
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
-  const { showActuals } = useSelector(
-    (state: RootState) => state.allocationView
+  const showActuals = useSelector(
+    (state: RootState) => state.allocationView.currentView?.showActuals ?? false
   );
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
   const { portfolios } = useSelector((state: RootState) => state.portfolios);
+  const { projects } = useSelector((state: RootState) => state.projects);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -110,10 +113,17 @@ function PortfolioAllocation({
           dispatch(setLoading(false));
         }
 
-        const formattedResources = filteredResources?.map(allocation => ({
+        const formattedResources = injectBlankProjectRows(
+          filteredResources as AllAllocations[],
+          projects || [],
+          portfolios || [],
+          projectTypes || [],
+          _resources || [],
+          startDate || '',
+          endDate || ''
+        )?.map(allocation => ({
           ...allocation,
-          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          hasAllocation: (allocation?.totalEffort ?? 0) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
             _resources || []
@@ -140,18 +150,18 @@ function PortfolioAllocation({
       })
     );
   };
-  
+
   const getPortfolioFirstChild = (params: GridCellParams) => {
-      if (
-        params.rowNode.type === 'group' &&
-        params.rowNode.groupingField === 'portfolioName'
-      ) {
-        const portfolioName = params.rowNode.groupingKey;
-        const portfolio = portfolios?.find(t => t.Name === portfolioName);
-        return portfolio;
-      }
-      return null;
-    };
+    if (
+      params.rowNode.type === 'group' &&
+      params.rowNode.groupingField === 'portfolioName'
+    ) {
+      const portfolioName = params.rowNode.groupingKey;
+      const portfolio = portfolios?.find(t => t.Name === portfolioName);
+      return portfolio;
+    }
+    return null;
+  };
 
   const getResource = (params: GridCellParams): Resource | null => {
     const { rowNode } = params;
@@ -276,8 +286,7 @@ function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Id
+          (item: any) => item.Resource?.Id === resource?.Id
         );
         const organizationName = resourceDetails?.Organization?.Name || '';
         return <EllipsisNameCell value={organizationName || ''} />;
@@ -771,11 +780,11 @@ function PortfolioAllocation({
     {
       field: 'totalEffort',
       headerName: 'Total Effort',
-      width: 106,
+      width: 122,
       type: 'number',
       sortable: true,
       cellClassName: getCellClassName,
-      headerClassName: 'secondary-header',
+      headerClassName: 'totals-header',
       // cellClassName: 'secondary-cell',
       headerAlign: 'left',
       primaryColumn: true,
@@ -783,9 +792,28 @@ function PortfolioAllocation({
         const value = Number(params.value);
         const formattedValue =
           !isNaN(value) && value !== null
-            ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+            ? normalizeAllocationValue(value)
             : null;
-        return <EllipsisNameCell value={formattedValue} />;
+        return <EllipsisNameCell value={`${formattedValue}`} />;
+      },
+    },
+    {
+      field: 'totalAllocationsTillDate',
+      headerName: 'Effort Till Date',
+      width: 122,
+      type: 'number',
+      sortable: true,
+      cellClassName: getCellClassName,
+      headerClassName: 'totals-header',
+      headerAlign: 'left',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const value = Number(params.value);
+        const formattedValue =
+          !isNaN(value) && value !== null
+            ? normalizeAllocationValue(value)
+            : null;
+        return <EllipsisNameCell value={`${formattedValue}`} />;
       },
     },
     {
@@ -803,7 +831,7 @@ function PortfolioAllocation({
     },
     {
       field: 'manager',
-      headerName: 'Manager',  // Resource page manager detail
+      headerName: 'Manager', // Resource page manager detail
       width: 130,
       type: 'string',
       isEditable: false,
@@ -811,8 +839,7 @@ function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Manager
+          (item: any) => item.Resource?.Id === resource?.Manager
         );
         const Manager = resourceDetails?.Resource?.FullName || '';
         return resource ? <EllipsisNameCell value={Manager || ''} /> : null;
@@ -829,11 +856,12 @@ function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Id
+          (item: any) => item.Resource?.Id === resource?.Id
         );
         const organizationStatus = resourceDetails?.Organization?.Status || '';
-        return resource ? <EllipsisNameCell value={organizationStatus || ''} /> : null;
+        return resource ? (
+          <EllipsisNameCell value={organizationStatus || ''} />
+        ) : null;
       },
     },
     {
@@ -893,13 +921,9 @@ function PortfolioAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
-        return (
-          <EllipsisNameCell
-            value={value as string}
-          />
-        );
+        return <EllipsisNameCell value={value as string} />;
       },
-    }
+    },
   ];
 
   const removeResourcesWithNoProjects = (allocations: AllAllocations[]) => {
@@ -963,9 +987,9 @@ function PortfolioAllocation({
                 organisationName: false,
                 manager: false,
                 organisationStatus: false,
-                portfolioDescription:false,
+                portfolioDescription: false,
                 portfolioStatus: false,
-                teamAllocationManager:false,
+                teamAllocationManager: false,
                 teamStatus: false,
                 teams: false,
               },

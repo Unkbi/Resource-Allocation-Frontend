@@ -38,6 +38,8 @@ import {
   ChartsYAxis,
   ChartsLegend,
   ChartsTooltip,
+  useAxisTooltip,
+  ChartsTooltipContainer,
 } from '@mui/x-charts';
 import DashboardWidget from '../../components/Dashboard/DashboardWidget';
 import DashboardToolbar from '../../components/Toolbar/DashboardToolbar';
@@ -123,6 +125,67 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
   });
 };
 
+// Custom tooltip for Weekly Allocation vs Capacity chart
+const WeeklyAllocCapTooltip = () => {
+  const tooltipData = useAxisTooltip();
+  if (!tooltipData) return null;
+
+  const { axisValue, seriesItems } = tooltipData;
+  const capacityItem = seriesItems?.find(s => s.label === 'Capacity');
+  const cap = capacityItem ? Number(capacityItem.value ?? 0) : 0;
+  const alloc = seriesItems
+    ?.filter(s => s.label !== 'Capacity')
+    .reduce((sum, s) => sum + Number(s.value ?? 0), 0) ?? 0;
+  const avail = Math.round(cap - alloc);
+
+  return (
+    <Box
+      sx={{
+        bgcolor: 'rgba(255,255,255,0.97)',
+        border: '1px solid #e2e8f0',
+        borderRadius: 1.5,
+        boxShadow: 4,
+        p: 1.5,
+        minWidth: 160,
+        pointerEvents: 'none',
+      }}
+    >
+      <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 0.5, color: '#0f172a' }}>
+        {axisValue}
+      </Typography>
+      {avail >= 0 && (
+        <Typography
+          sx={{
+            color: '#16a34a',
+            fontWeight: 600,
+            fontSize: 12,
+            mb: 0.75,
+            bgcolor: '#dcfce7',
+            px: 1,
+            py: 0.25,
+            borderRadius: 1,
+            display: 'inline-block',
+          }}
+        >
+          {avail} avail
+        </Typography>
+      )}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4, mt: 0.5 }}>
+        <Typography sx={{ fontSize: 12, color: '#64748b' }}>Alloc</Typography>
+        <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+          {Number(alloc.toFixed(2))}
+        </Typography>
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
+        <Typography sx={{ fontSize: 12, color: '#64748b' }}>Cap</Typography>
+        <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+          {cap}
+        </Typography>
+      </Box>
+    </Box>
+  );
+};
+
 // Define chart sequence for each tab - EASY TO CUSTOMIZE
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
@@ -131,9 +194,11 @@ const OVERVIEW_CHART_SEQUENCE = [
   'plan_vs_actual_variance',
   'top_projects_by_variance',
   'projectFTE',
+  'weeklyAllocationVsCapacity',
   'activeProjectsByType',
   'totalHeadcount',
   'allocation_by_project_type_group',
+  'custom_allocation_percentage',
   'unapprovedProjectAllocation',
   'projectScoreByPM',
   'actuals_confirmation_status',
@@ -153,6 +218,7 @@ const TEAM_CHART_SEQUENCE = [
   'underAllocated',
   'overAllocated',
   'weeklyLoggedInUsersByTeam',
+  'userStatusSplitByTeam',
 ];
 
 const generateLayouts = chartKeys => {
@@ -229,6 +295,8 @@ export default function ExecutiveDashboardPage() {
     totalResourceCost = [],
     allocationPercentage = [],
     allocation_by_project_type_group = [],
+    custom_allocation_percentage = [],
+    weeklyAllocationVsCapacity = [],
     top_projects_by_variance = [],
     actuals_confirmation_status = [],
     actualsTrendWeekly = [],
@@ -285,6 +353,7 @@ export default function ExecutiveDashboardPage() {
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
   const [filteredTop5Projects, setFilteredTop5Projects] = useState([]);
+  const [filteredUserStatusSplit, setFilteredUserStatusSplit] = useState([]);
   const { projectTypes, projectTypeGroups,locationGroups } = useSelector(
     state => state.allSettings
   );
@@ -465,6 +534,7 @@ export default function ExecutiveDashboardPage() {
         'projectScoreByPM',
         'projectHealthOverview',
         'engagementScoreOverview',
+        'weeklyAllocationVsCapacity',
       ];
 
       // Set loading state at the start of data fetch only on initial load or when filters change
@@ -622,6 +692,12 @@ export default function ExecutiveDashboardPage() {
     );
   }, [activeProjectsByType]);
 
+  useEffect(() => {
+    setFilteredUserStatusSplit(
+      Array.isArray(weeklyLoggedInUsersByTeam) ? weeklyLoggedInUsersByTeam : []
+    );
+  }, [weeklyLoggedInUsersByTeam]);
+
   // Calculate the Monday of the selected week
   const getMonday = date => {
     const day = date.day();
@@ -717,7 +793,54 @@ export default function ExecutiveDashboardPage() {
    * Helper function to navigate to report page with filters
    * Maps chart identifiers to appropriate report types and configurations
    */
-  const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null) => {
+  const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null, weekData = null) => {
+    // Special case: Navigate to custom tab for custom allocation chart
+    if (chartKey === 'custom_allocation_percentage') {
+      navigateToReport(
+        advancedFilters,
+        {
+          reportType: 'percentageAllocation', // Dummy value for custom tab
+          period: 'custom',
+          customStartDate: currentWeekMonday.format('YYYY-MM-DD'),
+          customEndDate: currentWeekSunday.format('YYYY-MM-DD'),
+          show_actuals: 'true',
+        },
+        false,
+        router
+      );
+      return ;
+    }
+
+    if (chartKey === 'weeklyAllocationVsCapacity') {
+      let startDate, endDate;
+      
+      if (weekData && weekData.Period) {
+        const weekStartDate = dayjs(weekData.Period);
+        const weekMonday = weekStartDate.isoWeekday(1);
+        const weekSunday = weekStartDate.isoWeekday(7);
+        startDate = weekMonday.format('YYYY-MM-DD');
+        endDate = weekSunday.format('YYYY-MM-DD');
+      } else {
+        // Default to 13-week range: 4 weeks past + current week + 8 weeks future
+        const currentMonday = dayjs().isoWeekday(1);
+        startDate = currentMonday.subtract(4, 'week').format('YYYY-MM-DD');
+        endDate = currentMonday.add(8, 'week').isoWeekday(7).format('YYYY-MM-DD');
+      }
+      
+      navigateToReport(
+        advancedFilters,
+        {
+          reportType: 'allocationCapacity',
+          period: 'custom',
+          customStartDate: startDate,
+          customEndDate: endDate,
+        },
+        false,
+        router
+      );
+      return ;
+    }
+
     // Map chart keys to report types
     const chartToReportMap = {
       // Overview charts
@@ -728,6 +851,7 @@ export default function ExecutiveDashboardPage() {
       'activeProjectsByType': { reportType: 'projectsOnly', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'totalHeadcount': { reportType: 'resourceOnly' },
       'allocation_by_project_type_group': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD'), },
+      'weeklyAllocationVsCapacity': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       //actuals by category
       'unapprovedProjectAllocation': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'actuals_confirmation_status': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
@@ -740,7 +864,8 @@ export default function ExecutiveDashboardPage() {
       'teamEngagementScore': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'projectScoreByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'unapprovedProjectActualsByTeam': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
-      'weeklyLoggedInUsersByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'weeklyLoggedInUsersByTeam': { reportType: 'userActivity', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'userStatusSplitByTeam': { reportType: 'userActivity', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'resourceCoverage': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'actualsTrendWeekly': { reportType: 'resourceProjectPeriod', period: 'custom' },
       'underAllocated': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
@@ -765,7 +890,7 @@ export default function ExecutiveDashboardPage() {
 
     // Navigate with advanced filters and chart config
     navigateToReport(advancedFilters, config, false, router);
-  }, [advancedFilters, router]);
+  }, [advancedFilters, router, currentWeekMonday, currentWeekSunday, lastWeekMonday, lastWeekSunday, threeWeeksBeforeMonday, twoWeeksAfterSunday]);
 
   const handleChartClick = chartName => {
     setSelectedChart(chartName);
@@ -2625,6 +2750,277 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
+
+    weeklyAllocationVsCapacity: (() => {
+      // Derive all unique project types across all periods (new API: ProjectTypeAllocations[].ProjectType.Name)
+      const allProjectTypes = [
+        ...new Set(
+          (weeklyAllocationVsCapacity || []).flatMap(period =>
+            (period.ProjectTypeAllocations || []).map(d => d.ProjectType?.Name).filter(Boolean)
+          )
+        ),
+      ];
+
+      // X-axis labels: week labels (W4, W5, ...) from new API field Week or Period
+      const weekLabels = (weeklyAllocationVsCapacity || []).map(p => p.Week || p.Period);
+
+      // Build dataset: one entry per period, with TotalAllocation per project type + TotalCapacity
+      const dataset = (weeklyAllocationVsCapacity || []).map(period => {
+        const entry = { week: period.Week || period.Period, capacity: Number(period.TotalCapacity || 0) };
+        allProjectTypes.forEach(pt => {
+          const match = (period.ProjectTypeAllocations || []).find(d => d.ProjectType?.Name === pt);
+          entry[pt] = Number(match?.TotalAllocation || 0);
+        });
+        return entry;
+      });
+
+       const barColors = [
+        '#4D79FF', '#7BBCB1', '#8B5CF694', '#F6C260',
+        '#E97E7E', '#A9D18E', '#FFD700', ,
+      ];
+
+      const allZero =
+        !weeklyAllocationVsCapacity ||
+        weeklyAllocationVsCapacity.length === 0 ||
+        weeklyAllocationVsCapacity.every(p =>
+          Number(p.TotalCapacity || 0) === 0 &&
+          (p.ProjectTypeAllocations || []).every(d => Number(d.TotalAllocation || 0) === 0)
+        );
+
+      return (
+        <DashboardWidget
+          minWidth={320}
+          minHeight={320}
+          showNoData={allZero}
+          noDataMessage="No weekly allocation vs capacity data available"
+        >
+          {dimensions => {
+            const config = useResponsiveChart(dimensions, 'bar');
+            const chartWidth = Math.max(config.width, 400);
+            const chartHeight = Math.max(config.height, 300);
+
+            const series = [
+              // One stacked bar series per project type
+              ...allProjectTypes.map((pt, idx) => ({
+                type: 'bar',
+                dataKey: pt,
+                label: pt,
+                stack: 'allocation',
+                color: barColors[idx % barColors.length],
+              })),
+              // Capacity line series
+              {
+                type: 'line',
+                dataKey: 'capacity',
+                label: 'Capacity',
+                color: '#F97316',
+                curve: 'linear',
+                showMark: true,
+              },
+            ];
+
+            return (
+              <Box sx={{ pt: 1, px: 1 }}>
+                <Typography
+                  sx={{ fontSize: '18px', fontWeight: 600, color: '#000000DE', mb: 1 }}
+                >
+                  Weekly Allocation vs. Capacity
+                </Typography>
+                <ChartContainer
+                  width={chartWidth}
+                  height={chartHeight}
+                  dataset={dataset}
+                  series={series}
+                  xAxis={[{
+                    scaleType: 'band',
+                    dataKey: 'week',
+                    categoryGapRatio: 0.3,
+                    tickLabelStyle: { color: '#475569', fontSize: 12 },
+                  }]}
+                  yAxis={[{ tickLabelStyle: { color: '#475569' } }]}
+                  margin={{ bottom: 40, left: 40, right: 20, top: 20 }}
+                  onAxisClick={(event, axisData) => {
+                    // Find the week data for the clicked axis point
+                    const clickedWeek = axisData?.axisValue;
+                    const weekDataItem = clickedWeek ? dataset.find(d => d.week === clickedWeek) : null;
+                    
+                    // Pass the full week data object which includes the Period
+                    const weekInfo = clickedWeek && weeklyAllocationVsCapacity 
+                      ? weeklyAllocationVsCapacity.find(w => w.Week === clickedWeek || w.Period === clickedWeek)
+                      : null;
+                    
+                    navigateToReportWithFilters('weeklyAllocationVsCapacity', null, weekInfo);
+                  }}
+                >
+                  <BarPlot />
+                  <LinePlot />
+                  <MarkPlot />
+                  <ChartsXAxis />
+                  <ChartsYAxis />
+                  <ChartsTooltip
+                    trigger="axis"
+                    slots={{ axisContent: WeeklyAllocCapTooltip }}
+                  />
+                </ChartContainer>
+                {/* Custom legend so it's always visible */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 1.5,
+                    alignItems: 'center',
+                    justifyContent: chartWidth < 400 ? 'flex-start' : 'center',
+                  }}
+                >
+                  {allProjectTypes.map((pt, idx) => (
+                    <Box
+                      key={pt}
+                      sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
+                    >
+                      <Box
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: 0.5,
+                          bgcolor: barColors[idx % barColors.length],
+                        }}
+                      />
+                      <Typography sx={{ fontSize: 12, color: '#475569' }}>
+                        {pt}
+                      </Typography>
+                    </Box>
+                  ))}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.75,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        width: 22,
+                        height: 2,
+                        bgcolor: '#F97316',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          right: -3,
+                          top: -3,
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: '#F97316',
+                        }}
+                      />
+                    </Box>
+                    <Typography sx={{ fontSize: 12, color: '#475569' }}>
+                      Capacity
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            );
+          }}
+        </DashboardWidget>
+      );
+    })(),
+
+    custom_allocation_percentage: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !custom_allocation_percentage ||
+          custom_allocation_percentage.length === 0 ||
+          custom_allocation_percentage.every(item =>
+            (Number(item.AllocationPercentage || 0) === 0) &&
+            (Number(item.ActualsPercentage || 0) === 0)
+          )
+        }
+        noDataMessage="No percentage allocation data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Prepare chart data
+          const categories = custom_allocation_percentage.map(item => item.ProjectBucket || 'Unknown');
+          const allocationData = custom_allocation_percentage.map(item => Number(item.AllocationPercentage || 0));
+          const actualsData = custom_allocation_percentage.map(item => Number(item.ActualsPercentage || 0));
+
+          return (
+            <Box sx={{ pt: 1, px: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  color: '#000000DE',
+                  mb: 1,
+                }}
+              >
+                Percentage Allocation by Project Reporting Type
+              </Typography>
+
+              <BarChart
+                width={config.width}
+                height={config.height}
+                series={[
+                  {
+                    data: allocationData,
+                    label: 'Allocation',
+                    id: 'allocationId',
+                    color: '#116086',
+                  },
+                  {
+                    data: actualsData,
+                    label: 'Actuals',
+                    id: 'actualsId',
+                    color: '#3790BB',
+                  },
+                ]}
+                xAxis={[
+                  {
+                    data: categories,
+                    scaleType: 'band',
+                    categoryGapRatio: 0.3,
+                    tickLabelStyle: { color: '#475569' },
+                  },
+                ]}
+                yAxis={[
+                  {
+                    label: 'Percentage Allocation (%)',
+                    max: 100,
+                    tickLabelStyle: { color: '#475569' },
+                  },
+                ]}
+                slotProps={{
+                  legend: {
+                    position: {
+                      vertical: 'bottom',
+                      horizontal: config.width < 400 ? 'start' : 'center',
+                    },
+                  },
+                }}
+                margin={{
+                  left: config.isSmallScreen ? 40 : 20,
+                  right: config.isSmallScreen ? 10 : 20,
+                  top: 20,
+                  bottom: config.isSmallScreen ? 40 : 20,
+                }}
+                grid={{ vertical: true, horizontal: true }}
+                onAxisClick={(event, axisData)=> {
+                  navigateToReportWithFilters('custom_allocation_percentage');
+                }}
+              />
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
   };
 
   const costsCharts = {
@@ -2853,7 +3249,7 @@ export default function ExecutiveDashboardPage() {
                       position: { vertical: 'bottom', horizontal: 'middle' },
                     },
                   }}
-                  margin={{ left: 20, right: 20, top: 20, bottom: 80 }}
+                  margin={{ left: 20, right: 20, top: 20, bottom: 20 }}
                   grid={{ horizontal: true }}
                   sx={{
                     cursor: 'pointer',
@@ -3519,14 +3915,22 @@ export default function ExecutiveDashboardPage() {
                   sx={{
                     cursor: 'pointer',
                   }}
-                  onAxisClick={(event, axisData) => {
-                    const { dataIndex, axisValue } = axisData || {};
-                    if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
+                  onItemClick={(event, barItemIdentifier) => {
+                    const { dataIndex, seriesId } = barItemIdentifier  || {};
+                    if(seriesId && dataIndex !== undefined) {
+                      const teamname = sortedLoggedInData[dataIndex]?.team_name;
+                      const teamId = teams.find(t => t.Name === teamname)?.Id;
                       if (teamId) {
-                        navigateToReportWithFilters('weeklyLoggedInUsersByTeam', {
-                          team: teamId
-                        });
+                        if(seriesId === 'totalActiveUsers') {
+                          navigateToReportWithFilters('weeklyLoggedInUsersByTeam', {
+                            team: teamId,
+                            userStatuses: ['Active']
+                          });
+                        } else if(seriesId === 'weeklyLoggedInUsers') {
+                          navigateToReportWithFilters('weeklyLoggedInUsersByTeam', {
+                            team: teamId
+                          });
+                        }
                       }
                     }
                   }}
@@ -3643,6 +4047,146 @@ export default function ExecutiveDashboardPage() {
                       if (teamId) {
                         navigateToReportWithFilters('projectScoreByTeam', {
                           team: teamId
+                        });
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    userStatusSplitByTeam: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !filteredUserStatusSplit ||
+          filteredUserStatusSplit.length === 0 ||
+          filteredUserStatusSplit.every(item => {
+            const splits = item.user_status_split || {};
+            return (
+              Number(splits['Active'] || 0) === 0 &&
+              Number(splits['Invited'] || 0) === 0 &&
+              Number(splits['Not Invited'] || 0) === 0
+            );
+          })
+        }
+        noDataMessage="No invite status data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Define status types and their colors
+          const statusTypes = [
+            { key: 'Active', label: 'Active', color: '#00C49F' },
+            { key: 'Invited', label: 'Invited', color: '#FFD966' },
+            { key: 'Not Invited', label: 'Not Invited', color: '#FDAA5D' },
+          ];
+
+          // Sort teams by total users descending
+          const sortedUserStatusData = [
+            ...(filteredUserStatusSplit || []),
+          ].sort((a, b) => {
+            const aTotal = statusTypes.reduce(
+              (sum, type) =>
+                sum + Number(a.user_status_split?.[type.key] || 0),
+              0
+            );
+            const bTotal = statusTypes.reduce(
+              (sum, type) =>
+                sum + Number(b.user_status_split?.[type.key] || 0),
+              0
+            );
+            return bTotal - aTotal;
+          });
+
+          // Extract team names from sorted data
+          const teamNames = sortedUserStatusData.map(item =>
+            formatTeamName(
+              item.team_name,
+              dimensions.width < 400 ? 8 : 10,
+              sortedUserStatusData.length
+            )
+          );
+
+          // Create series data for each status type
+          const seriesData = statusTypes.map(type => ({
+            label: type.label,
+            id: type.key,
+            data: sortedUserStatusData.map(item =>
+              Number(item.user_status_split?.[type.key] || 0)
+            ),
+            color: type.color,
+            stack: 'total',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Invite Status by Team
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={seriesData}
+                  xAxis={[
+                    {
+                      data: teamNames,
+                      label: 'Team',
+                      scaleType: 'band',
+                      categoryGapRatio: 0.5,
+                      barGapRatio: 0.1,
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'No. of Users',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'row',
+                      position: { vertical: 'bottom', horizontal: 'middle' },
+                    },
+                  }}
+                  margin={{ left: 20, right: 20, top: 20, bottom: 20 }}
+                  grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
+                  onItemClick={(event, barItemIdentifier) => {
+                    const { dataIndex, seriesId } = barItemIdentifier || {};
+                    if (dataIndex !== undefined && seriesId) {
+                      const teamname = sortedUserStatusData[dataIndex]?.team_name;
+                      const teamId = teams.find(t => t.Name === teamname)?.Id;
+                      if (teamId && seriesId) {
+                        navigateToReportWithFilters('userStatusSplitByTeam', {
+                          userStatuses: [seriesId],
+                          team: teamId,
                         });
                       }
                     }

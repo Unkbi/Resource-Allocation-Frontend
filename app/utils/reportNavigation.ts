@@ -10,6 +10,7 @@ export interface ChartReportConfig {
   customStartDate?: string;
   customEndDate?: string;
   additionalFilters?: Record<string, string | string[]>;
+  show_actuals?: string;
 }
 
 /**
@@ -61,6 +62,10 @@ export const buildReportUrl = (
     }
   }
 
+  if(config.show_actuals) {
+    params.set('show_actuals', config.show_actuals);
+  }
+
   // Add additional filters from chart clicks
   if (config.additionalFilters) {
     Object.entries(config.additionalFilters).forEach(([key, value]) => {
@@ -73,10 +78,13 @@ export const buildReportUrl = (
       }
     });
   }
-
   const encodedParams = compressToEncodedURIComponent(
     params.toString()
   );
+
+  if(config.reportType === 'percentageAllocation' || config.reportType === 'allocationCapacity') {
+    return `/report?tab=custom&filters=${encodedParams}`;
+  }
   return `/report?tab=reports&filters=${encodedParams}`;
 };
 

@@ -8,6 +8,7 @@ import {
 import {
   DATE_FORMAT,
   DISPLAY_DATE_FORMAT,
+  PERCENTAGES,
   TOTAL_FUTURE_WEEKS,
 } from '@/app/constants/constants';
 import { showToastAction } from '@/app/redux/actions/toastAction';
@@ -24,22 +25,28 @@ import {
   parseISO,
   startOfWeek,
 } from 'date-fns';
+import {
+  formatMin1Max2,
+  normalizeAllocationValue,
+} from '@/app/utils/actualsUtils';
 
 const WEEK_CONFIG = {
   TOTAL_WEEKS: TOTAL_FUTURE_WEEKS + 1,
   COLUMN_WIDTH: 50,
   MAX_VALUE: 2,
-  DECIMAL_PRECISION: 1,
+  DECIMAL_PRECISION: 2,
 };
 
 export const getStartDate = () => getStartOfPreviousWeek(new Date());
 
-const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
+const createBaseColumnConfig = (weekDate, isCurrentWeek, showDateHeader = false) => ({
   field: getWeekNumber(weekDate),
   // Keep the visible header short (legacy format like "W1") while the
   // internal `field` remains canonical (e.g. "W1-2026"). This prevents the
   // UI label from showing the ISO-year while preserving canonical keys.
-  headerName: String(getWeekNumber(weekDate)).split('-')[0],
+  headerName: showDateHeader
+    ? format(weekDate, 'MMM d')
+    : String(getWeekNumber(weekDate)).split('-')[0],
   width: WEEK_CONFIG.COLUMN_WIDTH,
   type: 'number',
   editable: true,
@@ -53,7 +60,12 @@ const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
     params.value == null ? 'weeklyCell' : clsx('super-app', 'weeklyCell'),
 });
 
-const createValueHandlers = (dispatch, isFormatWithK) => ({
+const createValueHandlers = (
+  dispatch,
+  isFormatWithK,
+  scalarSettings = null,
+  userPreferences = null
+) => ({
   valueParser: value => {
     const parsed = parseFloat(
       value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, '')
@@ -62,46 +74,78 @@ const createValueHandlers = (dispatch, isFormatWithK) => ({
   },
 
   valueFormatter: value => {
+    if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+      return Math.round(value);
+    }
     if (value == null || value === '') return '';
-    const num = typeof value === 'number' ? value : parseFloat(value);
-    return isNaN(num)
-      ? ''
-      : isFormatWithK
-        ? `${num.toFixed(1)}k`
-        : num.toFixed(1);
+
+    const num =
+      typeof value === 'number'
+        ? normalizeAllocationValue(value)
+        : normalizeAllocationValue(parseFloat(value));
+
+    if (isNaN(num)) return '';
+
+    return isFormatWithK ? `${formatMin1Max2(num)}k` : formatMin1Max2(num);
   },
   valueGetter: params => {
+    if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+      return params?.value != null ? Math.round(params.value * 100) : null;
+    }
     return params?.value ?? null;
   },
 
   preProcessEditCellProps: params => {
     const { props } = params;
-    let numericValue = parseFloat(props?.value) || 0;
-    const formattedValue = Math.round(numericValue * 10) / 10 || null;
-    const hasError = formattedValue > 2;
+    const rawValue = props?.value;
 
     let className = props?.className || '';
-    if (hasError) {
-      dispatch(
-        showToastAction(
-          true,
-          'Invalid input. Please enter a number between 0 and 2.',
-          'error'
-        )
-      );
-      if (!className) {
-        className = clsx(className, 'errorCell');
-      }
-    } else if (formattedValue < 2) {
-      className = className.replace('errorCell', '').trim();
+
+    // Preserve empty values
+    if (rawValue === '' || rawValue === null || rawValue === undefined) {
+      return {
+        ...props,
+        value: null,
+        className: className.replace('errorCell', '').trim(),
+      };
+    }
+
+    const numericValue = parseFloat(rawValue);
+
+    // If invalid number, keep it empty
+    if (isNaN(numericValue)) {
+      return {
+        ...props,
+        value: null,
+        className: className.replace('errorCell', '').trim(),
+      };
+    }
+    let formattedValue = numericValue;
+    let hasError = false;
+    let erroMessage = `Invalid input. Please enter a number between 0 and ${scalarSettings?.Max_Allocation_Error || '2.0'}.`;
+    if (userPreferences?.Allocation_Preference === PERCENTAGES) {
+      hasError =
+        formattedValue >
+        Number(scalarSettings?.Max_Allocation_Error * 100 || '200');
+      erroMessage = `Invalid input. Please enter a number between 0 and ${Math.round(scalarSettings?.Max_Allocation_Error * 100) || '200'}.`;
     } else {
-      className = '';
+      formattedValue = normalizeAllocationValue(numericValue);
+      hasError =
+        formattedValue > Number(scalarSettings?.Max_Allocation_Error || '2.0');
+    }
+
+    if (hasError) {
+      dispatch(showToastAction(true, erroMessage, 'error'));
+
+      className = clsx(className, 'errorCell');
+    } else {
+      className = className.replace('errorCell', '').trim();
     }
 
     return {
       ...props,
       value: formattedValue,
-      className: className,
+      className,
     };
   },
 });
@@ -110,7 +154,10 @@ export const generateWeeklyColumns = (
   startDate,
   endDate,
   dispatch,
-  isFormatWithK
+  isFormatWithK,
+  scalarSettings = null,
+  userPreferences = null,
+  showDateHeader = false
 ) => {
   const isoStart = parseISO(startDate);
   const isoEnd = parseISO(endDate);
@@ -135,23 +182,57 @@ export const generateWeeklyColumns = (
     });
 
     return {
-      ...createBaseColumnConfig(weekStartDate, isCurrentWeek),
-      ...(dispatch ? createValueHandlers(dispatch, isFormatWithK) : {}),
+      ...createBaseColumnConfig(weekStartDate, isCurrentWeek, showDateHeader),
+      ...(dispatch
+        ? createValueHandlers(
+            dispatch,
+            isFormatWithK,
+            scalarSettings,
+            userPreferences
+          )
+        : {}),
     };
   });
 };
 
-export const generateColumnGroupingModel = (startDate, endDate, allColumns) => {
+export const generateColumnGroupingModel = (
+  startDate,
+  endDate,
+  allColumns,
+  splitView = false
+) => {
   const nonWeeklyColumns = allColumns.filter(column => column.primaryColumn);
   const groups = [];
   let currentGroup = null;
   nonWeeklyColumns.forEach(column => {
-    groups.push({
-      groupId: `empty-group-${column.field}`,
-      headerClassName: 'empty-group-header',
-      headerName: '',
-      children: [{ field: column.field, headerName: '' }],
-    });
+    if (splitView) {
+      groups.push({
+        groupId: `empty-group-${column.field}`,
+        headerClassName: 'empty-group-header',
+        headerName: '',
+        children: [{ field: column.field }],
+      });
+    } else {
+      if (column.field === 'totalAllocationsTillDate') return;
+      if (column.field === 'totalEffort') {
+        groups.push({
+          groupId: 'totalEffort-group',
+          headerName: 'Totals',
+          headerClassName: 'grouping-header',
+          children: [
+            { field: 'totalEffort' },
+            { field: 'totalAllocationsTillDate' },
+          ],
+        });
+      } else {
+        groups.push({
+          groupId: `empty-group-${column.field}`,
+          headerClassName: 'empty-group-header',
+          headerName: '',
+          children: [{ field: column.field }],
+        });
+      }
+    }
   });
 
   // Caculate the weeks difference between start and end dates. For column header grouping ("Apr 2023", "May 2023", etc.)
@@ -207,11 +288,22 @@ export const getAllColumnsWithWeek = (
   dispatch,
   startDate,
   endDate,
-  isFormatWithK
+  isFormatWithK,
+  scalarSettings,
+  userPreferences,
+  showDateHeader = false
 ) => {
   return [
     ...existingColumns,
-    ...generateWeeklyColumns(startDate, endDate, dispatch, isFormatWithK),
+    ...generateWeeklyColumns(
+      startDate,
+      endDate,
+      dispatch,
+      isFormatWithK,
+      scalarSettings,
+      userPreferences,
+      showDateHeader
+    ),
   ];
 };
 

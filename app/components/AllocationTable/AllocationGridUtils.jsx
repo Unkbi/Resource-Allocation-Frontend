@@ -37,7 +37,17 @@ import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { parseISO } from 'date-fns';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
-import { generateEmptyRow, getFirstChild } from '@/app/utils/allocationUtils';
+import {
+  generateEmptyProjectRow,
+  generateEmptyRow,
+  getFirstChild,
+  initSortAllocations,
+} from '@/app/utils/allocationUtils';
+import {
+  projectViewsGrouping,
+  teamsViewsGrouping,
+} from '@/app/constants/constants';
+import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -83,6 +93,13 @@ const CellWithMenu = ({
   const allResources = useSelector(state => state.resources.resources || []);
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allProjects = useSelector(state => state.projects.projects || []);
+  const allPortfolios = useSelector(state => state.portfolios.portfolios || []);
+  const projectTypes = useSelector(
+    state => state.allSettings.projectTypes || []
+  );
+  const projectTypeGroups = useSelector(
+    state => state.allSettings.projectTypeGroups || []
+  );
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
@@ -251,8 +268,14 @@ const CellWithMenu = ({
           'teamAllocation'
         ).find(r => r.resourceId === row.resourceId);
 
+        const projectExistsOnAllicationTable = getAllRowsForView(
+          'projectAllocation'
+        ).find(r => r.projectId === row.projectId);
         // If resource does not exist on allocation table, add empty row for resource, for Team Allocation view
-        if (!resourceExistsOnAllicationTable) {
+        if (
+          teamsViewsGrouping.includes(currentView?.GroupBy) &&
+          !resourceExistsOnAllicationTable
+        ) {
           // Add empty for resource
           const emptyRow = generateEmptyRow(
             currentView?.isDynamicRange
@@ -300,6 +323,49 @@ const CellWithMenu = ({
               ...r,
               project: null,
               projectId: null,
+              hasAllocation: false,
+            }))
+          );
+        }
+
+        if (
+          projectViewsGrouping.includes(currentView?.GroupBy) &&
+          !projectExistsOnAllicationTable
+        ) {
+          const emptyRow = generateEmptyProjectRow(
+            currentView?.isDynamicRange
+              ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+              : currentView?.isFixedRange
+                ? currentView?.StartDate
+                : '',
+            currentView?.isDynamicRange
+              ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+              : currentView?.isFixedRange
+                ? currentView?.EndDate
+                : '',
+            allPortfolios,
+            allProjects,
+            projectTypes,
+            projectTypeGroups,
+            allResources,
+            {
+              ProjectName: row?.project || '',
+              Id: '',
+              ProjectManager: row?.projectManager || '',
+              Period: '',
+              Resource: row?.resourceId || '',
+              Duration: '',
+              ResourceName: row?.resource || '',
+              AllocationEntered: null,
+              Project: row?.projectId || '',
+            }
+          );
+          updateRowsForView(
+            'projectAllocation',
+            [emptyRow].map(r => ({
+              ...r,
+              resource: null,
+              resourceId: null,
               hasAllocation: false,
             }))
           );
@@ -504,12 +570,19 @@ export const getFinalColumns = (
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
+  const { scalarSettings } = useSelector(state => state.allSettings);
+  const { userPreferences } = useSelector(state => state.userPreferences) ?? {};
+  const { currentView } = useSelector(state => state.allocationView);
+  const showDateHeader = currentView?.showDateHeader ?? false;
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
     endDate,
-    isFormatWithK
+    isFormatWithK,
+    scalarSettings,
+    userPreferences,
+    showDateHeader
   );
 
   const handleAddClick = params => {
@@ -645,8 +718,8 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        // sortable: groupBy == 'project' ? true : false, //Making it sortable in all views 
-        sortable : true ,
+        // sortable: groupBy == 'project' ? true : false, //Making it sortable in all views
+        sortable: true,
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
@@ -792,7 +865,7 @@ export const getFinalColumns = (
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
         // sortable: groupBy == 'project' ? true : false,
-        sortable :true ,
+        sortable: true,
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
@@ -1174,12 +1247,17 @@ export const getCellClassName = (
   updatedRows,
   allocationTheme = [],
   type = 'allocation',
+  removeContractorPT = false,
   allProjects = [],
+  resources = [],
   projectTypes = [],
   isCellEditable,
   groupBy = ''
 ) => {
-  if (params?.field === 'totalEffort') {
+  if (
+    params?.field === 'totalEffort' ||
+    params?.field === 'totalAllocationsTillDate'
+  ) {
     if (
       type === 'cost' &&
       params.rowNode?.type === 'group' &&
@@ -1219,10 +1297,32 @@ export const getCellClassName = (
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
+
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
-      const totalRows = uniqueProjectRows.size;
+
+      const children = params.rowNode?.children ?? [];
+
+      let totalRows = uniqueProjectRows.size;
+
+      if (removeContractorPT) {
+        const validResources = children.filter(childId => {
+          const childNode = params.api.getRowNode(childId);
+          if (!childNode) return false;
+          const resourceName = childNode.groupingKey;
+
+          const resource = resources?.find(r => r.FullName === resourceName);
+
+          return resource && resource.Type !== 'Contractor - PT';
+        });
+
+        const validResourceCount = validResources.length;
+        totalRows = validResourceCount;
+      } else {
+        totalRows = children.length;
+      }
+
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
         const numericValue =
@@ -1234,8 +1334,8 @@ export const getCellClassName = (
 
       const allocationValue =
         params.rowNode?.groupingField === 'resource'
-          ? Math.round(aggregatedValue * 10) / 10
-          : Math.round((aggregatedValue / totalRows) * 10) / 10;
+          ? normalizeAllocationValue(aggregatedValue)
+          : normalizeAllocationValue(aggregatedValue / totalRows);
 
       const sortedTheme = [...allocationTheme].sort(
         (a, b) => parseFloat(a.From) - parseFloat(b.From)
@@ -1250,11 +1350,6 @@ export const getCellClassName = (
           matchingRange = range;
           break;
         }
-      }
-
-      // If no matching range found and value exceeds max range, use the last theme
-      if (!matchingRange && sortedTheme.length > 0) {
-        matchingRange = sortedTheme[sortedTheme.length - 1];
       }
 
       if (matchingRange) {
