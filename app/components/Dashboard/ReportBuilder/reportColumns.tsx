@@ -43,6 +43,26 @@ const renderCommentCell = (params: any) => {
 const renderScoreCell = (params: any) => {
   const rawValue = Number(params.value ?? 0);
   const value = Number.isNaN(rawValue) ? 0 : rawValue;
+  const displayValue = `${Math.round(value)}`;
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        height: '100%',
+      }}
+    >
+      <ScorePill score={value}>{displayValue}</ScorePill>
+    </Box>
+  );
+};
+
+const renderPercentageScoreCell = (params: any) => {
+  const rawValue = Number(params.value ?? 0);
+  const value = Number.isNaN(rawValue) ? 0 : rawValue;
   const displayValue = `${Math.round(value)}%`;
 
   return (
@@ -69,7 +89,7 @@ const ClickableScoreCell = ({ params }: { params: any }) => {
   
   const rawValue = Number(params.value ?? 0);
   const value = Number.isNaN(rawValue) ? 0 : rawValue;
-  const displayValue = `${Math.round(value)}%`;
+  const displayValue = `${Math.round(value)}`;
 
   const handleClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -454,8 +474,8 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 160, renderCell: renderScoreCell },
   { field: 'project_health_score', headerName: 'Health Score', minWidth: 150, renderCell: renderScoreCell },
-  { field: 'weighted_percent_variance', headerName: 'Weighted % Variance', minWidth: 170, renderCell: renderScoreCell },
-  { field: 'percent_variance', headerName: 'Percent Variance', minWidth: 140, renderCell: renderScoreCell },
+  { field: 'weighted_percent_variance', headerName: 'Weighted % Variance', minWidth: 170, renderCell: renderPercentageScoreCell },
+  { field: 'percent_variance', headerName: 'Percent Variance', minWidth: 140, renderCell: renderPercentageScoreCell },
   { field: 'comments', headerName: 'Comments / Project updates', minWidth: 200, renderCell: renderCommentCell },
   { field: 'resource_start_date', headerName: 'Resource Start Date', minWidth: 140 },
   { field: 'resource_end_date', headerName: 'Resource End Date', minWidth: 140 },
