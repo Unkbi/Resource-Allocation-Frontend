@@ -3916,6 +3916,9 @@ const AllocationForm = () => {
             reportType = initialData?.reportType || 'percentageAllocation';
           }
 
+          // Get gridFilters from initialData (DataGrid filter model)
+          const gridFilters = initialData?.gridFilters || [];
+
           // Prepare report data with all required fields
           // NOTE: Filters must be sent as an object. If the backend stores it as a string,
           // the frontend will parse it back to an object when loading.
@@ -3925,7 +3928,7 @@ const AllocationForm = () => {
             Description: cleanedValues.Description || '',
             ReportType: reportType,
             Filters: filters, // This should always be an object
-            GridFilters: {}, // Empty for now as per user requirements
+            GridFilters: gridFilters, // DataGrid filter model items
             Columns: initialData?.columns || [], // This now contains currently visible columns
             IsDefault: false,
           };
@@ -4004,6 +4007,9 @@ const AllocationForm = () => {
             reportType = initialData?.reportType || 'percentageAllocation';
           }
 
+          // Get gridFilters from initialData (DataGrid filter model)
+          const gridFilters = initialData?.gridFilters || [];
+
           // NOTE: Filters must be sent as an object. If the backend stores it as a string,
           // the frontend will parse it back to an object when loading.
           const reportData = {
@@ -4013,7 +4019,7 @@ const AllocationForm = () => {
             Description: cleanedValues.Description || '',
             ReportType: reportType,
             Filters: filters, // This should always be an object
-            GridFilters: {}, // Empty for now as per user requirements
+            GridFilters: gridFilters, // DataGrid filter model items
             Columns: initialData?.columns || [], // This now contains currently visible columns
             IsDefault: false,
           };

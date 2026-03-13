@@ -8,6 +8,6 @@ export const fetchDashboardChart = createAction<ChartParams>('dashboard/fetchDas
 export const fetchInventoryMetrics = createAction<ChartParams>('dashboard/fetchInventoryMetrics');
 
 // Reports: trigger server fetch for a specific report type with UI filters
-export const fetchReport = createAction<{ reportType: ReportType; uiFilters: ReportUIFilters }>(
+export const fetchReport = createAction<{ reportType: ReportType; uiFilters: ReportUIFilters; gridFilters?: Record<string, any> }>(
 	'dashboard/fetchReport'
 );

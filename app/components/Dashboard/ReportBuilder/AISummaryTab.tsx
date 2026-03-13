@@ -1,19 +1,24 @@
 'use client';
 
 import { Box, Typography, Tooltip } from '@mui/material';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/app/redux/store';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
-import {GridColDef } from '@mui/x-data-grid-premium';
+import { GridColDef, useGridApiRef } from '@mui/x-data-grid-premium';
 import { StyledDataGrid, ColumnManagementStyles, FilterPanelStyles } from '../../AllocationTable/styles/StyledDataGrid';
 import { formatAISummaryResponse, getScoreColor, WeekColumn, ProjectSummaryTableRow } from '@/app/utils/aiSummaryFormatter';
 import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
 import AISummaryDetailDialog from './AISummaryDetailDialog';
 import { getProjectPeriodDetail } from '@/app/services/aiSummaryServices';
 
-export default function AISummaryTab() {
+interface AISummaryTabProps {
+  gridFilters?: any;
+}
+
+export default function AISummaryTab({ gridFilters }: AISummaryTabProps) {
   const dispatch = useDispatch();
+  const gridApiRef = useGridApiRef();
   const { currentSummary, loading, error } = useSelector(
     (state: RootState) => state.aiSummary
   );
@@ -75,6 +80,43 @@ export default function AISummaryTab() {
       setLoadingDetail(false);
     }
   }, []);
+
+  // Apply grid filters when loading saved reports
+  useEffect(() => {
+    if (!gridFilters || !rows.length || !gridApiRef.current) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      try {
+        let filterModel: any;
+        
+        if (Array.isArray(gridFilters)) {
+          // Already in DataGrid filter model format from saved report
+          filterModel = {
+            items: gridFilters,
+            logicOperator: 'and',
+            quickFilterValues: [],
+            quickFilterLogicOperator: 'and',
+          };
+        } else {
+          // Skip if it's an empty object
+          if (Object.keys(gridFilters).length === 0) {
+            return;
+          }
+          filterModel = gridFilters;
+        }
+        
+        if (filterModel && filterModel.items && filterModel.items.length > 0) {
+          gridApiRef.current.setFilterModel(filterModel);
+        }
+      } catch (error) {
+        console.error('Error applying DataGrid filters in AI Summary:', error);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [gridFilters, rows, gridApiRef]);
 
   // Build dynamic columns for the data grid
   const columns: GridColDef[] = useMemo(() => {
@@ -293,6 +335,7 @@ export default function AISummaryTab() {
             }}
           >
             <StyledDataGrid
+              apiRef={gridApiRef}
               rows={rows}
               columns={columns}
               hideFooter

@@ -378,10 +378,25 @@ function ReportBuilderPage({
     // Small delay to ensure DataGrid is fully initialized
     const timer = setTimeout(() => {
       try {
-        const columns = gridApiRef.current.getAllColumns();
-        const filterModel = convertFiltersToGridModel(gridFiltersToApply, columns);
+        // Check if gridFiltersToApply is already in DataGrid filter model format
+        // (array of items from saved reports) or needs conversion (object from UI filters)
+        let filterModel: any;
         
-        if (filterModel.items.length > 0) {
+        if (Array.isArray(gridFiltersToApply)) {
+          // Already in DataGrid filter model format from saved report
+          filterModel = {
+            items: gridFiltersToApply,
+            logicOperator: 'and',
+            quickFilterValues: [],
+            quickFilterLogicOperator: 'and',
+          };
+        } else {
+          // Convert from UI filters object to DataGrid filter model
+          const columns = gridApiRef.current.getAllColumns();
+          filterModel = convertFiltersToGridModel(gridFiltersToApply, columns);
+        }
+        
+        if (filterModel && filterModel.items && filterModel.items.length > 0) {
           gridApiRef.current.setFilterModel(filterModel);
           // Clear after successfully applying
           setGridFiltersToApply(null);
@@ -453,33 +468,17 @@ function ReportBuilderPage({
     };
     const apiPayload = prepareApiPayload(uiFilters);
     try {
+      // Don't pass gridFilters when generating - they should only come from DataGrid filter model when saving
       dispatch(
-        fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload })
+        fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload, gridFilters: {} })
       );
       setShowData(true);
       
-      // Store filters for DataGrid application
-      // Check if there are specific gridFilters from URL (from chart clicks), otherwise use report filters
+      // Check if there are specific gridFilters from URL (from chart clicks)
       const gridFiltersFromUrl = (pendingQueryFilters as any)?.gridFilters;
-      const gridFilters = gridFiltersFromUrl || {
-        project: filters.project,
-        team: filters.team,
-        organization: filters.organization,
-        resource: filters.resource,
-        projectType: filters.projectType,
-        projectTypeGroup: filters.projectTypeGroup,
-        portfolio: filters.portfolio,
-        projectManager: filters.projectManager,
-        allocationManager: filters.allocationManager,
-        resourceType: filters.resourceType,
-        resourceStatuses: filters.resourceStatuses,
-        projectStatuses: filters.projectStatuses,
-        userStatuses: filters.userStatuses,
-        userRoles: filters.userRoles,
-        resourceLocations: filters.resourceLocations,
-        resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
-      };
-      setGridFiltersToApply(gridFilters);
+      if (gridFiltersFromUrl) {
+        setGridFiltersToApply(gridFiltersFromUrl);
+      }
       
       // Save the last generated report to sessionStorage
       sessionStorage.setItem(
@@ -520,7 +519,8 @@ function ReportBuilderPage({
 
       // Saga will handle date calculation and payload building
       try {
-        dispatch(fetchProjectSummary(uiFilters));
+        // Don't pass gridFilters when generating - they should only come from DataGrid filter model when saving
+        dispatch(fetchProjectSummary({ ...uiFilters, gridFilters: {} }));
         setShowData(true);
       } catch (error) {
         console.error('Error generating AI summary:', error);
@@ -663,10 +663,11 @@ function ReportBuilderPage({
     };
 
     try {
+      // Don't pass gridFilters when generating - they should only come from DataGrid filter model when saving
       if (customReportType === 'allocationCapacity') {
-        dispatch(fetchAllocationCapacityRequest(apiFilters, uiFilters));
+        dispatch(fetchAllocationCapacityRequest(apiFilters, uiFilters, {}));
       } else {
-        dispatch(fetchCustomReportRequest(apiFilters, uiFilters));
+        dispatch(fetchCustomReportRequest(apiFilters, uiFilters, {}));
       }
       setShowData(true);
     } catch (error) {
@@ -1040,9 +1041,10 @@ function ReportBuilderPage({
 
     const apiPayload = prepareApiPayload(uiFilters);
 
+    // Don't create fake gridFilters from UI filters - only use actual DataGrid filter model items from saved reports
     // Fetch the report data
     dispatch(
-      fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload })
+      fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload, gridFilters: {} })
     );
     setShowData(true);
     setFiltersExpanded(false);
@@ -1109,8 +1111,9 @@ function ReportBuilderPage({
           userRoles: f.userRoles || [],
         });
 
+        // Don't create fake gridFilters from UI filters - only use actual DataGrid filter model items from saved reports
         // Fetch the report data
-        dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
+        dispatch(fetchReport({ reportType: f.reportType, uiFilters: f, gridFilters: {} }));
         setShowData(true);
         setFiltersExpanded(false);
         setHasAppliedQueryParams(true);
@@ -1322,7 +1325,13 @@ function ReportBuilderPage({
       setIsLoading(true);
       setFiltersExpanded(false);
       
-      dispatch(fetchProjectSummary(summaryUiFilters));
+      // Extract gridFilters from saved report
+      const gridFilters = report.GridFilters || [];
+      
+      // Store gridFilters to apply later to DataGrid
+      setGridFiltersToApply(gridFilters);
+      
+      dispatch(fetchProjectSummary({ ...summaryUiFilters, gridFilters }));
       
     } else if (isCustom) {
       // Handle Custom report
@@ -1397,10 +1406,16 @@ function ReportBuilderPage({
         show_actuals: savedFilters.show_actuals || false,
       };
       
+      // Extract gridFilters from saved report
+      const gridFilters = report.GridFilters || [];
+      
+      // Store gridFilters to apply later to DataGrid
+      setGridFiltersToApply(gridFilters);
+      
       if (report.ReportType === 'allocationCapacity') {
-        dispatch(fetchAllocationCapacityRequest(apiFilters, uiFilters));
+        dispatch(fetchAllocationCapacityRequest(apiFilters, uiFilters, gridFilters));
       } else {
-        dispatch(fetchCustomReportRequest(apiFilters, uiFilters));
+        dispatch(fetchCustomReportRequest(apiFilters, uiFilters, gridFilters));
       }
       
     } else {
@@ -1461,8 +1476,14 @@ function ReportBuilderPage({
       
       const apiPayload = prepareApiPayload(uiFilters);
       
+      // Extract gridFilters from saved report
+      const gridFilters = report.GridFilters || [];
+      
+      // Store gridFilters to apply later to DataGrid
+      setGridFiltersToApply(gridFilters);
+      
       // Dispatch fetch with restored filters
-      dispatch(fetchReport({ reportType: report.ReportType as ReportType, uiFilters: apiPayload }));
+      dispatch(fetchReport({ reportType: report.ReportType as ReportType, uiFilters: apiPayload, gridFilters }));
     }
     
     if (!isCustom) {
@@ -1943,7 +1964,7 @@ function ReportBuilderPage({
               flexDirection: 'column',
             }}
           >
-            <AISummaryTab />
+            <AISummaryTab gridFilters={gridFiltersToApply} />
           </Box>
         </>
       )}

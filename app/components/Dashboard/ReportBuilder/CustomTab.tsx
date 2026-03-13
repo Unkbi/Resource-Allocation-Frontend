@@ -806,17 +806,31 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
 
     // Apply filters to percentage allocation DataGrid when data is loaded
     useEffect(() => {
-        // Use gridFilters if provided (from chart clicks), otherwise fall back to customFilters
-        const filtersToApply = gridFilters || customFilters;
-        if (!filtersToApply || !gridApiRef.current) return;
+        if (!gridFilters || !gridApiRef.current) return;
 
         const applyFilters = async () => {
             try {
                 await new Promise(resolve => setTimeout(resolve, 500));
-                const columns = gridApiRef.current.getAllColumns();
-                const filterModel = convertFiltersToGridModel(filtersToApply, columns);
                 
-                if (filterModel.items.length > 0) {
+                let filterModel: any;
+                
+                // Check if gridFilters is already in DataGrid filter model format (array from saved report)
+                if (Array.isArray(gridFilters)) {
+                    filterModel = {
+                        items: gridFilters,
+                        logicOperator: 'and',
+                        quickFilterValues: [],
+                        quickFilterLogicOperator: 'and',
+                    };
+                } else if (typeof gridFilters === 'object' && Object.keys(gridFilters).length > 0) {
+                    // Convert from UI filters object to DataGrid filter model
+                    const columns = gridApiRef.current.getAllColumns();
+                    filterModel = convertFiltersToGridModel(gridFilters, columns);
+                } else {
+                    return;
+                }
+                
+                if (filterModel && filterModel.items && filterModel.items.length > 0) {
                     gridApiRef.current.setFilterModel(filterModel);
                 }
             } catch (error) {
@@ -827,21 +841,35 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
         if (customReportType === 'percentageAllocation' && rows.length > 0) {
             applyFilters();
         }
-    }, [rows, gridFilters, customFilters, customReportType, gridApiRef]);
+    }, [rows, gridFilters, customReportType, gridApiRef]);
 
     // Apply filters to allocation capacity DataGrid when data is loaded
     useEffect(() => {
-        // Use gridFilters if provided (from chart clicks), otherwise fall back to customFilters
-        const filtersToApply = gridFilters || customFilters;
-        if (!filtersToApply || !gridApiRefAllocCap.current) return;
+        if (!gridFilters || !gridApiRefAllocCap.current) return;
 
         const applyFilters = async () => {
             try {
                 await new Promise(resolve => setTimeout(resolve, 500));
-                const columns = gridApiRefAllocCap.current.getAllColumns();
-                const filterModel = convertFiltersToGridModel(filtersToApply, columns);
                 
-                if (filterModel.items.length > 0) {
+                let filterModel: any;
+                
+                // Check if gridFilters is already in DataGrid filter model format (array from saved report)
+                if (Array.isArray(gridFilters)) {
+                    filterModel = {
+                        items: gridFilters,
+                        logicOperator: 'and',
+                        quickFilterValues: [],
+                        quickFilterLogicOperator: 'and',
+                    };
+                } else if (typeof gridFilters === 'object' && Object.keys(gridFilters).length > 0) {
+                    // Convert from UI filters object to DataGrid filter model
+                    const columns = gridApiRefAllocCap.current.getAllColumns();
+                    filterModel = convertFiltersToGridModel(gridFilters, columns);
+                } else {
+                    return;
+                }
+                
+                if (filterModel && filterModel.items && filterModel.items.length > 0) {
                     gridApiRefAllocCap.current.setFilterModel(filterModel);
                 }
             } catch (error) {
@@ -852,7 +880,7 @@ export default function CustomTab({ showActuals, APIFilters, customReportType = 
         if (customReportType === 'allocationCapacity' && allocCapRows.length > 0) {
             applyFilters();
         }
-    }, [allocCapRows, gridFilters, customFilters, customReportType, gridApiRefAllocCap]);
+    }, [allocCapRows, gridFilters, customReportType, gridApiRefAllocCap]);
 
     const allocCapacityCharts: Record<string, React.ReactElement> = {
         allocationCapacityChart: (

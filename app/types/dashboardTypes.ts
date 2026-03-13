@@ -85,6 +85,7 @@ export interface ReportEntry {
   data: any[];
   uiFilters?: ReportUIFilters; // what the user selected (serialized)
   requestPayload?: any; // exact payload sent to the API
+  gridFilters?: Record<string, any>; // DataGrid-specific filters to apply to the grid
 }
 
 export type ReportState = Record<ReportType, ReportEntry>;

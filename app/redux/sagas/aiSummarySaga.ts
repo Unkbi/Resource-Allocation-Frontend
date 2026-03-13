@@ -51,10 +51,11 @@ function* fetchProjectSummarySaga(
     // Build API payload using service function
     const apiPayload = buildSummaryPayload(filtersWithDates);
     
-    // Store the uiFilters and requestPayload before making API call
+    // Store the uiFilters, requestPayload, and gridFilters before making API call
     yield put(setSummaryFilters({
       uiFilters: filtersWithDates,
       requestPayload: apiPayload,
+      gridFilters: action.payload.gridFilters,
     }));
     
     const data: any = yield call(getProjectSummary, apiPayload);

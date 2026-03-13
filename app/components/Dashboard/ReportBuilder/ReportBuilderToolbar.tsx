@@ -11,7 +11,7 @@ import {
   Typography,
   styled,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Description, KeyboardArrowDown } from '@mui/icons-material';
 import { ReportType, SummaryType } from '@/app/types/dashboardTypes';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
@@ -254,6 +254,45 @@ function ReportBuilderToolbar({
   const selectedReportName = selectedSavedReport
     ? savedReports.find(r => r.Id === selectedSavedReport)?.Name || 'My Reports'
     : 'My Reports';
+
+  // Component to show tooltip only when text is truncated
+  const TruncatedText = ({ text }: { text: string }) => {
+    const textRef = useRef<HTMLSpanElement>(null);
+    const [isOverflowing, setIsOverflowing] = useState(false);
+
+    useEffect(() => {
+      const checkOverflow = () => {
+        if (textRef.current) {
+          setIsOverflowing(textRef.current.scrollWidth > textRef.current.clientWidth);
+        }
+      };
+
+      checkOverflow();
+      // Recheck on window resize
+      window.addEventListener('resize', checkOverflow);
+      return () => window.removeEventListener('resize', checkOverflow);
+    }, [text]);
+
+    return (
+      <Tooltip title={text} placement="top" disableHoverListener={!isOverflowing}>
+        <Typography
+          ref={textRef}
+          component="span"
+          sx={{
+            fontSize: '13px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            pr: 1,
+            display: 'block',
+            maxWidth: 'calc(100% - 48px)',
+          }}
+        >
+          {text}
+        </Typography>
+      </Tooltip>
+    );
+  };
 
   return (
     <Box
@@ -598,20 +637,7 @@ function ReportBuilderToolbar({
                 position: 'relative',
               }}
             >
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: '13px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    pr: 1,
-                    display: 'block',
-                    maxWidth: 'calc(100% - 48px)',
-                  }}
-                >
-                  {report.Name}
-                </Typography>
+                <TruncatedText text={report.Name} />
                 <Box
                   className="action-buttons"
                   sx={{
