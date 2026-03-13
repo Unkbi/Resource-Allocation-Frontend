@@ -264,7 +264,7 @@ export const PROJECT_PAGE_VALID_TABS = [
   'businessImpact',
 ] as const;
 
-export const PROJECT_TYPE_VALID_TABS = ['project-types', 'project-types-group'];
+export const PROJECT_TYPE_VALID_TABS = ['project-types', 'project-category'];
 
 export const LOCATION_VALID_TABS = ['location', 'location-group'];
 

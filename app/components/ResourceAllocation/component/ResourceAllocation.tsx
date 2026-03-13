@@ -779,7 +779,7 @@ function ResourceAllocation({
     },
     {
       field: 'projectTypeGroup',
-      headerName: 'Project Type Group',
+      headerName: 'Project Category',
       width: 130,
       type: 'string',
       isEditable: false,

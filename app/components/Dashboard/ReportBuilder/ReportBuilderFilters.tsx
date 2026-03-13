@@ -484,7 +484,7 @@ function ReportBuilderFilters({
     resourceType: 'Resource Type',
     resource: 'Resource',
     projectType: 'Project Type',
-    projectTypeGroup: 'Project Type Group',
+    projectTypeGroup: 'Project Category',
     project: 'Project',
     portfolio: 'Portfolio',
     resourceStatuses: 'Resource Status',
@@ -1012,7 +1012,7 @@ function ReportBuilderFilters({
         {checkFilterEnabled( 'projectTypeGroup') && (
         <FilterSection
           disabled={!permissions?.['ProjectTypeGroup']?.r}
-          title="Project Type Group"
+          title="Project Category"
           name="projectTypeGroup"
           options={projectTypeGroupOptions}
           selected={filters.projectTypeGroup}

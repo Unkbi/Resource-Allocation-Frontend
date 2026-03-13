@@ -567,7 +567,7 @@ function FlatAllocation({
     },
     {
       field: 'projectTypeGroup',
-      headerName: 'Project Type Group',
+      headerName: 'Project Category',
       width: 150,
       type: 'string',
       isEditable: false,

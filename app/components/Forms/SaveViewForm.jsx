@@ -123,7 +123,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       projectStatus: 'Project Status',
       projectLocation: 'Project Location',
       projectType: 'Project Type',
-      projectTypeGroup: 'Project Type Group',
+      projectTypeGroup: 'Project Category',
       projectOvertimeAllowed: 'Overtime',
       projectCost: 'Project Budget',
       projectCurrency: 'Project Currency',

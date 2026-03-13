@@ -563,7 +563,7 @@ const ProjectCost = ({
     },
     {
       field: 'projectTypeGroup',
-      headerName: 'Project Type Group',
+      headerName: 'Project Category',
       width: 150,
       type: 'string',
       headerClassName: 'secondary-header',

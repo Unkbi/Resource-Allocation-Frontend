@@ -596,11 +596,11 @@ export const addProjectTypeGroupValidationSchema = (
 
   return Yup.object({
     Name: Yup.string()
-      .required('Project Type Group Name is required')
+      .required('Project Category Name is required')
       .max(90, 'Reached Max Characters')
       .test(
         'unique-name',
-        'Project Type Group Name already exists. Please choose another name.',
+        'Project Category Name already exists. Please choose another name.',
         value => {
           if (!value) return true;
           if (
@@ -642,7 +642,7 @@ export const addProjectTypeValidationSchema = (
     Status: Yup.string()
       .oneOf(['Active', 'Inactive'], 'Status must be Active or Inactive')
       .required('Status is required'),
-    ProjectTypeGroup: Yup.string().required('Project Type Group is required'),
+    ProjectTypeGroup: Yup.string().required('Project Category is required'),
     Description: Yup.string().nullable(),
     Color: Yup.string().required('Color is required'),
   });
