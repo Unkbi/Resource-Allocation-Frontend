@@ -1352,6 +1352,11 @@ export const getCellClassName = (
         }
       }
 
+      const isFirstGroup =
+        params.rowNode?.groupingField === 'teams' ||
+        params.rowNode?.groupingField === 'portfolioName' ||
+        params.rowNode?.groupingField === 'organisationName';
+
       if (matchingRange) {
         const base = `allocation-theme-${matchingRange.id}`;
         const groupClass =
@@ -1370,6 +1375,10 @@ export const getCellClassName = (
 
         return `${groupClass} ${nonEditableClass}`.trim();
       }
+
+      return isFirstGroup
+        ? 'allocation-outside-range'
+        : 'allocation-outside-range-secondGroup';
     } else if (
       params.rowNode?.type === 'group' &&
       params.rowNode?.groupingField === 'project' &&
