@@ -79,7 +79,6 @@ export const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   Filters: [],
   removeContractorPT: false,
   showActuals: false,
-  showDateHeader: false,
 };
 
 const initialState: AllocationGridViewState = {
@@ -483,7 +482,6 @@ const viewSlice = createSlice({
             Filters: view.Filters,
             removeContractorPT: view.RemoveContractorPT ?? false,
             showActuals: view.ShowActuals ?? false,
-            showDateHeader: (view as any).ShowDateHeader ?? false,
           }));
         }
         state.savedViews = [...formatedView, COMPANY_DEFAULT_VIEW];
@@ -520,7 +518,6 @@ const viewSlice = createSlice({
           Filters: newView.Filters,
           removeContractorPT: newView.RemoveContractorPT ?? false,
           showActuals: newView.ShowActuals ?? false,
-          showDateHeader: newView.ShowDateHeader ?? false,
         };
         state.savedViews = [formatedView, ...state.savedViews];
         state.currentView = {
@@ -564,7 +561,6 @@ const viewSlice = createSlice({
           Filters: updatedView?.Filters,
           removeContractorPT: updatedView?.RemoveContractorPT ?? false,
           showActuals: updatedView?.ShowActuals ?? false,
-          showDateHeader: updatedView?.ShowDateHeader ?? false,
         };
 
         // Update saved View list.

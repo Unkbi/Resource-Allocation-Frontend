@@ -86,7 +86,6 @@ export interface AllocationGridView {
   Filters: ToolbarFilters[] | null;
   removeContractorPT: boolean;
   showActuals: boolean;
-  showDateHeader: boolean;
 }
 
 export interface AllColumns {
