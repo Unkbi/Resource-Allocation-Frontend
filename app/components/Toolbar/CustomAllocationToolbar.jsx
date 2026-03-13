@@ -1163,6 +1163,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     dispatch(setRemoveContractorPT(!removeContractorPT));
   };
 
+  const handleShowDateHeaderToggle = () => {
+    dispatch(updateCurrentView({ showDateHeader: !showDateHeader }));
+  };
+
   return (
     <Box className="Toolbar" sx={{ display: 'flex', flexDirection: 'column' }}>
       {/*Top Toolbar*/}
