@@ -47,6 +47,7 @@ import {
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
   TOTAL_FUTURE_WEEKS_ARROW,
+  PERCENTAGES,
 } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
 import FolderIcon from '@mui/icons-material/Folder';
@@ -350,6 +351,13 @@ const SplitTeamToolbar = memo(
     const { user } = useSelector(state => state.user);
     const { resources } = useSelector(state => state.resources);
     const { teams } = useSelector(state => state.teams);
+    const { userPreferences } = useSelector(state => state.userPreferences);
+    const isPercentages =
+      userPreferences?.Allocation_Preference === PERCENTAGES;
+    const { scalarSettings } = useSelector(state => state.allSettings);
+    const maxAllocationError = parseFloat(
+      scalarSettings?.Max_Allocation_Error || '2.0'
+    );
 
     const { startDate: _startDate, endDate: _endDate } = calendarDate || {};
 
@@ -383,7 +391,18 @@ const SplitTeamToolbar = memo(
       setAnchorEl(null);
     };
 
+    const [localSliderValue, setLocalSliderValue] = useState(allocationThreshold);
+
+    useEffect(() => {
+      setLocalSliderValue(allocationThreshold);
+    }, [allocationThreshold]);
+
     const handleAllocationRangeChange = (event, newValue) => {
+      setLocalSliderValue(newValue);
+    };
+
+    const handleAllocationRangeCommit = (event, newValue) => {
+      setLocalSliderValue(newValue);
       setAllocationThreshold(newValue);
     };
 
@@ -593,10 +612,10 @@ const SplitTeamToolbar = memo(
       teams
         ?.filter(t => t.Status === 'Active')
         ?.map(team => ({
-        label: team.Name,
-        value: team.Id,
-      }))
-       ?.sort((a, b) => a.label.localeCompare(b.label)) || [];
+          label: team.Name,
+          value: team.Id,
+        }))
+        ?.sort((a, b) => a.label.localeCompare(b.label)) || [];
 
     const handleTeamChange = (event, newValue) => {
       if (!newValue) return;
@@ -755,10 +774,10 @@ const SplitTeamToolbar = memo(
                     lineHeight: 'normal',
                   }}
                 >
-                  {'Select Utilization ≤'}
+                  {'Select Availability'}
                 </Typography>
                 <Tooltip
-                  title="Shows resources whose average utilization for the selected period is ≤ the chosen value."
+                  title="Shows resources whose average availability for the selected period is within the chosen range."
                   arrow
                   placement="top"
                   componentsProps={{
@@ -793,24 +812,34 @@ const SplitTeamToolbar = memo(
                 }}
               >
                 <StyledSlider
-                  value={allocationThreshold}
+                  value={localSliderValue}
                   onChange={handleAllocationRangeChange}
+                  onChangeCommitted={handleAllocationRangeCommit}
                   valueLabelDisplay="on"
                   size="small"
-                  step={0.1}
-                  min={0.0}
-                  max={1.2}
+                  step={null}
+                  min={-0.2}
+                  max={1.0}
                   marks={[
-                    { value: 0, label: '0' },
-                    { value: 0.2, label: '0.2' },
-                    { value: 0.4, label: '0.4' },
-                    { value: 0.6, label: '0.6' },
-                    { value: 0.8, label: '0.8' },
-                    { value: 1, label: '1.0' },
-                    { value: 1.2, label: 'max' },
+                    { value: -0.2, label: isPercentages ? '< 0%' : '< 0' },
+                    { value: 0, label: isPercentages ? '0%' : '0' },
+                    { value: 0.1, label: '' },
+                    { value: 0.2, label: isPercentages ? '20%' : '0.2' },
+                    { value: 0.3, label: '' },
+                    { value: 0.4, label: isPercentages ? '40%' : '0.4' },
+                    { value: 0.5, label: '' },
+                    { value: 0.6, label: isPercentages ? '60%' : '0.6' },
+                    { value: 0.7, label: '' },
+                    { value: 0.8, label: isPercentages ? '80%' : '0.8' },
+                    { value: 0.9, label: '' },
+                    { value: 1.0, label: isPercentages ? '100%' : '1.0' },
                   ]}
                   valueLabelFormat={value =>
-                    value === 1.1 ? 'max' : value === 1.2 ? 'max' : `${value}`
+                    value < 0
+                      ? isPercentages ? '< 0%' : '< 0'
+                      : isPercentages
+                        ? `${Math.round(value * 100)}%`
+                        : `${parseFloat(value.toFixed(2))}`
                   }
                 />
               </Box>
