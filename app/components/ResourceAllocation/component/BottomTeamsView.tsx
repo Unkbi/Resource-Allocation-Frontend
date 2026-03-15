@@ -32,10 +32,17 @@ function BottomTeamsView({
   const [selectedTeam, setSelectedTeam] = useState<
     Array<{ label: string; value: string }>
   >([]);
-  const [allocationThreshold, setAllocationThreshold] = useState(1.2);
+  const [allocationThreshold, setAllocationThreshold] = useState([-0.2, 1.0]);
+
   const dispatch = useDispatch<AppDispatch>();
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
+  );
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
+  const maxAllocationError = parseFloat(
+    (scalarSettings?.Max_Allocation_Error as string) || '2.0'
   );
   // const { startDate, endDate } = calendarDate || {};
 
@@ -117,11 +124,12 @@ function BottomTeamsView({
         });
       });
 
-      const avgAllocation =
+      const avgUtilization =
         seenWeeks.size > 0 ? totalAllocation / seenWeeks.size : 0;
+      const avgAvailability = maxAllocationError - avgUtilization;
       rows.forEach(row => {
         const cloned = { ...row };
-        cloned._avgPeriodAllocation = avgAllocation; // New field
+        cloned._avgPeriodAllocation = avgAvailability; // Remaining availability: Max_Allocation_Error - avg utilization
         result.push(cloned);
       });
     });
@@ -197,16 +205,12 @@ function BottomTeamsView({
         const teamMatch = selectedTeam.length
           ? row.teams && selectedTeam.some(team => team.label === row.teams)
           : true;
-
+        if (!teamMatch) return false;
+        const [minVal, maxVal] = allocationThreshold;
         const avgWeekly = row._avgPeriodAllocation ?? 0;
-        if (allocationThreshold === 0) {
-          return teamMatch && hasZeroAllocation(row);
-        }
-        if (allocationThreshold > 1) {
-          return teamMatch;
-        }
-
-        return teamMatch && avgWeekly <= allocationThreshold;
+        const normalizedAvailability = avgWeekly - maxAllocationError + 1.0;
+        if (minVal < 0) return normalizedAvailability <= maxVal;
+        return normalizedAvailability >= minVal && normalizedAvailability <= maxVal;
       });
 
       setRows(filteredResources || []);
