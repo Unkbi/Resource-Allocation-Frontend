@@ -11,12 +11,12 @@ const MAX_COMMENT_CHARS = 30;
 
 const renderCommentCell = (params: any) => {
   const text = params.value || '';
-  
+
   if (!text) return '';
-  
+
   const shouldTruncate = text.length > MAX_COMMENT_CHARS;
-  const displayText = shouldTruncate 
-    ? `${text.slice(0, MAX_COMMENT_CHARS)}...` 
+  const displayText = shouldTruncate
+    ? `${text.slice(0, MAX_COMMENT_CHARS)}...`
     : text;
 
   if (shouldTruncate) {
@@ -36,11 +36,14 @@ const renderCommentCell = (params: any) => {
       </Tooltip>
     );
   }
-  
+
   return displayText;
 };
 
 const renderScoreCell = (params: any) => {
+  if (params.value === null || params.value === undefined) {
+    return '';
+  }
   const rawValue = Number(params.value ?? 0);
   const value = Number.isNaN(rawValue) ? 0 : rawValue;
   const displayValue = `${Math.round(value)}`;
@@ -61,6 +64,9 @@ const renderScoreCell = (params: any) => {
 };
 
 const renderPercentageScoreCell = (params: any) => {
+  if (params.value === null || params.value === undefined) {
+    return '';
+  }
   const rawValue = Number(params.value ?? 0);
   const value = Number.isNaN(rawValue) ? 0 : rawValue;
   const displayValue = `${Math.round(value)}%`;
@@ -86,17 +92,17 @@ const renderPercentageScoreCell = (params: any) => {
  */
 const ClickableScoreCell = ({ params }: { params: any }) => {
   const router = useRouter();
-  
+
   const rawValue = Number(params.value ?? 0);
   const value = Number.isNaN(rawValue) ? 0 : rawValue;
   const displayValue = `${Math.round(value)}`;
 
   const handleClick = (event: React.MouseEvent) => {
     event.stopPropagation();
-    
+
     const projectId = params.row?.project_id;
     const period = params.row?.period; // Format: "MM/DD/YYYY"
-    
+
     if (!projectId || !period) {
       console.warn('Missing project_id or period for navigation');
       return;
@@ -105,26 +111,26 @@ const ClickableScoreCell = ({ params }: { params: any }) => {
     // Convert period from MM/DD/YYYY to YYYY-MM-DD format
     let customStartDate: string | undefined;
     let customEndDate: string | undefined;
-    
+
     try {
       const parts = period.split('/');
       if (parts.length === 3) {
         const [month, day, year] = parts;
         const periodDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        
+
         // The period represents a Monday (start of week)
         // Calculate the end of that week (Sunday)
         const startDate = new Date(periodDate);
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + 6); // Add 6 days to get to Sunday
-        
+
         const formatDate = (date: Date) => {
           const y = date.getFullYear();
           const m = String(date.getMonth() + 1).padStart(2, '0');
           const d = String(date.getDate()).padStart(2, '0');
           return `${y}-${m}-${d}`;
         };
-        
+
         customStartDate = formatDate(startDate);
         customEndDate = formatDate(endDate);
       }
@@ -137,7 +143,7 @@ const ClickableScoreCell = ({ params }: { params: any }) => {
       console.warn('Failed to parse period for navigation');
       return;
     }
-    
+
     // Navigate to resourceProjectPeriod report with filters
     navigateToReport(
       {}, // No advanced filters from current context
@@ -195,17 +201,17 @@ const GetResources = (): any[] => {
   return resources;
 };
 
-const formatCurrency = (amount:any, currency = 'USD', locale = 'en-US') => {
+const formatCurrency = (amount: any, currency = 'USD', locale = 'en-US') => {
   try {
     // Handle null, undefined, or non-numeric values
     const numAmount = Number(amount);
     if (isNaN(numAmount)) {
       return '';
     }
-    
+
     // Fallback to USD if currency is invalid or undefined
     const validCurrency = currency && typeof currency === 'string' && currency.length === 3 ? currency : 'USD';
-    
+
     return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: validCurrency,
@@ -244,11 +250,12 @@ const projectsOnlyColumns: GridColDef[] = [
   { field: 'end_date', headerName: 'End Date', minWidth: 120 },
   { field: 'budget', headerName: 'Budget', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.budget_currency) },
   { field: 'budget_currency', headerName: 'Budget Currency', minWidth: 150 },
-  { field: 'allow_overtime', headerName: 'Allow Overtime', minWidth: 140,
+  {
+    field: 'allow_overtime', headerName: 'Allow Overtime', minWidth: 140,
     renderCell: (params: any) => (
       params.value && params.value === true ? 'Yes' : 'No'
     )
-   },
+  },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
   { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
   {
@@ -317,7 +324,7 @@ const resourceOnlyColumns: GridColDef[] = [
   { field: 'role', headerName: 'Title', minWidth: 140 },
   { field: 'hr_level', headerName: 'HR Level', minWidth: 100 },
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
-  { field: 'contractor_hourly_rate', headerName: 'Contractor Hourly Rate', minWidth: 180, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.contractor_hourly_rate_currency)},
+  { field: 'contractor_hourly_rate', headerName: 'Contractor Hourly Rate', minWidth: 180, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.contractor_hourly_rate_currency) },
   { field: 'contractor_hourly_rate_currency', headerName: 'Contractor Hourly Rate Currency', minWidth: 220 },
   { field: 'manager_name', headerName: 'Manager Name', minWidth: 160 },
   { field: 'team_name', headerName: 'Team Name', minWidth: 140 },
@@ -332,7 +339,7 @@ const resourceOnlyColumns: GridColDef[] = [
     field: 'status', headerName: 'Resource Status', minWidth: 150,
     aggregable: false,
     renderCell: (params: any) => (
-     params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
+      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
   { field: 'user_id', headerName: 'User ID', minWidth: 120 },
@@ -353,7 +360,8 @@ const projectPeriodColumns: GridColDef[] = [
   { field: 'project_name', headerName: 'Project', minWidth: 200, flex: 1 },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
   { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
-  { field: 'status', headerName: 'Project Status', minWidth: 150,
+  {
+    field: 'status', headerName: 'Project Status', minWidth: 150,
     aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
@@ -364,9 +372,9 @@ const projectPeriodColumns: GridColDef[] = [
   { field: 'project_manager_email', headerName: 'Project Manager Email', minWidth: 200 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
   { field: 'yearWeek', headerName: 'Year-Week', minWidth: 120 },
-  { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'actual_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right'},
+  { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
+  { field: 'actual_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
+  { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
   { field: 'project_score', headerName: 'Project Score', minWidth: 150, renderCell: renderClickableScoreCell },
   { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 150, renderCell: renderClickableScoreCell },
   { field: 'health_score', headerName: 'Health Score', minWidth: 130, renderCell: renderClickableScoreCell },
@@ -385,7 +393,8 @@ const projectPeriodColumns: GridColDef[] = [
 const resourcePeriodColumns: GridColDef[] = [
   { field: 'resource_name', headerName: 'Resource', minWidth: 180, flex: 1 },
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
-  { field: 'status', headerName: 'Resource Status', minWidth: 150,
+  {
+    field: 'status', headerName: 'Resource Status', minWidth: 150,
     aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
@@ -408,10 +417,10 @@ const resourcePeriodColumns: GridColDef[] = [
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
-  { field: 'confirmed_at', headerName: 'Confirmed At', minWidth: 140 }, 
-  { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'actuals_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right'},
+  { field: 'confirmed_at', headerName: 'Confirmed At', minWidth: 140 },
+  { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
+  { field: 'actuals_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
+  { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
   { field: 'engagement_score', headerName: 'Engagement Score', minWidth: 150, renderCell: renderScoreCell },
   { field: 'planning_engagement', headerName: 'Plan Engagement', minWidth: 140, renderCell: renderScoreCell },
   { field: 'actuals_engagement', headerName: 'Actuals Engagement', minWidth: 140, renderCell: renderScoreCell },
@@ -435,7 +444,8 @@ const resourcePeriodColumns: GridColDef[] = [
 const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'resource_name', headerName: 'Resource', minWidth: 180, flex: 1 },
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
-  { field: 'resource_status', headerName: 'Resource Status', minWidth: 150,
+  {
+    field: 'resource_status', headerName: 'Resource Status', minWidth: 150,
     aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
@@ -450,7 +460,8 @@ const resourceProjectPeriodColumns: GridColDef[] = [
     renderCell: (params) => getAllocationManagerFromPath(params.value, GetResources())?.FullName || params.value,
   },
   { field: 'project_name', headerName: 'Project', minWidth: 200 },
-  { field: 'project_status', headerName: 'Project Status', minWidth: 150,
+  {
+    field: 'project_status', headerName: 'Project Status', minWidth: 150,
     aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
@@ -466,14 +477,14 @@ const resourceProjectPeriodColumns: GridColDef[] = [
     field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
     aggregable: false,
     renderCell: (params: any) => (
-     params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
+      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
-  { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
-  { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 160, renderCell: renderScoreCell },
-  { field: 'project_health_score', headerName: 'Health Score', minWidth: 150, renderCell: renderScoreCell },
+  { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
+  { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
+  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
+  { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 160, aggregable: false, renderCell: renderScoreCell },
+  { field: 'project_health_score', headerName: 'Health Score', minWidth: 150, aggregable: false, renderCell: renderScoreCell },
   { field: 'weighted_percent_variance', headerName: 'Weighted % Variance', minWidth: 170, renderCell: renderPercentageScoreCell },
   { field: 'percent_variance', headerName: 'Percent Variance', minWidth: 140, renderCell: renderPercentageScoreCell },
   { field: 'comments', headerName: 'Comments / Project updates', minWidth: 200, renderCell: renderCommentCell },
@@ -494,7 +505,8 @@ const resourceProjectPeriodColumns: GridColDef[] = [
 const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'resource_name', headerName: 'Resource', minWidth: 220, flex: 1 },
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
-  { field: 'resource_status', headerName: 'Resource Status', minWidth: 150,
+  {
+    field: 'resource_status', headerName: 'Resource Status', minWidth: 150,
     aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
@@ -511,7 +523,8 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'project_name', headerName: 'Project', minWidth: 200 },
   { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
-  { field: 'project_status', headerName: 'Project Status', minWidth: 150,
+  {
+    field: 'project_status', headerName: 'Project Status', minWidth: 150,
     aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
@@ -528,9 +541,9 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
-  { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
+  { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
+  { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
+  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['sum', 'avg', 'min', 'max', 'size'] },
   { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 160, renderCell: renderScoreCell },
   { field: 'project_health_score', headerName: 'Health Score', minWidth: 150, renderCell: renderScoreCell },
   { field: 'weighted_percent_variance', headerName: 'Weighted % Variance', minWidth: 170, renderCell: renderScoreCell },
@@ -559,18 +572,18 @@ const userActivityColumns: GridColDef[] = [
   { field: 'first_name', headerName: 'First Name', minWidth: 140 },
   { field: 'preferred_first_name', headerName: 'Preferred First Name', minWidth: 170 },
   { field: 'last_name', headerName: 'Last Name', minWidth: 140 },
-  { 
-    field: 'resource_status', 
-    headerName: 'Resource Status', 
+  {
+    field: 'resource_status',
+    headerName: 'Resource Status',
     minWidth: 150,
     aggregable: false,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
-  { 
-    field: 'user_status', 
-    headerName: 'User Status', 
+  {
+    field: 'user_status',
+    headerName: 'User Status',
     minWidth: 140,
     aggregable: false,
     renderCell: (params: any) => (
@@ -594,15 +607,15 @@ const userActivityColumns: GridColDef[] = [
   // { field: 'resource_id', headerName: 'Resource ID', minWidth: 120 },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
   {
-    field: 'created_by', 
-    headerName: 'Created By', 
+    field: 'created_by',
+    headerName: 'Created By',
     minWidth: 160,
     renderCell: (params) => GetName(params.value),
   },
   { field: 'last_modified', headerName: 'Last Modified On', minWidth: 140 },
   {
-    field: 'last_modified_by', 
-    headerName: 'Last Modified By', 
+    field: 'last_modified_by',
+    headerName: 'Last Modified By',
     minWidth: 180,
     renderCell: (params) => GetName(params.value),
   },

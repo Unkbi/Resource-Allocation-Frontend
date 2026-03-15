@@ -193,6 +193,17 @@ const parseQueryParams = (
     }
   }
 
+  // Parse columnAggregations (for column-level aggregations)
+  const columnAggregationsParam = searchParams.get('columnAggregations');
+  if (columnAggregationsParam) {
+    try {
+      const parsed = JSON.parse(columnAggregationsParam);
+      (filters as any).columnAggregations = parsed;
+    } catch (e) {
+      console.error('Failed to parse columnAggregations:', e);
+    }
+  }
+
   // Parse custom date range
   const customStartDate = searchParams.get('customStartDate');
   const customEndDate = searchParams.get('customEndDate');
@@ -358,6 +369,9 @@ function ReportBuilderPage({
 
   // State to track filters that should be applied to DataGrid
   const [gridFiltersToApply, setGridFiltersToApply] = useState<any>(null);
+  
+  // State to track column aggregations that should be applied to DataGrid
+  const [columnAggregationsToApply, setColumnAggregationsToApply] = useState<Record<string, string> | null>(null);
 
   // Check if all necessary data is loaded
   const isDataLoaded =
@@ -409,6 +423,38 @@ function ReportBuilderPage({
 
     return () => clearTimeout(timer);
   }, [reportData, gridApiRef, activeTab]);
+
+  // Effect to apply column aggregations to DataGrid after report data is available
+  useEffect(() => {
+    if (!columnAggregationsToApply || !reportData.length || !gridApiRef.current) {
+      return;
+    }
+
+    // Small delay to ensure DataGrid is fully initialized
+    const timer = setTimeout(() => {
+      try {       
+        // Apply aggregations to each specified column
+        Object.entries(columnAggregationsToApply).forEach(([columnField, aggregationFunction]) => {
+          try {
+            // Use the column menu aggregation API
+            gridApiRef.current.setAggregationModel({
+              ...gridApiRef.current.state.aggregation?.model,
+              [columnField]: aggregationFunction as string,
+            });
+          } catch (err) {
+            console.error(`Failed to apply aggregation for ${columnField}:`, err);
+          }
+        });
+        
+        // Clear after successfully applying
+        setColumnAggregationsToApply(null);
+      } catch (error) {
+        console.error('Error applying column aggregations:', error);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [reportData, columnAggregationsToApply, gridApiRef]);
 
   // Helper function to prepare API payload from filters
   const prepareApiPayload = (filters: ReportUIFilters) => {
@@ -478,6 +524,12 @@ function ReportBuilderPage({
       const gridFiltersFromUrl = (pendingQueryFilters as any)?.gridFilters;
       if (gridFiltersFromUrl) {
         setGridFiltersToApply(gridFiltersFromUrl);
+      }
+      
+      // Check if there are specific columnAggregations from URL (from chart clicks)
+      const columnAggregationsFromUrl = (pendingQueryFilters as any)?.columnAggregations;
+      if (columnAggregationsFromUrl) {
+        setColumnAggregationsToApply(columnAggregationsFromUrl);
       }
       
       // Save the last generated report to sessionStorage
@@ -1012,6 +1064,11 @@ function ReportBuilderPage({
     // Store gridFilters separately if they exist in URL
     if ((pendingQueryFilters as any)?.gridFilters) {
       setGridFiltersToApply((pendingQueryFilters as any).gridFilters);
+    }
+    
+    // Store columnAggregations separately if they exist in URL
+    if ((pendingQueryFilters as any)?.columnAggregations) {
+      setColumnAggregationsToApply((pendingQueryFilters as any).columnAggregations);
     }
 
     // Prepare API filters
@@ -1835,6 +1892,9 @@ function ReportBuilderPage({
                       },
                       columns: {
                         columnVisibilityModel: hiddenColumns,
+                      },
+                      aggregation: {
+                        model: {},
                       },
                     }}
                     pageSizeOptions={[10, 25, 50, 100]}
