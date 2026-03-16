@@ -15,10 +15,10 @@ export const FETCH_ALLOCATION_CAPACITY_SUCCESS = 'FETCH_ALLOCATION_CAPACITY_SUCC
 export const FETCH_ALLOCATION_CAPACITY_FAILURE = 'FETCH_ALLOCATION_CAPACITY_FAILURE';
 export const RESET_ALLOCATION_CAPACITY = 'RESET_ALLOCATION_CAPACITY';
 
-export const fetchCustomReportRequest = (filters: CustomReportFilters, uiFilters?: any) => ({
+export const fetchCustomReportRequest = (filters: CustomReportFilters, uiFilters?: any, gridFilters?: Record<string, any>) => ({
   type: FETCH_CUSTOM_REPORT_REQUEST,
   payload: filters,
-  meta: { uiFilters },
+  meta: { uiFilters, gridFilters, reportType: 'percentageAllocation' },
 });
 
 export const fetchCustomReportSuccess = (data: CustomReportResponse) => ({
@@ -40,15 +40,15 @@ export const setCustomReportFilters = (filters: CustomReportFilters) => ({
   payload: filters,
 });
 
-export const setCustomReportUIFilters = (uiFilters: any, requestPayload: any) => ({
+export const setCustomReportUIFilters = (uiFilters: any, requestPayload: any, gridFilters?: Record<string, any>, reportType?: string) => ({
   type: SET_CUSTOM_REPORT_UI_FILTERS,
-  payload: { uiFilters, requestPayload },
+  payload: { uiFilters, requestPayload, gridFilters, reportType: reportType || 'percentageAllocation' },
 });
 
-export const fetchAllocationCapacityRequest = (filters: any, uiFilters?: any) => ({
+export const fetchAllocationCapacityRequest = (filters: any, uiFilters?: any, gridFilters?: Record<string, any>) => ({
   type: FETCH_ALLOCATION_CAPACITY_REQUEST,
   payload: filters,
-  meta: { uiFilters },
+  meta: { uiFilters, gridFilters, reportType: 'allocationCapacity' },
 });
 
 export const fetchAllocationCapacitySuccess = (data: any) => ({

@@ -223,12 +223,12 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
   }
 }
 
-function* fetchReportSaga(action: { payload: { reportType: string; uiFilters: any } }): Generator<any, void, any> {
-  const { reportType, uiFilters } = action.payload;
+function* fetchReportSaga(action: { payload: { reportType: string; uiFilters: any; gridFilters?: Record<string, any> } }): Generator<any, void, any> {
+  const { reportType, uiFilters, gridFilters } = action.payload;
   try {
     yield put(startReportLoading({ reportType }));
     const requestPayload = buildReportPayload(uiFilters);
-    yield put(setReportRequestPayload({ reportType, uiFilters, requestPayload }));
+    yield put(setReportRequestPayload({ reportType, uiFilters, requestPayload, gridFilters }));
 
     const data: any[] = yield call(fetchReportData, reportType, requestPayload);
     yield put(setReportData({ reportType, data }));

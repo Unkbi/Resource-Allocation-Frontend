@@ -14,12 +14,14 @@ import { CustomReportResponse } from '@/app/types/customReportTypes';
 
 function* fetchCustomReportSaga(action: any): Generator<any, void, any> {
   try {
-    // Store the UI filters and request payload
+    // Store the UI filters, request payload, and gridFilters
     yield put({
       type: 'SET_CUSTOM_REPORT_UI_FILTERS',
       payload: {
         uiFilters: action.meta?.uiFilters || {},
         requestPayload: action.payload,
+        gridFilters: action.meta?.gridFilters || {},
+        reportType: action.meta?.reportType || 'percentageAllocation',
       },
     });
     
@@ -32,12 +34,14 @@ function* fetchCustomReportSaga(action: any): Generator<any, void, any> {
 
 function* fetchAllocationCapacitySaga(action: any): Generator<any, void, any> {
   try {
-    // Store the UI filters and request payload
+    // Store the UI filters, request payload, and gridFilters
     yield put({
       type: 'SET_CUSTOM_REPORT_UI_FILTERS',
       payload: {
         uiFilters: action.meta?.uiFilters || {},
         requestPayload: action.payload,
+        gridFilters: action.meta?.gridFilters || {},
+        reportType: action.meta?.reportType || 'allocationCapacity',
       },
     });
     

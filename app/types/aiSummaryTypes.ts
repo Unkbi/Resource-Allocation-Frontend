@@ -72,6 +72,7 @@ export interface AISummaryState {
   historyError: string | null;
   uiFilters: any | null; // Store the UI filters used to generate the summary
   requestPayload: any | null; // Store the API request payload
+  gridFilters?: Record<string, any>; // DataGrid-specific filters to apply to the grid
 }
 
 export type SummaryType = 'project' | 'resource' | 'team'; // Extensible for future summary types

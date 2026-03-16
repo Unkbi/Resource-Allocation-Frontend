@@ -33,9 +33,10 @@ const aiSummarySlice = createSlice({
       state.error = null;
     },
     
-    setSummaryFilters: (state, action: PayloadAction<{ uiFilters: any; requestPayload: any }>) => {
+    setSummaryFilters: (state, action: PayloadAction<{ uiFilters: any; requestPayload: any; gridFilters?: Record<string, any> }>) => {
       state.uiFilters = action.payload.uiFilters;
       state.requestPayload = action.payload.requestPayload;
+      state.gridFilters = action.payload.gridFilters;
     },
     
     setSummaryError: (state, action: PayloadAction<string>) => {

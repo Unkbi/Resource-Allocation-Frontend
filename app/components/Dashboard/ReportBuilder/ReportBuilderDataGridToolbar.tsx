@@ -104,9 +104,14 @@ export default function ReportBuilderDataGridToolbar({
       })
       .map(col => col.field);
 
+    // Get current DataGrid filter model
+    const filterModel = apiRef.current.state.filter?.filterModel;
+    const gridFilters = filterModel?.items || [];
+
     let dialogData: any = {
       columns: visibleColumns,
       tab: tab,
+      gridFilters: gridFilters, // Include DataGrid filters
     };
 
     // Handle different tabs

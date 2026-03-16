@@ -116,15 +116,17 @@ const dashboardSlice = createSlice({
       } as ReportEntry;
     },
     setReportRequestPayload: (state, action) => {
-      const { reportType, uiFilters, requestPayload } = action.payload as {
+      const { reportType, uiFilters, requestPayload, gridFilters } = action.payload as {
         reportType: ReportType;
         uiFilters: any;
         requestPayload: any;
+        gridFilters?: Record<string, any>;
       };
       state.report![reportType] = {
         ...(state.report?.[reportType] || { data: [], error: null, loading: false }),
         uiFilters,
         requestPayload,
+        gridFilters,
       } as ReportEntry;
     },
   },
