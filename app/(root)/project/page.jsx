@@ -309,6 +309,7 @@ function Project({ permissions, loadingPermissions }) {
         __last_modified_by: users?.find(
           user => user.id === item?.__last_modified_by
         )?.Name,
+        AllowOvertime : project.AllowOvertime ? 'Yes' : 'No',
       };
     });
   };
@@ -768,7 +769,6 @@ function Project({ permissions, loadingPermissions }) {
       headerName: 'Allow Overtime',
       flex: 1,
       minWidth: 130,
-      valueGetter: params => (params ? 'Yes' : 'No'),
     },
     {
       field: 'Status',
