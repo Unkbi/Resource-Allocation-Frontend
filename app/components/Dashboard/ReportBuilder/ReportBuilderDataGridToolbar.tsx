@@ -173,7 +173,6 @@ export default function ReportBuilderDataGridToolbar({
           gap: 2,
         }}
       >
-        
           {(() => {
             // Check if currentLoadedReport belongs to the current tab
             if (currentLoadedReport) {
