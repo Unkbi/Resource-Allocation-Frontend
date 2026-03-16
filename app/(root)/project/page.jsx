@@ -342,7 +342,9 @@ function Project({ permissions, loadingPermissions }) {
         id: businessImpact.Id,
         Project: project?.Name || '',
         BusinessImpactType: impactType?.Name || '',
-        Amount: businessImpact.AnnualizedAmount,
+        Amount: businessImpact.AnnualizedAmount
+          ? `$${(businessImpact.AnnualizedAmount || 0).toLocaleString()}`
+          : '',
         BusinessImpactTypeId: businessImpact.BusinessImpactType,
       };
     });
@@ -1316,10 +1318,6 @@ function Project({ permissions, loadingPermissions }) {
       field: 'Amount',
       headerName: 'Amount',
       minWidth: 120,
-      renderCell: params => {
-        const amount = params.value;
-        return amount ? `$${amount.toLocaleString()}` : '';
-      },
     },
     {
       field: 'Description',

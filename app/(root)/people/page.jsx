@@ -1329,6 +1329,7 @@ function Resources({ permissions, loadingPermissions }) {
         id: item.Id,
         WorkLocation:
           location?.find(loc => loc.Id === item.WorkLocation)?.Name || '',
+        
       }));
     }
     return [];

@@ -174,8 +174,12 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
           type="number"
           disabled={readOnly}
           readOnly={readOnly}
-          value={values.Amount || ''}
-          onChange={handleChange}
+          value = {Number(values.Amount) ? values.Amount.replace(/[$,]/g, '') : ''}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            const cleaned = e.target.value.replace(/[$,]/g, '');
+            const numberValue = cleaned ? Number(cleaned) : '';
+            setFieldValue('Amount', numberValue);
+          }}
           onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
             const trimmed = e.target.value.trim();
             setFieldValue('Amount', trimmed);
