@@ -110,7 +110,7 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
       const rowData: BusinessImpactFormValues = {
         Project: initialData.ProjectUUID || '',
         BusinessImpactType: initialData.BusinessImpactTypeId || '',
-        Amount: initialData.Amount || '',
+        Amount: initialData.Amount ? String(initialData.Amount).replace(/[$,]/g, '') : '',
         Description: initialData.Description || '',
         Status: initialData.Status || '',
         Currency: initialData.Currency || 'USD',
@@ -174,7 +174,7 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
           type="number"
           disabled={readOnly}
           readOnly={readOnly}
-          value = {Number(values.Amount) ? values.Amount.replace(/[$,]/g, '') : ''}
+          value={values.Amount !== '' && values.Amount !== undefined ? String(values.Amount).replace(/[$,]/g, '') : ''}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const cleaned = e.target.value.replace(/[$,]/g, '');
             const numberValue = cleaned ? Number(cleaned) : '';
