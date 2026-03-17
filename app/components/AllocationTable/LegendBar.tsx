@@ -85,11 +85,12 @@ const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
                 </Typography>
               </Box>
 
-              <Box sx={{ background: '#E0ECFF', px: 2, py: '3px' }}>
+              <Box sx={{ background: '#fff8d6', px: 2, py: '3px' }}>
                 <Typography
-                  sx={{ color: '#4C89EE', fontSize: 10, fontWeight: 600 }}
+                  sx={{ color: '#caa200', fontSize: 10, fontWeight: 600 }}
                 >
-                  Over-Achieved
+                  {' '}
+                  Under-Achieved{' '}
                 </Typography>
               </Box>
 
@@ -97,8 +98,7 @@ const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
                 <Typography
                   sx={{ color: '#B91C1C', fontSize: 10, fontWeight: 600 }}
                 >
-                  {' '}
-                  Under-Achieved{' '}
+                  Over-Achieved
                 </Typography>
               </Box>
             </Box>
