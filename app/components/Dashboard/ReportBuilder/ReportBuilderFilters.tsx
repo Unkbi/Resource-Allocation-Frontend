@@ -16,10 +16,13 @@ import {
   Select,
   Checkbox,
   FormControlLabel,
+  IconButton,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CloseIcon from '@mui/icons-material/Close';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ChevronLeftIcon  from '@mui/icons-material/ChevronLeft';
 import { ArrowDropDown } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { useEffect, useState } from 'react';
@@ -802,39 +805,94 @@ function ReportBuilderFilters({
           </Select>
 
           {filters.period === 'custom' && formatDateRange(filters.customDateRange) && (
-            <Box
-              onClick={(e) => {
-                setTempDateRange(filters.customDateRange || [null, null]);
-                setCustomDateSubmenuAnchor(e.currentTarget);
-              }}
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.75,
-                borderRadius: '5px',
-                border: '1px solid #E5E7EB',
-                backgroundColor: '#FFFFFF',
-                px: 1.5,
-                py: 1.25,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Left Arrow - Previous Week */}
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const currentRange = filters.customDateRange;
+                  if (currentRange && currentRange[0] && currentRange[1]) {
+                    const newStart = dayjs(currentRange[0]).subtract(7, 'day');
+                    const newEnd = dayjs(currentRange[1]).subtract(7, 'day');
+                    onFiltersChange({
+                      ...filters,
+                      period: 'custom',
+                      customDateRange: [newStart, newEnd],
+                    });
+                  }
+                }}
+                size="small"
+                sx={{
+                color: '#5D6979',
                 '&:hover': {
-                  backgroundColor: '#F9FAFB',
-                  borderColor: '#D1D5DB',
+                  backgroundColor: 'rgba(52, 70, 101, 0.04)',
                 },
               }}
-            >
-              <CalendarMonthIcon sx={{ fontSize: 18, mr: 1, color: '#5D6979' }} /> {' '}
-              <Typography
+              >
+                <ChevronLeftIcon />
+              </IconButton>
+
+              {/* Date Range Display */}
+              <Box
+                onClick={(e) => {
+                  setTempDateRange(filters.customDateRange || [null, null]);
+                  setCustomDateSubmenuAnchor(e.currentTarget);
+                }}
                 sx={{
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  color: '#111827',
-                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  borderRadius: '5px',
+                  border: '1px solid #E5E7EB',
+                  backgroundColor: '#FFFFFF',
+                  px: 1.5,
+                  py: 1.25,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: '#F9FAFB',
+                    borderColor: '#D1D5DB',
+                  },
                 }}
               >
-                {formatDateRange(filters.customDateRange)}
-              </Typography>
+                <CalendarMonthIcon sx={{ fontSize: 18, mr: 1, color: '#5D6979' }} /> {' '}
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    color: '#111827',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {formatDateRange(filters.customDateRange)}
+                </Typography>
+              </Box>
+
+              {/* Right Arrow - Next Week */}
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const currentRange = filters.customDateRange;
+                  if (currentRange && currentRange[0] && currentRange[1]) {
+                    const newStart = dayjs(currentRange[0]).add(7, 'day');
+                    const newEnd = dayjs(currentRange[1]).add(7, 'day');
+                    onFiltersChange({
+                      ...filters,
+                      period: 'custom',
+                      customDateRange: [newStart, newEnd],
+                    });
+                  }
+                }}
+                size="small"
+                sx={{
+                color: '#5D6979',
+                '&:hover': {
+                  backgroundColor: 'rgba(52, 70, 101, 0.04)',
+                },
+              }}
+              >
+                <ChevronRightIcon />
+              </IconButton>
             </Box>
           )}
 
