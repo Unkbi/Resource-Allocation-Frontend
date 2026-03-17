@@ -755,7 +755,10 @@ function AllocationTheme({
         : baseRow.From;
       // newTo = baseRow.From;
     } else {
-      newFrom = '0.0';
+      const lastRow = allocationRanges[allocationRanges.length - 1];
+      newFrom = lastRow?.To
+        ? format2(roundToStep(parseFloat(lastRow.To) + 0.05))
+        : '0.0';
       newTo = `${max_allocation_error}`;
     }
 
