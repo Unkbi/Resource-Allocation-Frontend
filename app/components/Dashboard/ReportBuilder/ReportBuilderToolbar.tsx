@@ -123,6 +123,7 @@ function ReportBuilderToolbar({
   const [selectedSavedReport, setSelectedSavedReport] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState<{ id: string; name: string } | null>(null);
+  const prevSavedReportsLength = useRef(filteredSavedReports.length);
 
   // Sync selectedReport with reportType prop when it changes
   useEffect(() => {
@@ -130,6 +131,27 @@ function ReportBuilderToolbar({
       setSelectedReport(reportType);
     }
   }, [reportType]);
+
+  // Auto-select newly saved report
+  useEffect(() => {
+    // Check if a new report was added (length increased)
+    if (filteredSavedReports.length > prevSavedReportsLength.current && filteredSavedReports.length > 0) {
+      // Get the most recently created report (assuming it's the last one or has the latest creation date)
+      const latestReport = filteredSavedReports.reduce((latest, report) => {
+        if (!latest) return report;
+        const latestDate = latest.__created ? new Date(latest.__created).getTime() : 0;
+        const currentDate = report.__created ? new Date(report.__created).getTime() : 0;
+        return currentDate > latestDate ? report : latest;
+      });
+
+      if (latestReport?.Id) {
+        setSelectedSavedReport(latestReport.Id);
+        onLoadReport?.(latestReport.Id);
+      }
+    }
+    // Update the previous length
+    prevSavedReportsLength.current = filteredSavedReports.length;
+  }, [filteredSavedReports, onLoadReport]);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchor(event.currentTarget);

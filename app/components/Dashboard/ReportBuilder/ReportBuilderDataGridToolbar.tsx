@@ -10,6 +10,7 @@ import {
   GridToolbarProps,
   GridColumnsPanel,
   useGridSelector,
+  gridFilteredSortedRowIdsSelector,
 } from '@mui/x-data-grid-premium';
 import { download, mkConfig } from 'export-to-csv';
 import ReportBuilderExport from './ReportBuilderExport';
@@ -70,6 +71,10 @@ export default function ReportBuilderDataGridToolbar({
   const apiRef = useGridApiContext();
   const dispatch = useDispatch();
   const [columnsAnchorEl, setColumnsAnchorEl] = useState<null | HTMLElement>(null);
+  
+  // Use DataGrid selector to get filtered row IDs - this updates in real-time
+  const filteredSortedRowIds = useGridSelector(apiRef, gridFilteredSortedRowIdsSelector);
+  const filteredRowCount = filteredSortedRowIds.length;
 
   // Get the current report filters from Redux based on tab
   const reportSlice = useSelector((state: RootState) => state.dashboard.report);
@@ -246,7 +251,7 @@ export default function ReportBuilderDataGridToolbar({
               color: '#6A7282',
             }}
           >
-            {`Total Records: ${GridRowCount ?? 0}`}
+            {`Total Records: ${filteredRowCount}`}
           </Box>
       </Box>
 
