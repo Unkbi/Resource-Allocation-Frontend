@@ -853,10 +853,9 @@ function AllocationTheme({
         const value = params.props.value as string;
 
         handleLabelChange(params.id as string, value);
-        const rowError = validationErrors[Number(params.id)];
         return {
           ...params.props,
-          error: !!rowError?.Label,
+          error: false,
         };
       },
     },
