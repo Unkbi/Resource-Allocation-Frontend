@@ -333,8 +333,8 @@ const resourceOnlyColumns: GridColDef[] = [
   { field: 'work_location', headerName: 'Resource Location', minWidth: 160 },
   { field: 'work_location_group', headerName: 'Resource Location Group', minWidth: 180 },
   { field: 'location_category', headerName: 'Location Category', minWidth: 160 },
-  { field: 'start_date', headerName: 'Start Date', minWidth: 120 },
-  { field: 'end_date', headerName: 'End Date', minWidth: 120 },
+  { field: 'start_date', headerName: 'Resource Start Date', minWidth: 120 },
+  { field: 'end_date', headerName: 'Resource End Date', minWidth: 120 },
   {
     field: 'status', headerName: 'Resource Status', minWidth: 150,
     aggregable: false,
