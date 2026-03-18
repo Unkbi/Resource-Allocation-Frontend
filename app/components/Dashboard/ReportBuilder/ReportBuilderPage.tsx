@@ -741,7 +741,7 @@ function ReportBuilderPage({
 
   const handleResetCustomFilters = () => {
     setCustomFilters({
-      reportType: 'resourceProjectPeriod', // Default to resourceProjectPeriod for custom tab
+      reportType: customFilters.reportType, // Keep current report type when resetting
       period: 'last_week',
       customDateRange: undefined,
       team: [],
@@ -824,6 +824,48 @@ function ReportBuilderPage({
 
     return count;
   };
+
+  // Effect: Reset filters when customReportType changes (for Custom tab)
+  useEffect(() => {
+    // Skip if we're loading from query params or saved reports
+    if (pendingQueryFilters || isInitializing) {
+      return;
+    }
+
+    // Only reset if user is on custom tab
+    if (activeTab !== 'custom') {
+      return;
+    }
+
+    // Reset filters when report type changes
+    setCustomFilters({
+      reportType: customReportType,
+      period: 'last_week',
+      customDateRange: undefined,
+      team: [],
+      organization: [],
+      resourceType: [],
+      resource: [],
+      projectType: [],
+      projectTypeGroup: [],
+      project: [],
+      portfolio: [],
+      projectManager: [],
+      allocationManager: [],
+      resourceStatuses: [],
+      resourceLocations: [],
+      resourceWorkLocationGroup: [],
+      projectStatuses: [],
+      userStatuses: [],
+      userRoles: [],
+      show_actuals: false,
+    });
+
+    // Clear report display
+    setShowData(false);
+    setAPIFilters(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customReportType]);
 
   // Effect 1: Parse and store query params on mount
   useEffect(() => {
