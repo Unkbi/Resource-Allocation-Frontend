@@ -14,6 +14,8 @@ export interface SavedReport {
   IsDefault: boolean;
   CreatedAt?: string;
   UpdatedAt?: string;
+  __created?: string; // API returns this field for creation timestamp
+  __last_modified?: string; // API returns this field for last modified timestamp
 }
 
 export interface CreateSavedReportPayload {

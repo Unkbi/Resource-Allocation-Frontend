@@ -1332,6 +1332,19 @@ function ReportBuilderPage({
       }
     }
     
+    // Parse GridFilters if they come as a string
+    let savedGridFilters = report.GridFilters as any;
+    if (typeof savedGridFilters === 'string') {
+      try {
+        savedGridFilters = JSON.parse(savedGridFilters);
+      } catch (e) {
+        console.error('Failed to parse grid filters:', e);
+        savedGridFilters = [];
+      }
+    }
+    // Ensure it's an array
+    savedGridFilters = Array.isArray(savedGridFilters) ? savedGridFilters : [];
+    
     // Determine which tab this report belongs to
     const isAISummary = report.ReportType === 'aisummary';
     const isCustom = report.ReportType === 'percentageAllocation' || report.ReportType === 'allocationCapacity';
@@ -1382,13 +1395,10 @@ function ReportBuilderPage({
       setIsLoading(true);
       setFiltersExpanded(false);
       
-      // Extract gridFilters from saved report
-      const gridFilters = report.GridFilters || [];
-      
       // Store gridFilters to apply later to DataGrid
-      setGridFiltersToApply(gridFilters);
+      setGridFiltersToApply(savedGridFilters);
       
-      dispatch(fetchProjectSummary({ ...summaryUiFilters, gridFilters }));
+      dispatch(fetchProjectSummary({ ...summaryUiFilters, gridFilters: savedGridFilters }));
       
     } else if (isCustom) {
       // Handle Custom report
@@ -1463,16 +1473,13 @@ function ReportBuilderPage({
         show_actuals: savedFilters.show_actuals || false,
       };
       
-      // Extract gridFilters from saved report
-      const gridFilters = report.GridFilters || [];
-      
       // Store gridFilters to apply later to DataGrid
-      setGridFiltersToApply(gridFilters);
+      setGridFiltersToApply(savedGridFilters);
       
       if (report.ReportType === 'allocationCapacity') {
-        dispatch(fetchAllocationCapacityRequest(apiFilters, uiFilters, gridFilters));
+        dispatch(fetchAllocationCapacityRequest(apiFilters, uiFilters, savedGridFilters));
       } else {
-        dispatch(fetchCustomReportRequest(apiFilters, uiFilters, gridFilters));
+        dispatch(fetchCustomReportRequest(apiFilters, uiFilters, savedGridFilters));
       }
       
     } else {
@@ -1533,14 +1540,11 @@ function ReportBuilderPage({
       
       const apiPayload = prepareApiPayload(uiFilters);
       
-      // Extract gridFilters from saved report
-      const gridFilters = report.GridFilters || [];
-      
       // Store gridFilters to apply later to DataGrid
-      setGridFiltersToApply(gridFilters);
+      setGridFiltersToApply(savedGridFilters);
       
       // Dispatch fetch with restored filters
-      dispatch(fetchReport({ reportType: report.ReportType as ReportType, uiFilters: apiPayload, gridFilters }));
+      dispatch(fetchReport({ reportType: report.ReportType as ReportType, uiFilters: apiPayload, gridFilters: savedGridFilters }));
     }
     
     if (!isCustom) {

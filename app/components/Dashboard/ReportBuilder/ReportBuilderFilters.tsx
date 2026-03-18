@@ -626,7 +626,7 @@ function ReportBuilderFilters({
       if (!value || 
           (Array.isArray(value) && value.length === 0) ||
           (typeof value === 'string' && value === 'resourceProjectPeriod' && key === 'reportType') || key === 'summaryType' ||
-          (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'|| filters.reportType === 'userActivity'))) {
+          (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'|| filters.reportType === 'userActivity')) || (filters.reportType === 'allocationCapacity' && key === 'show_actuals')) {
         return;
       }
       
@@ -679,6 +679,7 @@ function ReportBuilderFilters({
               getDisplayValue={getReportDisplayValue}
               filterType="report"
               showClearButton={permissions?.['Reports']?.r}
+              customReportType={customReportType}
             />
           </Box>
         )}

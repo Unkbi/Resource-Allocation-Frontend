@@ -78,6 +78,7 @@ interface FilterChipsProps {
   getDisplayValue?: (key: string, value: any) => string | string[];
   filterType?: 'advanced' | 'report';
   showClearButton?: boolean;
+  customReportType?: 'percentageAllocation' | 'allocationCapacity';
 }
 
 interface ActiveFilter {
@@ -97,6 +98,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
   getDisplayValue,
   filterType = 'advanced',
   showClearButton = true,
+  customReportType,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   
@@ -190,6 +192,8 @@ const FilterChips: React.FC<FilterChipsProps> = ({
         if (!isAdvancedMode) {
           if (key === 'reportType') return false;
           if (key === 'customDateRange') return false; // Don't show as separate chip
+          // Hide show_actuals filter for allocationCapacity report type
+          if (key === 'show_actuals' && customReportType === 'allocationCapacity') return false;
         }
         return true;
       })
@@ -247,6 +251,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
     isAdvancedMode,
     getDisplayName,
     defualtAdvancedFilters,
+    customReportType,
   ]);
 
   const handleRemoveFilter = (filterKey: string) => {

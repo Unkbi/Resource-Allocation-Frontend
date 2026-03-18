@@ -551,6 +551,7 @@ const AllocationForm = () => {
     locationGroups,
     userResources,
   } = useSelector(state => state.allSettings);
+  const { savedReports } = useSelector(state => state.savedReports);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -692,9 +693,9 @@ const AllocationForm = () => {
       case 'edit_business_impact':
         return addBusinessImpactValidationSchema;
       case 'save_reports':
-        return saveReportsValidationSchema([],initialData?.Name || '');
+        return saveReportsValidationSchema(savedReports,initialData?.Name || '');
       case 'edit_reports':
-        return saveReportsValidationSchema([],initialData?.Name || '');
+        return saveReportsValidationSchema(savedReports,initialData?.Name || '');
       default:
         return null;
     }
