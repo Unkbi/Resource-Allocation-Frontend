@@ -693,9 +693,9 @@ const AllocationForm = () => {
       case 'edit_business_impact':
         return addBusinessImpactValidationSchema;
       case 'save_reports':
-        return saveReportsValidationSchema(savedReports,initialData?.Name || '');
+        return saveReportsValidationSchema(savedReports, initialData?.Name || '');
       case 'edit_reports':
-        return saveReportsValidationSchema(savedReports,initialData?.Name || '');
+        return saveReportsValidationSchema(savedReports, initialData?.Name || '');
       default:
         return null;
     }
@@ -820,10 +820,10 @@ const AllocationForm = () => {
     const allRows = splitView
       ? bottomTeamAllocationGrid?.getAllRows()
       : getAllRowsForView(
-          currentView?.GroupBy === 'Project'
-            ? 'projectAllocation'
-            : 'teamAllocation'
-        );
+        currentView?.GroupBy === 'Project'
+          ? 'projectAllocation'
+          : 'teamAllocation'
+      );
 
     for (let i = 0; i < allRows?.length; i++) {
       if (
@@ -1320,7 +1320,7 @@ const AllocationForm = () => {
             resource =>
               resource.Id !== initialData.Id &&
               resource.FullName.toLowerCase() ===
-                newCalculatedFullName.toLowerCase()
+              newCalculatedFullName.toLowerCase()
           )
         ) {
           dispatch(
@@ -1558,10 +1558,10 @@ const AllocationForm = () => {
                   splitView
                     ? bottomTeamAllocationGrid?.getAllRows()
                     : getAllRowsForView(
-                        currentView?.GroupBy === 'Project'
-                          ? 'projectAllocation'
-                          : 'teamAllocation'
-                      ),
+                      currentView?.GroupBy === 'Project'
+                        ? 'projectAllocation'
+                        : 'teamAllocation'
+                    ),
                   resource,
                   weekKey,
                   allocationValue,
@@ -1659,21 +1659,20 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              `Adding allocation for ${
-                Array.isArray(values.Resource)
-                  ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.find(
-                        r => r.Id === resourceId
-                      );
-                      if (!resource) return acc;
-                      return (
-                        acc +
-                        resources?.find(resource => resource.Id === resourceId)
-                          ?.FullName +
-                        ', '
-                      );
-                    }, '').slice(0, -2)
-                  : resources?.find(r => r.Id === values.Resource)?.FullName
+              `Adding allocation for ${Array.isArray(values.Resource)
+                ? values.Resource.reduce((acc, resourceId) => {
+                  const resource = resources?.find(
+                    r => r.Id === resourceId
+                  );
+                  if (!resource) return acc;
+                  return (
+                    acc +
+                    resources?.find(resource => resource.Id === resourceId)
+                      ?.FullName +
+                    ', '
+                  );
+                }, '').slice(0, -2)
+                : resources?.find(r => r.Id === values.Resource)?.FullName
               }...`,
               'info'
             )
@@ -1986,23 +1985,22 @@ const AllocationForm = () => {
               true,
               e?.response?.data
                 ? e?.response?.data
-                : `Failed to create allocation for ${
-                    Array.isArray(values.Resource)
-                      ? values.Resource.reduce((acc, resourceId) => {
-                          const resource = resources?.find(
-                            r => r.Id === resourceId
-                          );
-                          if (!resource) return acc;
-                          return (
-                            acc +
-                            resources?.find(
-                              resource => resource.Id === resourceId
-                            )?.FullName +
-                            ', '
-                          );
-                        }, '').slice(0, -2)
-                      : resources?.find(r => r.Id === values.Resource)?.FullName
-                  }`,
+                : `Failed to create allocation for ${Array.isArray(values.Resource)
+                  ? values.Resource.reduce((acc, resourceId) => {
+                    const resource = resources?.find(
+                      r => r.Id === resourceId
+                    );
+                    if (!resource) return acc;
+                    return (
+                      acc +
+                      resources?.find(
+                        resource => resource.Id === resourceId
+                      )?.FullName +
+                      ', '
+                    );
+                  }, '').slice(0, -2)
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
+                }`,
               'error',
               4000
             )
@@ -3889,10 +3887,34 @@ const AllocationForm = () => {
             throw new Error('User ID not found');
           }
 
+          // Check if this is an update (has ID and submitType is 'primary') or create new (submitType is 'secondary' = Save As)
+          const isUpdate = initialData?.id && submitType === 'primary';
+          const isSaveAs = submitType === 'secondary';
+
+          // If creating new or Save As, check for name conflicts (NOT for updates/Save)
+          if (!isUpdate) {
+            const nameExists = savedReports.some(
+              report => report.Name.toLowerCase() === cleanedValues.Name.toLowerCase()
+            );
+
+            if (nameExists) {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `A report with the name "${cleanedValues.Name}" already exists. Please choose a different name.`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              return;
+            }
+          }
+
           // Determine report type based on tab
           let reportType = initialData?.reportType || 'resourceProjectPeriod';
           let filters = initialData?.filters || {};
-          
+
           // Ensure filters is an object (parse if it's a string)
           if (typeof filters === 'string') {
             try {
@@ -3902,7 +3924,7 @@ const AllocationForm = () => {
               filters = {};
             }
           }
-          
+
           // For AI Summary tab, handle summaryType
           if (initialData?.tab === 'aisummary') {
             // For AI Summary, we store the summaryType in the filters
@@ -3923,7 +3945,7 @@ const AllocationForm = () => {
           // Prepare report data with all required fields
           // NOTE: Filters must be sent as an object. If the backend stores it as a string,
           // the frontend will parse it back to an object when loading.
-          const reportData = {
+          let reportData = {
             UserId: userId,
             Name: cleanedValues.Name,
             Description: cleanedValues.Description || '',
@@ -3934,26 +3956,58 @@ const AllocationForm = () => {
             IsDefault: false,
           };
 
-          const response = await new Promise((resolve, reject) => {
-            dispatch({
-              type: CREATE_SAVED_REPORT,
-              payload: {
-                reportData,
-                resolve,
-                reject,
-              },
-            });
-          });
+          if (isUpdate) {
+            // Update existing report
+            reportData = {
+              ...reportData,
+              Id: initialData.id, // Include ID for updates
+            };
 
-          dispatch(
-            showToast({
-              open: true,
-              message: 'Report saved successfully.',
-              type: 'success',
-              position: 'bottom-left',
-              autoHideTimer: 4000,
-            })
-          );
+            const response = await new Promise((resolve, reject) => {
+              dispatch({
+                type: UPDATE_SAVED_REPORT,
+                payload: {
+                  reportId: initialData.id,
+                  reportData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Report updated successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            // Create new report (including Save As)
+            const response = await new Promise((resolve, reject) => {
+              dispatch({
+                type: CREATE_SAVED_REPORT,
+                payload: {
+                  reportData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: isSaveAs ? 'Report saved as new successfully.' : 'Report saved successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+
           dispatch(closeDialog());
         } catch (error) {
           console.error('Failed to save report:', error);
@@ -3974,16 +4028,16 @@ const AllocationForm = () => {
       case 'edit_reports': {
         try {
           const reportId = initialData?.id;
-           const userId = user?.id;
+          const userId = user?.id;
 
-           if (!userId) {
+          if (!userId) {
             throw new Error('User ID not found');
           }
 
           // Determine report type based on tab
           let reportType = initialData?.reportType || 'resourceProjectPeriod';
           let filters = initialData?.filters || {};
-          
+
           // Ensure filters is an object (parse if it's a string)
           if (typeof filters === 'string') {
             try {
@@ -3993,7 +4047,7 @@ const AllocationForm = () => {
               filters = {};
             }
           }
-          
+
           // For AI Summary tab, handle summaryType
           if (initialData?.tab === 'aisummary') {
             // For AI Summary, we store the summaryType in the filters
@@ -4595,9 +4649,8 @@ const AllocationForm = () => {
                 AllocationEnteredToValue !== undefined
                   ? String(AllocationEnteredToValue)
                   : '',
-              byUser: `${modifingUserDetails?.firstName || ''} ${
-                modifingUserDetails?.lastName || ''
-              }`,
+              byUser: `${modifingUserDetails?.firstName || ''} ${modifingUserDetails?.lastName || ''
+                }`,
               _timestampRaw: Math.floor(new Date(Timestamp)?.getTime() / 1000),
             };
           });
@@ -4984,6 +5037,7 @@ const AllocationForm = () => {
           isValid={formikProps.isValid}
           onCancel={onCancel}
           viewOnly={formType === 'open_history' || readOnly}
+          shouldShowSaveAs={formType === 'save_reports' && !!initialData?.id}
         >
           <Box>
             {getFormComponent(formType, {

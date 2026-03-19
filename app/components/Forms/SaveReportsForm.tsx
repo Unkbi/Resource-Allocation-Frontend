@@ -8,6 +8,7 @@ import StyledLabel from '../Label/StyledLabel';
 export interface SaveReport {
     Name: string;
     Description?: string;
+    id?: string; // Report ID when editing
 }
 
 import { FormikProps } from 'formik';
@@ -34,7 +35,11 @@ const SaveReportsForm = ({
     const { formType } = useSelector(
         (state: RootState) => state.globalDialog.formState
     );
+    const { savedReports, currentLoadedReport } = useSelector(
+        (state: RootState) => state.savedReports
+    );
     const [readOnly, setReadOnly] = useState(true);
+    const [isLoadedReport, setIsLoadedReport] = useState(false);
 
     useEffect(() => {
         // setReadOnly(
@@ -50,10 +55,14 @@ const SaveReportsForm = ({
             const rowData = {
                 Name: initialData.Name || '',
                 Description: initialData?.Description || '',
+                id: initialData?.id || '',
             };
             setFormValue(rowData);
             formikProps.resetForm({ values: rowData });
             formikProps.setTouched({});
+            
+            // Check if this is a loaded report (has an id)
+            setIsLoadedReport(!!initialData?.id);
         }
     }, [initialData]);
 

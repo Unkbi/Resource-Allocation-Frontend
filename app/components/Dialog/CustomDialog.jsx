@@ -110,6 +110,7 @@ const CustomDialog = ({
   onCancel,
   viewOnly = false,
   isSubmitting =false,
+  shouldShowSaveAs = false,
 }) => {
   const dispatch = useDispatch();
   const dialogState = useSelector(state => state.globalDialog);
@@ -164,20 +165,35 @@ const CustomDialog = ({
                   </StyledSubmitButton>
                 </StyledSubmitButtonContainer>
               </StyledDialogActionsContainer>
-            ) : secondaryButtonText ? (
+            ) : secondaryButtonText || shouldShowSaveAs ? (
               <StyledDialogActionsContainer>
                 <StyledCancelButton variant="outlined" onClick={handleClose}>
                   {cancelButtonText}
                 </StyledCancelButton>
                 <StyledSubmitButtonContainer>
-                  <StyledSubmitButton
-                    variant="outlined"
-                    onClick={onSecondarySubmit}
-                  >
-                    {secondaryButtonText}
-                  </StyledSubmitButton>
+                  {shouldShowSaveAs && (
+                    <StyledSubmitButton
+                      variant="outlined"
+                      onClick={onSecondarySubmit}
+                      disabled={isSubmitting}
+                    >
+                      Save As
+                    </StyledSubmitButton>
+                  )}
+                  {secondaryButtonText && !shouldShowSaveAs && (
+                    <StyledSubmitButton
+                      variant="outlined"
+                      onClick={onSecondarySubmit}
+                    >
+                      {secondaryButtonText}
+                    </StyledSubmitButton>
+                  )}
                   {submitButtonText && (
-                    <StyledSubmitButton onClick={onSubmit} variant="contained">
+                    <StyledSubmitButton 
+                      onClick={onSubmit} 
+                      variant="contained"
+                      disabled={isSubmitting}
+                    >
                       {submitButtonText}
                     </StyledSubmitButton>
                   )}

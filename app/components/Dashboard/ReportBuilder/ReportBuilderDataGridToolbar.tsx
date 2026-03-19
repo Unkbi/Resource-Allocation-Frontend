@@ -117,6 +117,9 @@ export default function ReportBuilderDataGridToolbar({
       columns: visibleColumns,
       tab: tab,
       gridFilters: gridFilters, // Include DataGrid filters
+      id: currentLoadedReport?.Id || null, // Include report ID if exists
+      Name: currentLoadedReport?.Name || '', // Pre-fill name
+      Description: currentLoadedReport?.Description || '', // Pre-fill description
     };
 
     // Handle different tabs
