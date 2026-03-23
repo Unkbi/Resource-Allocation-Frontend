@@ -80,6 +80,7 @@ export const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   removeContractorPT: false,
   showActuals: false,
   showDateHeader: false,
+  allocationThreshold: [-0.2, 1.0] as [number, number],
 };
 
 const initialState: AllocationGridViewState = {

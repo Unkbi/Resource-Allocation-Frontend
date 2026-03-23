@@ -2,12 +2,12 @@
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import {
   formatDateMMDDYYYY,
   getAllocationManagerFromPath,
+  isWeekKey,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
 // import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
@@ -16,9 +16,8 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
+import { useDataGrid } from '@/app/context/dataGridContext';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
-import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
@@ -60,13 +59,6 @@ function FlatAllocation({
 }: FlatAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
-  const { teams, teamsResources } = useSelector(
-    (state: RootState) => state.teams
-  );
-  const { location } = useSelector((state: RootState) => state.allSettings);
-  const { allResourcesDetail } = useSelector(
-    (state: RootState) => state.allResourcesDetail
-  );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
@@ -79,44 +71,89 @@ function FlatAllocation({
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  const {
-    setRows,
-    ready,
-    getAllRows: getAllTeamViewRows,
-  } = useAllocationGrid('teamAllocation');
-  const { getAllRows: getAllProjectViewRows } =
-    useAllocationGrid('projectAllocation');
-  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
+  const { setRows, ready } = useAllocationGrid('teamAllocation');
+  const { setAllocationMaster, getAllocationMaster } = useDataGrid();
+  const allocationThreshold = useSelector(
+    (state: RootState) =>
+      state.allocationView.currentView?.allocationThreshold ?? [-0.2, 1.0]
+  );
+  const maxAllocationError = parseFloat(
+    (scalarSettings?.Max_Allocation_Error as string) || '2.0'
+  );
 
+  const computeAverageAllocations = (data: AllAllocations[]) => {
+    const grouped: Record<string, any[]> = {};
+    data.forEach(row => {
+      const resource = row.resource;
+      if (!resource) return;
+      if (!grouped[resource]) grouped[resource] = [];
+      grouped[resource].push(row);
+    });
+    const result: any[] = [];
+    Object.entries(grouped).forEach(([, rows]) => {
+      let totalAllocation = 0;
+      const seenWeeks = new Set<string>();
+      rows.forEach(row => {
+        Object.keys(row).forEach(key => {
+          if (isWeekKey(key) && typeof row[key] === 'object') {
+            const value = parseFloat(row[key]?.value ?? 0);
+            totalAllocation += value;
+            if (!seenWeeks.has(key)) seenWeeks.add(key);
+          }
+        });
+      });
+      const avgUtilization =
+        seenWeeks.size > 0 ? totalAllocation / seenWeeks.size : 0;
+      const avgAvailability = maxAllocationError - avgUtilization;
+      rows.forEach(row => {
+        result.push({ ...row, _avgPeriodAllocation: avgAvailability });
+      });
+    });
+    return result;
+  };
+
+  const applyThresholdFilter = (rows: AllAllocations[]) => {
+    const enriched = computeAverageAllocations(rows);
+    const [minVal, maxVal] = allocationThreshold;
+    const filtered = enriched.filter(row => {
+      const normalizedAvailability =
+        (row._avgPeriodAllocation ?? 0) - maxAllocationError + 1.0;
+      if (minVal < 0) return normalizedAvailability <= maxVal;
+      return (
+        normalizedAvailability >= minVal && normalizedAvailability <= maxVal
+      );
+    });
+    setRows(filtered);
+  };
+
+  // Data loading effect: computes full rows and stores in master store
   useEffect(() => {
     if (loadingPermissions) return;
-    if (permissions['Allocation'].r && ready) {
-      let filteredResources;
-      const allTempRows = getAllRowsForView('teamAllocationtemp');
-      if (!loading && allTempRows?.length > 0) {
-        setRows(allTempRows || []);
-        setRowsForView('teamAllocationtemp', []);
-      } else {
-        const projectViewRows = getAllProjectViewRows();
-        if (!loading && projectViewRows.length > 0) {
-          filteredResources = removeResourcesWithNoTeams(
-            injectBlankRows(
-              projectViewRows as AllAllocations[],
-              teams || [],
-              // @ts-ignore
-              teamsResources,
-              allResourcesDetail,
-              location,
-              startDate,
-              endDate
-            )
-          );
-        } else if (allAllocations) {
-          filteredResources = removeResourcesWithNoTeams(allAllocations || []);
-          dispatch(setLoading(false));
-        }
+    if (!permissions['Allocation'].r || !ready) return;
 
-        const formattedResources = filteredResources?.map(allocation => ({
+    if (loading) {
+      if (!allAllocations) return;
+      const formattedRows = (
+        removeResourcesWithNoTeams(allAllocations as AllAllocations[]) ?? []
+      ).map(allocation => ({
+        ...allocation,
+        hasAllocation: (allocation?.totalEffort ?? 0) > 0,
+        teamAllocationManager: getAllocationManagerFromPath(
+          allocation?.teamAllocationManager,
+          _resources || []
+        )?.FullName,
+      }));
+      setAllocationMaster(formattedRows);
+      applyThresholdFilter(formattedRows);
+      dispatch(setLoading(false));
+    } else {
+      const master = getAllocationMaster() as AllAllocations[];
+      if (master.length > 0) {
+        applyThresholdFilter(master);
+      } else if (allAllocations) {
+        const formattedRows = (
+          removeResourcesWithNoTeams(allAllocations as AllAllocations[]) ?? []
+        ).map(allocation => ({
           ...allocation,
           hasAllocation: (allocation?.totalEffort ?? 0) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
@@ -124,13 +161,18 @@ function FlatAllocation({
             _resources || []
           )?.FullName,
         }));
-
-        setRows(formattedResources || []);
+        setAllocationMaster(formattedRows);
+        applyThresholdFilter(formattedRows);
       }
-      // Sahadev : Reset temp View for Project Related Views, Currently ProjectsView and ProtfolioView.
-      setRowsForView('projectAllocationtemp', []);
     }
   }, [ready, allAllocations, loadingPermissions]);
+
+  // Filter-only effect: re-applies slider filter from master store when threshold changes
+  useEffect(() => {
+    const master = getAllocationMaster() as AllAllocations[];
+    if (!master.length) return;
+    applyThresholdFilter(master);
+  }, [allocationThreshold]);
 
   const organisationColumnConfig = [
     {
@@ -592,18 +634,17 @@ function FlatAllocation({
     },
     {
       field: 'manager',
-      headerName: 'Manager',  // Resource page manager detail
+      headerName: 'Manager', // Resource page manager detail
       width: 130,
       type: 'string',
       isEditable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return (
-          <EllipsisNameCell value={allocation.manager || ''} /> )
+        return <EllipsisNameCell value={allocation.manager || ''} />;
       },
     },
-     {
+    {
       field: 'portfolioStatus',
       headerName: 'Portfolio Status',
       width: 180,
@@ -626,7 +667,9 @@ function FlatAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.portfolioDescription || ''} />;
+        return (
+          <EllipsisNameCell value={allocation?.portfolioDescription || ''} />
+        );
       },
     },
   ];

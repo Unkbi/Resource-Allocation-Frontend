@@ -2,13 +2,13 @@
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import {
   formatDateMMDDYYYY,
   getAllocationManagerFromPath,
   getResourceFromUid,
+  isWeekKey,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
@@ -16,13 +16,9 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import {
-  initSortAllocations,
-  injectBlankRows,
-  normalizeRow,
-} from '@/app/utils/allocationUtils';
+import { useDataGrid } from '@/app/context/dataGridContext';
+import { initSortAllocations } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
-import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import {
   compareDateEmptyLast,
@@ -70,9 +66,7 @@ function ResourceAllocation({
 }: ResourceAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
-  const { teams, teamsResources } = useSelector(
-    (state: RootState) => state.teams
-  );
+  const { teams } = useSelector((state: RootState) => state.teams);
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
@@ -86,76 +80,120 @@ function ResourceAllocation({
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  const {
-    setRows,
-    ready,
-    getAllRows: getAllTeamViewRows,
-  } = useAllocationGrid('teamAllocation');
-  const { getAllRows: getAllProjectViewRows } =
-    useAllocationGrid('projectAllocation');
-  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
+  const { setRows, ready } = useAllocationGrid('teamAllocation');
+  const { setAllocationMaster, getAllocationMaster } = useDataGrid();
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
   );
   const { resources } = useSelector((state: RootState) => state.resources);
+  const allocationThreshold = useSelector(
+    (state: RootState) =>
+      state.allocationView.currentView?.allocationThreshold ?? [-0.2, 1.0]
+  );
+  const maxAllocationError = parseFloat(
+    (scalarSettings?.Max_Allocation_Error as string) || '2.0'
+  );
 
+  const computeAverageAllocations = (data: AllAllocations[]) => {
+    const grouped: Record<string, any[]> = {};
+    data.forEach(row => {
+      const resource = row.resource;
+      if (!resource) return;
+      if (!grouped[resource]) grouped[resource] = [];
+      grouped[resource].push(row);
+    });
+    const result: any[] = [];
+    Object.entries(grouped).forEach(([, rows]) => {
+      let totalAllocation = 0;
+      const seenWeeks = new Set<string>();
+      rows.forEach(row => {
+        Object.keys(row).forEach(key => {
+          if (isWeekKey(key) && typeof row[key] === 'object') {
+            const value = parseFloat(row[key]?.value ?? 0);
+            totalAllocation += value;
+            if (!seenWeeks.has(key)) seenWeeks.add(key);
+          }
+        });
+      });
+      const avgUtilization =
+        seenWeeks.size > 0 ? totalAllocation / seenWeeks.size : 0;
+      const avgAvailability = maxAllocationError - avgUtilization;
+      rows.forEach(row => {
+        result.push({ ...row, _avgPeriodAllocation: avgAvailability });
+      });
+    });
+    return result;
+  };
+
+  const applyThresholdFilter = (rows: AllAllocations[]) => {
+    const enriched = computeAverageAllocations(rows);
+    const [minVal, maxVal] = allocationThreshold;
+    const filtered = enriched.filter(row => {
+      const normalizedAvailability =
+        (row._avgPeriodAllocation ?? 0) - maxAllocationError + 1.0;
+      if (minVal < 0) return normalizedAvailability <= maxVal;
+      return (
+        normalizedAvailability >= minVal && normalizedAvailability <= maxVal
+      );
+    });
+    setRows(filtered);
+  };
+
+  // Data loading effect: computes full rows and stores in master store
   useEffect(() => {
     if (loadingPermissions) return;
-    if (permissions['Allocation'].r && ready) {
-      let filteredResources;
-      const allTempRows = getAllRowsForView('teamAllocationtemp');
-      if (!loading && allTempRows?.length > 0) {
-        setRows(
-          initSortAllocations(
-            allTempRows as AllAllocations[],
-            'resource',
-            'project'
-          ) || []
-        );
-        setRowsForView('teamAllocationtemp', []);
-      } else {
-        const projectViewRows = getAllProjectViewRows();
-        if (!loading && projectViewRows.length > 0) {
-          filteredResources = initSortAllocations(
-            removeResourcesWithNoTeams(
-              injectBlankRows(
-                projectViewRows as AllAllocations[],
-                teams || [],
-                // @ts-ignore
-                teamsResources,
-                allResourcesDetail,
-                location,
-                startDate,
-                endDate
-              )
-            ),
-            'resource',
-            'project'
-          );
-        } else if (allAllocations) {
-          filteredResources = initSortAllocations(
-            removeResourcesWithNoTeams(allAllocations || []),
-            'resource',
-            'project'
-          );
-          dispatch(setLoading(false));
-        }
+    if (!permissions['Allocation'].r || !ready) return;
 
-        const formattedResources = filteredResources?.map(allocation => ({
+    if (loading) {
+      if (!allAllocations) return;
+      const formattedRows = (
+        initSortAllocations(
+          removeResourcesWithNoTeams(allAllocations as AllAllocations[]),
+          'resource',
+          'project'
+        ) ?? []
+      ).map(allocation => ({
+        ...allocation,
+        hasAllocation: (allocation?.totalEffort ?? 0) > 0,
+        teamAllocationManager: getAllocationManagerFromPath(
+          allocation?.teamAllocationManager,
+          _resources || []
+        )?.FullName,
+      }));
+      setAllocationMaster(formattedRows);
+      applyThresholdFilter(formattedRows);
+      dispatch(setLoading(false));
+    } else {
+      const master = getAllocationMaster() as AllAllocations[];
+      if (master.length > 0) {
+        applyThresholdFilter(master);
+      } else if (allAllocations) {
+        const formattedRows = (
+          initSortAllocations(
+            removeResourcesWithNoTeams(allAllocations as AllAllocations[]),
+            'resource',
+            'project'
+          ) ?? []
+        ).map(allocation => ({
           ...allocation,
-         hasAllocation: (allocation?.totalEffort ?? 0) > 0,
+          hasAllocation: (allocation?.totalEffort ?? 0) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
             _resources || []
           )?.FullName,
         }));
-
-        setRows(formattedResources || []);
+        setAllocationMaster(formattedRows);
+        applyThresholdFilter(formattedRows);
       }
-      // Sahadev : Reset temp View for Project Related Views, Currently ProjectsView and ProtfolioView.
-      setRowsForView('projectAllocationtemp', []);
     }
   }, [ready, allAllocations, loadingPermissions]);
+
+  // Filter-only effect: re-applies slider filter from master store when threshold changes
+  useEffect(() => {
+    const master = getAllocationMaster() as AllAllocations[];
+    if (!master.length) return;
+    applyThresholdFilter(master);
+  }, [allocationThreshold]);
 
   const getTeam = (params: GridCellParams) => {
     if (
@@ -207,16 +245,14 @@ function ResourceAllocation({
         ) => {
           const r1 = getResource(p1)?.Id;
           const DetailsR1 = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === r1
+            (item: any) => item.Resource?.Id === r1
           );
-          const team1 = DetailsR1?.Team?.Name
+          const team1 = DetailsR1?.Team?.Name;
           const r2 = getResource(p2)?.Id;
           const DetailsR2 = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === r2
+            (item: any) => item.Resource?.Id === r2
           );
-          const team2 = DetailsR2?.Team?.Name
+          const team2 = DetailsR2?.Team?.Name;
           return compareStringEmptyLast(team1, team2, sortDirection);
         };
       },
@@ -311,11 +347,10 @@ function ResourceAllocation({
           return compareStringEmptyLast(r1, r2, sortDirection);
         };
       },
-       renderCell: (params: GridCellParams) => {
+      renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Id
+          (item: any) => item.Resource?.Id === resource?.Id
         );
         const organizationName = resourceDetails?.Organization?.Name || '';
         return <EllipsisNameCell value={organizationName || ''} />;
@@ -836,32 +871,31 @@ function ResourceAllocation({
     },
     {
       field: 'manager',
-      headerName: 'Manager',  // Resource page manager detail
+      headerName: 'Manager', // Resource page manager detail
       width: 130,
       type: 'string',
       isEditable: false,
-     getSortComparator: (sortDirection: 'asc' | 'desc') => {
-            return (
-              _v1: string | null,
-              _v2: string | null,
-              p1: GridCellParams,
-              p2: GridCellParams
-            ) => {
-              const r1 = getResource(p1)?.Manager
-              const m1 = getResourceFromUid(r1, resources)
-              const n1 = m1?.FullName
-              const r2 = getResource(p2)?.Manager ?? '';
-              const m2 = getResourceFromUid(r2, resources)
-              const n2 = m2?.FullName
-              return compareStringEmptyLast(n1, n2, sortDirection);
-            };
-          },
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const r1 = getResource(p1)?.Manager;
+          const m1 = getResourceFromUid(r1, resources);
+          const n1 = m1?.FullName;
+          const r2 = getResource(p2)?.Manager ?? '';
+          const m2 = getResourceFromUid(r2, resources);
+          const n2 = m2?.FullName;
+          return compareStringEmptyLast(n1, n2, sortDirection);
+        };
+      },
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Manager
+          (item: any) => item.Resource?.Id === resource?.Manager
         );
         const Manager = resourceDetails?.Resource?.FullName || '';
         return resource ? <EllipsisNameCell value={Manager || ''} /> : null;
@@ -889,7 +923,9 @@ function ResourceAllocation({
       },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return resource ? <EllipsisNameCell value={resource?.Status || ''} /> : null;
+        return resource ? (
+          <EllipsisNameCell value={resource?.Status || ''} />
+        ) : null;
       },
     },
     {
@@ -903,11 +939,12 @@ function ResourceAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const resourceDetails = allResourcesDetail?.find(
-          (item: any) =>
-            item.Resource?.Id === resource?.Id
+          (item: any) => item.Resource?.Id === resource?.Id
         );
         const organizationStatus = resourceDetails?.Organization?.Status || '';
-        return resource ? <EllipsisNameCell value={organizationStatus || ''} /> : null;
+        return resource ? (
+          <EllipsisNameCell value={organizationStatus || ''} />
+        ) : null;
       },
     },
     {
@@ -921,9 +958,9 @@ function ResourceAllocation({
       sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-      const value =
-        typeof params.value === 'string' && params.value !== 'zzzzz'
-          ? params.value
+        const value =
+          typeof params.value === 'string' && params.value !== 'zzzzz'
+            ? params.value
             : '';
         return <EllipsisNameCell value={value} />;
       },
@@ -951,7 +988,9 @@ function ResourceAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.portfolioDescription || ''} />;
+        return (
+          <EllipsisNameCell value={allocation?.portfolioDescription || ''} />
+        );
       },
     },
   ];
@@ -1033,10 +1072,10 @@ function ResourceAllocation({
                 organisationName: false,
                 manager: false,
                 organisationStatus: false,
-                resourceStatus: false,     
+                resourceStatus: false,
                 portfolioDescription: false,
                 portfolioName: false,
-                portfolioStatus:false,
+                portfolioStatus: false,
               },
             },
           }}

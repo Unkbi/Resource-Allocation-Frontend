@@ -87,6 +87,7 @@ export interface AllocationGridView {
   removeContractorPT: boolean;
   showActuals: boolean;
   showDateHeader: boolean;
+  allocationThreshold?: [number, number];
 }
 
 export interface AllColumns {

@@ -1,6 +1,6 @@
 'use client';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
@@ -8,10 +8,10 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import SplitTeamToolbar from '../../Toolbar/SplitTeamToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
-import { Box } from '@mui/material';
 import { AllAllocations, Resource } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getCombinedAllocation } from '@/app/utils/allocationUtils';
+import { useDataGrid } from '@/app/context/dataGridContext';
 import { isWeekKey } from '@/app/utils/common';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
@@ -49,7 +49,8 @@ function BottomTeamsView({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
-  const { setRows, ready, getAllRows } = useAllocationGrid('bottomTeam');
+  const { setRows, ready } = useAllocationGrid('bottomTeam');
+  const { getAllocationMaster } = useDataGrid();
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -182,14 +183,14 @@ function BottomTeamsView({
       permissions &&
       permissions['Allocation'].r &&
       ready &&
-      (allAllocations?.length || getAllRows()?.length)
+      (allAllocations?.length || getAllocationMaster()?.length)
     ) {
       let filteredResources = [];
       // Combine to keep upto Date information.
       let allRows = [];
       if (!loading) {
         allRows = getCombinedAllocation(
-          getAllRows() as AllAllocations[],
+          getAllocationMaster() as AllAllocations[],
           allAllocations || []
         );
       } else {
@@ -210,7 +211,9 @@ function BottomTeamsView({
         const avgWeekly = row._avgPeriodAllocation ?? 0;
         const normalizedAvailability = avgWeekly - maxAllocationError + 1.0;
         if (minVal < 0) return normalizedAvailability <= maxVal;
-        return normalizedAvailability >= minVal && normalizedAvailability <= maxVal;
+        return (
+          normalizedAvailability >= minVal && normalizedAvailability <= maxVal
+        );
       });
 
       setRows(filteredResources || []);

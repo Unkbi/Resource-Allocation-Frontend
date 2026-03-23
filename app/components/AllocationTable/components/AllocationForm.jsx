@@ -121,6 +121,7 @@ import {
   UPDATE_EMPLOYEE_RATES,
 } from '@/app/redux/actions/employeeRatesActions';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import { useDataGrid } from '@/app/context/dataGridContext';
 import {
   filterAllocationsForSelectedProject,
   getFormattedAllocationsForUpdate,
@@ -193,7 +194,10 @@ import {
   CREATE_BUSINESS_IMPACT,
   UPDATE_BUSINESS_IMPACT,
 } from '@/app/redux/actions/businessImpactActions';
-import { CREATE_SAVED_REPORT, UPDATE_SAVED_REPORT } from '@/app/redux/actions/savedReportsActions';
+import {
+  CREATE_SAVED_REPORT,
+  UPDATE_SAVED_REPORT,
+} from '@/app/redux/actions/savedReportsActions';
 import { UPDATE_TOTAL_ALLOCATIONS } from '@/app/redux/actions/allocationTotalsAction';
 
 const initialValuesMap = {
@@ -569,6 +573,7 @@ const AllocationForm = () => {
   const projectAllocationGrid = useAllocationGrid('projectAllocation');
   const topProjectAllocationGrid = useAllocationGrid('topProject');
   const bottomTeamAllocationGrid = useAllocationGrid('bottomTeam');
+  const { updateAllocationMaster } = useDataGrid();
 
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
@@ -693,9 +698,15 @@ const AllocationForm = () => {
       case 'edit_business_impact':
         return addBusinessImpactValidationSchema;
       case 'save_reports':
-        return saveReportsValidationSchema(savedReports, initialData?.Name || '');
+        return saveReportsValidationSchema(
+          savedReports,
+          initialData?.Name || ''
+        );
       case 'edit_reports':
-        return saveReportsValidationSchema(savedReports, initialData?.Name || '');
+        return saveReportsValidationSchema(
+          savedReports,
+          initialData?.Name || ''
+        );
       default:
         return null;
     }
@@ -820,10 +831,10 @@ const AllocationForm = () => {
     const allRows = splitView
       ? bottomTeamAllocationGrid?.getAllRows()
       : getAllRowsForView(
-        currentView?.GroupBy === 'Project'
-          ? 'projectAllocation'
-          : 'teamAllocation'
-      );
+          currentView?.GroupBy === 'Project'
+            ? 'projectAllocation'
+            : 'teamAllocation'
+        );
 
     for (let i = 0; i < allRows?.length; i++) {
       if (
@@ -1015,6 +1026,7 @@ const AllocationForm = () => {
                 });
                 updateRowsForView('projectAllocation', updatedRows);
                 updateRowsForView('teamAllocation', updatedRows);
+                updateAllocationMaster(updatedRows);
                 updateRowsForView('bottomTeam', updatedRows);
                 updateRowsForView('topProject', updatedRows);
 
@@ -1320,7 +1332,7 @@ const AllocationForm = () => {
             resource =>
               resource.Id !== initialData.Id &&
               resource.FullName.toLowerCase() ===
-              newCalculatedFullName.toLowerCase()
+                newCalculatedFullName.toLowerCase()
           )
         ) {
           dispatch(
@@ -1558,10 +1570,10 @@ const AllocationForm = () => {
                   splitView
                     ? bottomTeamAllocationGrid?.getAllRows()
                     : getAllRowsForView(
-                      currentView?.GroupBy === 'Project'
-                        ? 'projectAllocation'
-                        : 'teamAllocation'
-                    ),
+                        currentView?.GroupBy === 'Project'
+                          ? 'projectAllocation'
+                          : 'teamAllocation'
+                      ),
                   resource,
                   weekKey,
                   allocationValue,
@@ -1659,20 +1671,21 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              `Adding allocation for ${Array.isArray(values.Resource)
-                ? values.Resource.reduce((acc, resourceId) => {
-                  const resource = resources?.find(
-                    r => r.Id === resourceId
-                  );
-                  if (!resource) return acc;
-                  return (
-                    acc +
-                    resources?.find(resource => resource.Id === resourceId)
-                      ?.FullName +
-                    ', '
-                  );
-                }, '').slice(0, -2)
-                : resources?.find(r => r.Id === values.Resource)?.FullName
+              `Adding allocation for ${
+                Array.isArray(values.Resource)
+                  ? values.Resource.reduce((acc, resourceId) => {
+                      const resource = resources?.find(
+                        r => r.Id === resourceId
+                      );
+                      if (!resource) return acc;
+                      return (
+                        acc +
+                        resources?.find(resource => resource.Id === resourceId)
+                          ?.FullName +
+                        ', '
+                      );
+                    }, '').slice(0, -2)
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
               }...`,
               'info'
             )
@@ -1928,14 +1941,17 @@ const AllocationForm = () => {
                     updateRowsForView('bottomTeam', allUpdatedRows);
                     updateRowsForView('projectAllocation', allUpdatedRows);
                     updateRowsForView('teamAllocation', allUpdatedRows);
+                    updateAllocationMaster(allUpdatedRows);
                   } else if (
                     teamsViewsGrouping.includes(currentView?.GroupBy)
                   ) {
                     updateRowsForView('teamAllocation', allUpdatedRows);
+                    updateAllocationMaster(allUpdatedRows);
                   } else if (
                     projectViewsGrouping.includes(currentView?.GroupBy)
                   ) {
                     updateRowsForView('projectAllocation', allUpdatedRows);
+                    updateAllocationMaster(allUpdatedRows);
                   } else {
                     dispatch(
                       showToastAction(
@@ -1985,22 +2001,23 @@ const AllocationForm = () => {
               true,
               e?.response?.data
                 ? e?.response?.data
-                : `Failed to create allocation for ${Array.isArray(values.Resource)
-                  ? values.Resource.reduce((acc, resourceId) => {
-                    const resource = resources?.find(
-                      r => r.Id === resourceId
-                    );
-                    if (!resource) return acc;
-                    return (
-                      acc +
-                      resources?.find(
-                        resource => resource.Id === resourceId
-                      )?.FullName +
-                      ', '
-                    );
-                  }, '').slice(0, -2)
-                  : resources?.find(r => r.Id === values.Resource)?.FullName
-                }`,
+                : `Failed to create allocation for ${
+                    Array.isArray(values.Resource)
+                      ? values.Resource.reduce((acc, resourceId) => {
+                          const resource = resources?.find(
+                            r => r.Id === resourceId
+                          );
+                          if (!resource) return acc;
+                          return (
+                            acc +
+                            resources?.find(
+                              resource => resource.Id === resourceId
+                            )?.FullName +
+                            ', '
+                          );
+                        }, '').slice(0, -2)
+                      : resources?.find(r => r.Id === values.Resource)?.FullName
+                  }`,
               'error',
               4000
             )
@@ -2072,8 +2089,12 @@ const AllocationForm = () => {
               ...(values?.filters !== undefined && {
                 Filters: values.filters,
               }),
-              RemoveContractorPT: initialData?.removeContractorPT ?? values.removeContractorPT ?? false,
-              ShowActuals: initialData?.showActuals ?? values.showActuals ?? false,
+              RemoveContractorPT:
+                initialData?.removeContractorPT ??
+                values.removeContractorPT ??
+                false,
+              ShowActuals:
+                initialData?.showActuals ?? values.showActuals ?? false,
             };
 
             // PUT request.
@@ -2127,8 +2148,12 @@ const AllocationForm = () => {
               Description: values.description,
               Filters: values.filters,
               UserId: userId,
-              RemoveContractorPT: initialData?.removeContractorPT ?? values.removeContractorPT ?? false,
-              ShowActuals: initialData?.showActuals ?? values.showActuals ?? false,
+              RemoveContractorPT:
+                initialData?.removeContractorPT ??
+                values.removeContractorPT ??
+                false,
+              ShowActuals:
+                initialData?.showActuals ?? values.showActuals ?? false,
             };
 
             // POST request to save the view.
@@ -3894,7 +3919,8 @@ const AllocationForm = () => {
           // If creating new or Save As, check for name conflicts (NOT for updates/Save)
           if (!isUpdate) {
             const nameExists = savedReports.some(
-              report => report.Name.toLowerCase() === cleanedValues.Name.toLowerCase()
+              report =>
+                report.Name.toLowerCase() === cleanedValues.Name.toLowerCase()
             );
 
             if (nameExists) {
@@ -3932,7 +3958,8 @@ const AllocationForm = () => {
             reportType = 'aisummary';
             filters = {
               ...filters,
-              summaryType: initialData?.summaryType || filters?.summaryType || 'project',
+              summaryType:
+                initialData?.summaryType || filters?.summaryType || 'project',
             };
           } else if (initialData?.tab === 'custom') {
             // For Custom Reports, ensure we have the correct reportType
@@ -4000,7 +4027,9 @@ const AllocationForm = () => {
             dispatch(
               showToast({
                 open: true,
-                message: isSaveAs ? 'Report saved as new successfully.' : 'Report saved successfully.',
+                message: isSaveAs
+                  ? 'Report saved as new successfully.'
+                  : 'Report saved successfully.',
                 type: 'success',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
@@ -4055,7 +4084,8 @@ const AllocationForm = () => {
             reportType = 'aisummary';
             filters = {
               ...filters,
-              summaryType: initialData?.summaryType || filters?.summaryType || 'project',
+              summaryType:
+                initialData?.summaryType || filters?.summaryType || 'project',
             };
           } else if (initialData?.tab === 'custom') {
             // For Custom Reports, ensure we have the correct reportType
@@ -4649,8 +4679,9 @@ const AllocationForm = () => {
                 AllocationEnteredToValue !== undefined
                   ? String(AllocationEnteredToValue)
                   : '',
-              byUser: `${modifingUserDetails?.firstName || ''} ${modifingUserDetails?.lastName || ''
-                }`,
+              byUser: `${modifingUserDetails?.firstName || ''} ${
+                modifingUserDetails?.lastName || ''
+              }`,
               _timestampRaw: Math.floor(new Date(Timestamp)?.getTime() / 1000),
             };
           });

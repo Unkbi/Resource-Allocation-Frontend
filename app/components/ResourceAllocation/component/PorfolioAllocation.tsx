@@ -16,18 +16,17 @@ import {
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import { useDataGrid } from '@/app/context/dataGridContext';
 import {
   getFirstChild,
   initSortAllocations,
   injectBlankProjectRows,
-  normalizeRow,
 } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import {
   PORTFOLIO_BLANK,
   PORTFOLIO_DISPLAY_NAME,
 } from '@/app/constants/constants';
-import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
 
@@ -65,10 +64,7 @@ function PortfolioAllocation({
   );
   const dispatch: AppDispatch = useDispatch();
   const { setRows, ready } = useAllocationGrid('projectAllocation');
-  const { getAllRows: getAllTeamViewRows } =
-    useAllocationGrid('teamAllocation');
-  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
-
+  const { getAllocationMaster } = useDataGrid();
   const showActuals = useSelector(
     (state: RootState) => state.allocationView.currentView?.showActuals ?? false
   );
@@ -82,60 +78,42 @@ function PortfolioAllocation({
     if (loadingPermissions) return;
     if (permissions['Allocation'].r && ready) {
       let filteredResources;
-      const allTempRows = getAllRowsForView('projectAllocationtemp');
-      if (!loading && allTempRows?.length > 0) {
-        setRows(
-          initSortAllocations(
-            allTempRows as AllAllocations[],
-            'portfolioName'
-          ) || []
+      const teamsViewRows = getAllocationMaster();
+      if (!loading && teamsViewRows.length > 0) {
+        filteredResources = initSortAllocations(
+          removeResourcesWithNoProjects(
+            (teamsViewRows as AllAllocations[]) || []
+          ),
+          'portfolioName'
         );
-        setRowsForView('projectAllocationtemp', []);
-      } else {
-        const teamsViewRows = getAllTeamViewRows();
-        if (!loading && teamsViewRows.length > 0) {
-          filteredResources = initSortAllocations(
-            removeResourcesWithNoProjects(
-              (teamsViewRows as AllAllocations[]) || []
-            ),
-            'portfolioName'
-          );
-          setRows(
-            removeResourcesWithNoProjects(
-              getAllTeamViewRows() as AllAllocations[]
-            )
-          );
-        } else if (allAllocations) {
-          filteredResources = initSortAllocations(
-            removeResourcesWithNoProjects(allAllocations || []),
-            'portfolioName'
-          );
-          dispatch(setLoading(false));
-        }
-
-        const formattedResources = injectBlankProjectRows(
-          filteredResources as AllAllocations[],
-          projects || [],
-          portfolios || [],
-          projectTypes || [],
-          _resources || [],
-          startDate || '',
-          endDate || ''
-        )?.map(allocation => ({
-          ...allocation,
-          hasAllocation: (allocation?.totalEffort ?? 0) > 0,
-          teamAllocationManager: getAllocationManagerFromPath(
-            allocation?.teamAllocationManager,
-            _resources || []
-          )?.FullName,
-        }));
-
-        setRows(formattedResources || []);
+      } else if (allAllocations) {
+        filteredResources = initSortAllocations(
+          removeResourcesWithNoProjects(allAllocations || []),
+          'portfolioName'
+        );
+        dispatch(setLoading(false));
       }
-      // Sahadev : Reset temp View for Teams Related Views, Currently Team, Organisation, Resource and Flat Views.
-      setRowsForView('teamAllocationtemp', []);
+
+      const formattedResources = injectBlankProjectRows(
+        filteredResources as AllAllocations[],
+        projects || [],
+        portfolios || [],
+        projectTypes || [],
+        _resources || [],
+        startDate || '',
+        endDate || ''
+      )?.map(allocation => ({
+        ...allocation,
+        hasAllocation: (allocation?.totalEffort ?? 0) > 0,
+        teamAllocationManager: getAllocationManagerFromPath(
+          allocation?.teamAllocationManager,
+          _resources || []
+        )?.FullName,
+      }));
+
+      setRows(formattedResources || []);
     }
-  }, [ready && allAllocations, loadingPermissions]);
+  }, [ready, allAllocations, loadingPermissions]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(

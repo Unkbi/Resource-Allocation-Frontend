@@ -24,6 +24,7 @@ import {
   Paper,
   Tooltip,
   Skeleton,
+  Slider,
 } from '@mui/material';
 import { ChevronRight, KeyboardArrowDown } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -56,6 +57,7 @@ import {
   DEFAULT_ALLOCATION_PREFERENCE,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
+  PERCENTAGES,
   PORTFOLIO_DISPLAY_NAME,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
@@ -460,6 +462,35 @@ const StyledShareButton = styled(Button)(({ theme }) => ({
   },
 }));
 
+const StyledSlider = styled(Slider)(({ theme }) => ({
+  width: '180px',
+  marginBottom: '0px',
+  '& .MuiSlider-rail': {
+    backgroundColor: '#DDE1E4',
+  },
+  '& .MuiSlider-track': {
+    backgroundColor: '#1C2D5F',
+  },
+  '& .MuiSlider-thumb': {
+    width: 12,
+    height: 12,
+    backgroundColor: '#ffffff',
+    border: '2px solid #1C2D5F',
+    '&:hover, &.Mui-active': {
+      boxShadow: '0 0 0 8px rgba(28, 45, 95, 0.16)',
+    },
+  },
+  '& .MuiSlider-markLabel': {
+    fontSize: '10px',
+    color: '#666',
+    transform: 'translate(-50%)',
+  },
+  '& .MuiSlider-valueLabel': {
+    fontSize: '10px',
+    padding: '2px 4px',
+  },
+}));
+
 // View options data
 const saveViewOptions = [
   {
@@ -649,6 +680,25 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const { portfolios } = useSelector(state => state.portfolios);
   const { scalarSettings } = useSelector(state => state.allSettings);
   const [showLegend, setShowLegend] = useState(false);
+
+  const isPercentages = userPreferences?.Allocation_Preference === PERCENTAGES;
+  const allocationThreshold = currentView?.allocationThreshold ?? [-0.2, 1.0];
+  const [localSliderValue, setLocalSliderValue] = useState(allocationThreshold);
+  const showAvailabilitySlider = ['Teams', 'Organisations', 'Resources', 'Flat'].includes(view);
+
+  useEffect(() => {
+    setLocalSliderValue(allocationThreshold);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(allocationThreshold)]);
+
+  const handleAllocationRangeChange = (event, newValue) => {
+    setLocalSliderValue(newValue);
+  };
+
+  const handleAllocationRangeCommit = (event, newValue) => {
+    setLocalSliderValue(newValue);
+    dispatch(updateCurrentView({ allocationThreshold: newValue }));
+  };
 
   const projectsLoaded = Array.isArray(projects);
   const resourcesLoaded = Array.isArray(resources);
@@ -2123,6 +2173,84 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               </Typography>
             </Stack>
           </ToolBox2>
+          {showAvailabilitySlider && (
+            <>
+              <Box
+                sx={{
+                  borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+                  ml: '20px',
+                  height: '34px',
+                  position: 'relative',
+                  top: '10px',
+                }}
+              />
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  ml: '16px',
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: '#212121',
+                    fontFamily: 'Open Sans',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Availability
+                </Typography>
+                <Tooltip
+                  title="Shows resources whose average availability for the selected period is within the chosen range."
+                  arrow
+                  placement="top"
+                  componentsProps={{
+                    tooltip: {
+                      sx: { whiteSpace: 'nowrap', maxWidth: 'none', fontSize: '12px' },
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                    <img src="/images/icons/splitInfo.svg" alt="info" />
+                  </Box>
+                </Tooltip>
+                <StyledSlider
+                  value={localSliderValue}
+                  onChange={handleAllocationRangeChange}
+                  onChangeCommitted={handleAllocationRangeCommit}
+                  valueLabelDisplay="auto"
+                  size="small"
+                  step={null}
+                  min={-0.2}
+                  max={1.0}
+                  marks={[
+                    { value: -0.2, label: isPercentages ? '< 0%' : '< 0' },
+                    { value: 0, label: isPercentages ? '0%' : '0' },
+                    { value: 0.1, label: '' },
+                    { value: 0.2, label: isPercentages ? '20%' : '0.2' },
+                    { value: 0.3, label: '' },
+                    { value: 0.4, label: isPercentages ? '40%' : '0.4' },
+                    { value: 0.5, label: '' },
+                    { value: 0.6, label: isPercentages ? '60%' : '0.6' },
+                    { value: 0.7, label: '' },
+                    { value: 0.8, label: isPercentages ? '80%' : '0.8' },
+                    { value: 0.9, label: '' },
+                    { value: 1.0, label: isPercentages ? '100%' : '1.0' },
+                  ]}
+                  valueLabelFormat={value =>
+                    value < 0
+                      ? isPercentages ? '< 0%' : '< 0'
+                      : isPercentages
+                        ? `${Math.round(value * 100)}%`
+                        : `${parseFloat(value.toFixed(2))}`
+                  }
+                />
+              </Box>
+            </>
+          )}
         </Box>
 
         <Box

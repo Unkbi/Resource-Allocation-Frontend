@@ -20,10 +20,10 @@ import {
   formatDateMMDDYYYY,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import { useDataGrid } from '@/app/context/dataGridContext';
 import {
   getFirstChild,
   injectBlankProjectRows,
-  normalizeRow,
 } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import Typography from '@mui/material/Typography';
@@ -47,7 +47,6 @@ import {
 } from '@/app/redux/reducers/allocationViewReducer';
 import { useRouter } from 'next/navigation';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
-import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { normalizeAllocationValue } from '@/app/utils/actualsUtils';
@@ -133,14 +132,11 @@ function ProjectAllocation({
   const {
     setRows,
     ready,
-    getAllRows: getAllProjectViewRows,
   } = useAllocationGrid('projectAllocation');
-  const { getAllRows: getAllTeamViewRows } =
-    useAllocationGrid('teamAllocation');
+  const { getAllocationMaster } = useDataGrid();
   const showActuals = useSelector(
     (state: RootState) => state.allocationView.currentView?.showActuals ?? false
   );
-  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
@@ -155,60 +151,37 @@ function ProjectAllocation({
     if (loadingPermissions) return;
     if (permissions['Allocation'].r && ready) {
       let filteredResources;
-      const allTempRows = getAllRowsForView('projectAllocationtemp');
-      if (!loading && allTempRows?.length > 0) {
-        setRows(
-          injectBlankProjectRows(
-            allTempRows as AllAllocations[],
-            projects || [],
-            portfolios || [],
-            projectTypes || [],
-            _resources || [],
-            startDate || '',
-            endDate || ''
-          ) || []
+      const teamsViewRows = getAllocationMaster();
+      if (!loading && teamsViewRows.length > 0) {
+        filteredResources = removeResourcesWithNoProjects(
+          (teamsViewRows as AllAllocations[]) || []
         );
-        setRowsForView('projectAllocationtemp', []);
-      } else {
-        const teamsViewRows = getAllTeamViewRows();
-        if (!loading && teamsViewRows.length > 0) {
-          filteredResources = removeResourcesWithNoProjects(
-            (teamsViewRows as AllAllocations[]) || []
-          );
-          setRows(
-            removeResourcesWithNoProjects(
-              getAllTeamViewRows() as AllAllocations[]
-            )
-          );
-        } else if (allAllocations) {
-          filteredResources = removeResourcesWithNoProjects(
-            allAllocations || []
-          );
-          dispatch(setLoading(false));
-        }
-
-        const formattedResources = injectBlankProjectRows(
-          filteredResources as AllAllocations[],
-          projects || [],
-          portfolios || [],
-          projectTypes || [],
-          _resources || [],
-          startDate || '',
-          endDate || ''
-        )?.map(allocation => ({
-          ...allocation,
-          hasAllocation: (allocation?.totalEffort ?? 0) > 0,
-          teamAllocationManager: getAllocationManagerFromPath(
-            allocation?.teamAllocationManager,
-            _resources || []
-          )?.FullName,
-        }));
-        setRows(formattedResources || []);
+      } else if (allAllocations) {
+        filteredResources = removeResourcesWithNoProjects(
+          allAllocations || []
+        );
+        dispatch(setLoading(false));
       }
-      // Sahadev : Reset temp View for Teams Related Views, Currently Team, Organisation, Resource and Flat Views.
-      setRowsForView('teamAllocationtemp', []);
+
+      const formattedResources = injectBlankProjectRows(
+        filteredResources as AllAllocations[],
+        projects || [],
+        portfolios || [],
+        projectTypes || [],
+        _resources || [],
+        startDate || '',
+        endDate || ''
+      )?.map(allocation => ({
+        ...allocation,
+        hasAllocation: (allocation?.totalEffort ?? 0) > 0,
+        teamAllocationManager: getAllocationManagerFromPath(
+          allocation?.teamAllocationManager,
+          _resources || []
+        )?.FullName,
+      }));
+      setRows(formattedResources || []);
     }
-  }, [ready && allAllocations, loadingPermissions]);
+  }, [ready, allAllocations, loadingPermissions]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(

@@ -107,7 +107,7 @@ function AllocationGrid({
   defaultGroupingExpansionDepth = 0,
 }) {
   const apiRef = useGridApiRef();
-  const { setApiRef, getApiRef } = useDataGrid();
+  const { setApiRef, getApiRef, updateAllocationMaster } = useDataGrid();
   const mainAllocationGrid = useAllocationGrid('main');
   const teamAllocationGrid = useAllocationGrid('teamAllocation');
   const projectAllocationGrid = useAllocationGrid('projectAllocation');
@@ -333,12 +333,6 @@ function AllocationGrid({
     if (apiRef.current) {
       setApiRef(viewId || 'main', apiRef.current);
     }
-
-    return () => {
-      if (getApiRef(viewId)) {
-        setApiRef(viewId + 'temp', getApiRef(viewId)); // This is to keep inSync if other views are using the same apiRef
-      }
-    };
   }, [apiRef, setApiRef, viewId]);
 
   useEffect(() => {
@@ -1528,6 +1522,7 @@ function AllocationGrid({
             } else if (viewId === 'bottomTeam') {
               topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
             }
+            updateAllocationMaster([allUpdatedRows[0]]);
             return allUpdatedRows[0];
           })
           .catch(error => {
