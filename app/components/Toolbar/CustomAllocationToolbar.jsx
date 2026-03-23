@@ -680,15 +680,21 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const { portfolios } = useSelector(state => state.portfolios);
   const { scalarSettings } = useSelector(state => state.allSettings);
   const [showLegend, setShowLegend] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
   const isPercentages = userPreferences?.Allocation_Preference === PERCENTAGES;
   const allocationThreshold = currentView?.allocationThreshold ?? [-0.2, 1.0];
   const [localSliderValue, setLocalSliderValue] = useState(allocationThreshold);
-  const showAvailabilitySlider = ['Teams', 'Organisations', 'Resources', 'Flat'].includes(view);
+  const showAvailabilitySlider = [
+    'Teams',
+    'Organisations',
+    'Resources',
+    'Flat',
+  ].includes(view);
 
   useEffect(() => {
     setLocalSliderValue(allocationThreshold);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(allocationThreshold)]);
 
   const handleAllocationRangeChange = (event, newValue) => {
@@ -1215,9 +1221,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     dispatch(setRemoveContractorPT(!removeContractorPT));
   };
 
- const handleLegendBox = () => {
-   setShowLegend(prev => !prev);
- };
+  const handleLegendBox = () => {
+    setShowLegend(prev => !prev);
+  };
+  const handleOptionsMenu = () => {
+    setShowOptionsMenu(prev => !prev);
+  };
   const handleShowDateHeaderToggle = () => {
     dispatch(updateCurrentView({ showDateHeader: !showDateHeader }));
   };
@@ -1846,12 +1855,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       <Box
         className="lowerToolbar"
         sx={{
-          height: '54px',
+          height: '58px',
           flexShrink: 0,
           display: 'flex',
           justifyContent: 'space-between',
           // borderBottom: '3px solid rgba(171, 183, 194, 0.50)',
-          borderBottom: '2px solid rgba(206, 220, 233, 0.50)',
+          borderBottom: '1px solid #E0E0E0',
           background:
             'linear-gradient(185deg, #FFF 3.99%, rgba(239, 244, 254, 0.10) 251.06%)',
         }}
@@ -1883,372 +1892,166 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             </Box>
           ) : (
             <>
-              {permissions && permissions['AllocationCost']?.r && (
-                <ToolBox2>
-                  <Stack direction="row" sx={{ alignItems: 'center' }}>
-                    <Typography
-                      sx={{
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: '#344665',
-                      }}
-                    >
-                      Allocations
-                    </Typography>
-                    <Switch
-                      size="small"
-                      checked={currentView?.GroupBy.includes('Cost')}
-                      onChange={handleAllocationCostSwitch}
-                      disabled={
-                        (showActuals &&
-                          !currentView?.GroupBy.includes('Cost')) ||
-                        currentView?.GroupBy === 'Portfolio' ||
-                        currentView?.GroupBy === 'Organisations' ||
-                        currentView?.GroupBy === 'Resources' ||
-                        currentView?.GroupBy === 'Flat'
+              {permissions && permissions['ActualsStatus']?.r && (
+                <>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      marginLeft: '22px',
+                    }}
+                  >
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={showActuals}
+                          disabled={currentView?.GroupBy.includes('Cost')}
+                          onChange={handleShowActualsToggle}
+                          size="small"
+                          sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
+                        />
+                      }
+                      label={
+                        <Typography
+                          sx={{
+                            color: '#374151',
+                            fontFamily: 'Open Sans',
+                            fontSize: '14px',
+                            fontStyle: 'normal',
+                            fontWeight: 500,
+                            lineHeight: '20px',
+                            marginRight: '-12px',
+                          }}
+                        >
+                          Actuals
+                        </Typography>
                       }
                     />
-                    <Typography
-                      sx={{
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: '#344665',
-                      }}
+                    <Tooltip
+                      placement="right"
+                      title={
+                        <Box>
+                          <Typography variant="body2">
+                            Displays actuals beneath planned allocations for all
+                            weeks with actuals.
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold" mt={1}>
+                            Color indicators:
+                          </Typography>
+                          <Typography variant="body2">
+                            <span>● Green</span> = match
+                            <br />
+                            <span>● Yellow</span> = actuals are lower
+                            <br />
+                            <span>● Red</span> = actuals are higher than
+                            planned.
+                          </Typography>
+                        </Box>
+                      }
                     >
-                      Costs
-                    </Typography>
-                  </Stack>
-                </ToolBox2>
-              )}
-              {permissions &&
-                permissions['AllocationCost']?.r &&
-                permissions &&
-                permissions['ActualsStatus']?.r && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <img src="/images/icons/InfoRounded.svg" alt="info" />
+                      </Box>
+                    </Tooltip>
+                  </Box>
                   <Box
                     sx={{
                       borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
-                      ml: '20px',
+                      ml: '10px',
                       height: '34px',
                       position: 'relative',
                       top: '10px',
                     }}
                   ></Box>
-                )}
-              {permissions && permissions['ActualsStatus']?.r && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginLeft: '22px',
-                  }}
-                >
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={showActuals}
-                        disabled={currentView?.GroupBy.includes('Cost')}
-                        onChange={handleShowActualsToggle}
-                        size="small"
-                        sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
-                      />
-                    }
-                    label={
-                      <Typography
-                        sx={{
-                          color: '#374151',
-                          fontFamily: 'Open Sans',
-                          fontSize: '14px',
-                          fontStyle: 'normal',
-                          fontWeight: 500,
-                          lineHeight: '20px',
-                          marginRight: '-12px',
-                        }}
-                      >
-                        Show Actuals
-                      </Typography>
-                    }
-                  />
-                  <Tooltip
-                    placement="right"
-                    title={
-                      <Box>
-                        <Typography variant="body2">
-                          Displays actuals beneath planned allocations for all
-                          weeks with actuals.
-                        </Typography>
-                        <Typography variant="body2" fontWeight="bold" mt={1}>
-                          Color indicators:
-                        </Typography>
-                        <Typography variant="body2">
-                          <span>● Green</span> = match
-                          <br />
-                          <span>● Yellow</span> = actuals are lower
-                          <br />
-                          <span>● Red</span> = actuals are higher than planned.
-                        </Typography>
-                      </Box>
-                    }
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <img src="/images/icons/InfoRounded.svg" alt="info" />
-                    </Box>
-                  </Tooltip>
-                </Box>
+                </>
               )}
-              <Box
-                sx={{
-                  borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
-                  ml: '20px',
-                  height: '34px',
-                  position: 'relative',
-                  top: '10px',
-                }}
-              ></Box>
-              {permissions && permissions['ActualsStatus']?.r && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginLeft: '22px',
-                  }}
-                >
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={!removeContractorPT}
-                        disabled={currentView?.GroupBy.includes('Cost')}
-                        onChange={handleRemoveContractorPTToggle}
-                        size="small"
-                        sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
-                      />
-                    }
-                    label={
-                      <Typography
-                        sx={{
-                          color: '#374151',
-                          fontFamily: 'Open Sans',
-                          fontSize: '14px',
-                          fontStyle: 'normal',
-                          fontWeight: 500,
-                          lineHeight: '20px',
-                          marginRight: '-12px',
-                        }}
-                      >
-                        Part-time Resources
-                      </Typography>
-                    }
-                  />
-                  <Tooltip
-                    placement="right"
-                    title={
-                      <Box>
-                        <Typography variant="body2">
-                          Includes part-time resources in capacity and
-                          availability calculations. When enabled, part-time
-                          resources contribute to the team’s headcount and may
-                          impact capacity indicators
-                        </Typography>
-                      </Box>
-                    }
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <img src="/images/icons/InfoRounded.svg" alt="info" />
-                    </Box>
-                  </Tooltip>
-                </Box>
-              )}
-              <Box
-                sx={{
-                  borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
-                  ml: '20px',
-                  height: '34px',
-                  position: 'relative',
-                  top: '10px',
-                }}
-              ></Box>
-              <FormControl
-                sx={{
-                  ml: '6px',
-                  alignSelf: 'center',
-                  ...(preferenceChanging && {
-                    opacity: 0.5,
-                    pointerEvents: 'none',
-                    cursor: 'not-allowed',
-                  }),
-                }}
-              >
-                <Select
-                  value={
-                    userPreferences?.Allocation_Preference ||
-                    DEFAULT_ALLOCATION_PREFERENCE
-                  }
-                  onChange={handleAllocationPreferenceChange}
-                  disabled={preferenceChanging}
-                  IconComponent={KeyboardArrowDown}
-                  renderValue={value => (
-                    <Box
-                      sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                    >
-                      {getAllocationPreferenceIcon(value)}
-                      {value}
-                    </Box>
-                  )}
-                  sx={{
-                    height: '40px',
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    color: '#5D6979',
-                    background: '#FFF',
-                    borderRadius: '8px',
-                    border: '1px solid #CBD0DB',
-                    '& .MuiSelect-select': {
-                      padding: '6px 12px',
+              {showAvailabilitySlider && (
+                <>
+                  <Box
+                    sx={{
                       display: 'flex',
                       alignItems: 'center',
-                    },
-                    '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      border: 'none',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      border: 'none',
-                    },
-                  }}
-                >
-                  {ALLOCATION_PREFERENCE_OPTIONS.map(option => (
-                    <StyledMenuItem key={option} value={option}>
-                      {getAllocationPreferenceIcon(option)}
-                      {option}
-                    </StyledMenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </>
-          )}
-          <Box
-            sx={{
-              borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
-              ml: '20px',
-              height: '34px',
-              position: 'relative',
-              top: '10px',
-            }}
-          ></Box>
-          <ToolBox2>
-            <Stack direction="row" sx={{ alignItems: 'center' }}>
-              <Typography
-                sx={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: '#344665',
-                }}
-              >
-                Weeks
-              </Typography>
-              <Switch
-                size="small"
-                checked={showDateHeader}
-                onChange={handleShowDateHeaderToggle}
-              />
-              <Typography
-                sx={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: '#344665',
-                }}
-              >
-                Date
-              </Typography>
-            </Stack>
-          </ToolBox2>
-          {showAvailabilitySlider && (
-            <>
-              <Box
-                sx={{
-                  borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
-                  ml: '20px',
-                  height: '34px',
-                  position: 'relative',
-                  top: '10px',
-                }}
-              />
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  ml: '16px',
-                }}
-              >
-                <Typography
-                  sx={{
-                    color: '#212121',
-                    fontFamily: 'Open Sans',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Availability
-                </Typography>
-                <Tooltip
-                  title="Shows resources whose average availability for the selected period is within the chosen range."
-                  arrow
-                  placement="top"
-                  componentsProps={{
-                    tooltip: {
-                      sx: { whiteSpace: 'nowrap', maxWidth: 'none', fontSize: '12px' },
-                    },
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                    <img src="/images/icons/splitInfo.svg" alt="info" />
+                      gap: 1,
+                      ml: '10px',
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: '#212121',
+                        fontFamily: 'Open Sans',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Availability
+                    </Typography>
+                    <Tooltip
+                      title="Shows resources whose average availability for the selected period is within the chosen range."
+                      arrow
+                      placement="top"
+                      componentsProps={{
+                        tooltip: {
+                          sx: {
+                            whiteSpace: 'nowrap',
+                            maxWidth: 'none',
+                            fontSize: '12px',
+                          },
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <img src="/images/icons/splitInfo.svg" alt="info" />
+                      </Box>
+                    </Tooltip>
+                    <StyledSlider
+                      value={localSliderValue}
+                      onChange={handleAllocationRangeChange}
+                      onChangeCommitted={handleAllocationRangeCommit}
+                      valueLabelDisplay="auto"
+                      size="small"
+                      step={null}
+                      min={-0.2}
+                      max={1.0}
+                      marks={[
+                        { value: -0.2, label: isPercentages ? '< 0%' : '< 0' },
+                        { value: 0, label: isPercentages ? '0%' : '0' },
+                        { value: 0.1, label: '' },
+                        { value: 0.2, label: isPercentages ? '20%' : '0.2' },
+                        { value: 0.3, label: '' },
+                        { value: 0.4, label: isPercentages ? '40%' : '0.4' },
+                        { value: 0.5, label: '' },
+                        { value: 0.6, label: isPercentages ? '60%' : '0.6' },
+                        { value: 0.7, label: '' },
+                        { value: 0.8, label: isPercentages ? '80%' : '0.8' },
+                        { value: 0.9, label: '' },
+                        { value: 1.0, label: isPercentages ? '100%' : '1.0' },
+                      ]}
+                      valueLabelFormat={value =>
+                        value < 0
+                          ? isPercentages
+                            ? '< 0%'
+                            : '< 0'
+                          : isPercentages
+                            ? `${Math.round(value * 100)}%`
+                            : `${parseFloat(value.toFixed(2))}`
+                      }
+                    />
                   </Box>
-                </Tooltip>
-                <StyledSlider
-                  value={localSliderValue}
-                  onChange={handleAllocationRangeChange}
-                  onChangeCommitted={handleAllocationRangeCommit}
-                  valueLabelDisplay="auto"
-                  size="small"
-                  step={null}
-                  min={-0.2}
-                  max={1.0}
-                  marks={[
-                    { value: -0.2, label: isPercentages ? '< 0%' : '< 0' },
-                    { value: 0, label: isPercentages ? '0%' : '0' },
-                    { value: 0.1, label: '' },
-                    { value: 0.2, label: isPercentages ? '20%' : '0.2' },
-                    { value: 0.3, label: '' },
-                    { value: 0.4, label: isPercentages ? '40%' : '0.4' },
-                    { value: 0.5, label: '' },
-                    { value: 0.6, label: isPercentages ? '60%' : '0.6' },
-                    { value: 0.7, label: '' },
-                    { value: 0.8, label: isPercentages ? '80%' : '0.8' },
-                    { value: 0.9, label: '' },
-                    { value: 1.0, label: isPercentages ? '100%' : '1.0' },
-                  ]}
-                  valueLabelFormat={value =>
-                    value < 0
-                      ? isPercentages ? '< 0%' : '< 0'
-                      : isPercentages
-                        ? `${Math.round(value * 100)}%`
-                        : `${parseFloat(value.toFixed(2))}`
-                  }
-                />
-              </Box>
+                </>
+              )}
             </>
           )}
         </Box>
@@ -2258,13 +2061,37 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <Button
+            onClick={handleOptionsMenu}
+            sx={{
+              height: '40px',
+              borderRadius: '6px',
+              border: '1px solid #E2E8F0',
+              background: showOptionsMenu ? '#F1F6FF' : '#FFF',
+              boxShadow: '0px 1px 0px rgba(0,0,0,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              p: 1,
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: 'transparent',
+              },
+            }}
+          >
+            <Typography
+              sx={{ fontWeight: 600, fontSize: '14px', color: '#5D6979' }}
+            >
+              More Options
+            </Typography>
+          </Button>
+          <Button
             onClick={handleLegendBox}
             sx={{
               height: '40px',
-              width: '90px',
+              minWidth: '41px',
               borderRadius: '6px',
               border: '1px solid #E2E8F0',
-              background: '#FFF',
+              background: showLegend ? '#F1F6FF' : '#FFF',
               boxShadow: '0px 1px 0px rgba(0,0,0,0.25)',
               display: 'flex',
               alignItems: 'center',
@@ -2275,17 +2102,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               },
             }}
           >
-            <img
-              src={
-                showLegend
-                  ? '/images/icons/legendBtn.svg'
-                  : '/images/icons/LegendButton.svg'
-              }
-              alt="Legend"
-              style={{
-                padding: '1.5px 1px 1.5px 0px',
-              }}
-            />
+            <img src={'/images/icons/legendBtn.svg'} alt="Legend" />
           </Button>
           <GridToolbarContainer
             ref={setFilterButtonEl}
@@ -2430,8 +2247,241 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </Box>
         </Box>
       </Box>
+      {showOptionsMenu && (
+        <Box
+          className="lowerToolbarSub"
+          sx={{
+            display: 'flex',
+            height: '54px',
+            borderBottom: '1px solid #E0E0E0',
+          }}
+        >
+          {permissions && permissions['ActualsStatus']?.r && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                marginLeft: '22px',
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={!removeContractorPT}
+                    disabled={currentView?.GroupBy.includes('Cost')}
+                    onChange={handleRemoveContractorPTToggle}
+                    size="small"
+                    sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
+                  />
+                }
+                label={
+                  <Typography
+                    sx={{
+                      color: '#374151',
+                      fontFamily: 'Open Sans',
+                      fontSize: '14px',
+                      fontStyle: 'normal',
+                      fontWeight: 500,
+                      lineHeight: '20px',
+                      marginRight: '-12px',
+                    }}
+                  >
+                    PTE
+                  </Typography>
+                }
+              />
+              <Tooltip
+                placement="right"
+                title={
+                  <Box>
+                    <Typography variant="body2">
+                      Includes part-time resources in capacity and availability
+                      calculations. When enabled, part-time resources contribute
+                      to the team’s headcount and may impact capacity indicators
+                    </Typography>
+                  </Box>
+                }
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <img src="/images/icons/InfoRounded.svg" alt="info" />
+                </Box>
+              </Tooltip>
+            </Box>
+          )}
+          <Box
+            sx={{
+              borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+              ml: '10px',
+              mr: '10px',
+              height: '34px',
+              position: 'relative',
+              top: '10px',
+            }}
+          ></Box>
+          <FormControl
+            sx={{
+              ml: '6px',
+              alignSelf: 'center',
+              ...(preferenceChanging && {
+                opacity: 0.5,
+                pointerEvents: 'none',
+                cursor: 'not-allowed',
+              }),
+            }}
+          >
+            <Select
+              value={
+                userPreferences?.Allocation_Preference ||
+                DEFAULT_ALLOCATION_PREFERENCE
+              }
+              onChange={handleAllocationPreferenceChange}
+              disabled={preferenceChanging}
+              IconComponent={KeyboardArrowDown}
+              renderValue={value => (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {getAllocationPreferenceIcon(value)}
+                  {value}
+                </Box>
+              )}
+              sx={{
+                height: '40px',
+                fontSize: '14px',
+                fontWeight: 700,
+                color: '#5D6979',
+                background: '#FFF',
+                borderRadius: '8px',
+                border: '1px solid #CBD0DB',
+                '& .MuiSelect-select': {
+                  padding: '6px 12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                },
+                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
+              }}
+            >
+              {ALLOCATION_PREFERENCE_OPTIONS.map(option => (
+                <StyledMenuItem key={option} value={option}>
+                  {getAllocationPreferenceIcon(option)}
+                  {option}
+                </StyledMenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Box
+            sx={{
+              borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+              ml: '16px',
+              mr: '1px',
+              height: '34px',
+              position: 'relative',
+              top: '10px',
+            }}
+          ></Box>
+          {permissions && permissions['AllocationCost']?.r && (
+            <>
+              <ToolBox2>
+                <Stack direction="row" sx={{ alignItems: 'center' }}>
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      color: '#344665',
+                    }}
+                  >
+                    Allocations
+                  </Typography>
+                  <Switch
+                    size="small"
+                    checked={currentView?.GroupBy.includes('Cost')}
+                    onChange={handleAllocationCostSwitch}
+                    disabled={
+                      (showActuals && !currentView?.GroupBy.includes('Cost')) ||
+                      currentView?.GroupBy === 'Portfolio' ||
+                      currentView?.GroupBy === 'Organisations' ||
+                      currentView?.GroupBy === 'Resources' ||
+                      currentView?.GroupBy === 'Flat'
+                    }
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      color: '#344665',
+                    }}
+                  >
+                    Costs
+                  </Typography>
+                </Stack>
+              </ToolBox2>
+              <Box
+                sx={{
+                  borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+                  ml: '20px',
+                  height: '34px',
+                  position: 'relative',
+                  top: '10px',
+                }}
+              ></Box>
+            </>
+          )}
+          <ToolBox2>
+            <Stack direction="row" sx={{ alignItems: 'center' }}>
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#344665',
+                }}
+              >
+                Weeks
+              </Typography>
+              <Switch
+                size="small"
+                checked={showDateHeader}
+                onChange={handleShowDateHeaderToggle}
+              />
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: '#344665',
+                }}
+              >
+                Date
+              </Typography>
+            </Stack>
+          </ToolBox2>
+          {/* Close Button */}
+          <IconButton
+            size="small"
+            onClick={handleOptionsMenu}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 130,
+            }}
+          >
+            <img src="/images/icons/CloseRemoveBtn.svg" alt="Close" />
+          </IconButton>
+        </Box>
+      )}
       {showLegend && (
-          <LegendBar onClose={() => setShowLegend(false)} />
+        <LegendBar
+          onClose={() => setShowLegend(false)}
+          showOptionsMenu={showOptionsMenu}
+        />
       )}
       <ConfirmDialog
         open={deleteDialogOpen}

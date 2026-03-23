@@ -5,9 +5,10 @@ import { Box, Typography, Skeleton, IconButton } from '@mui/material';
 
 interface LegendBarProps {
   onClose: () => void;
+  showOptionsMenu?: boolean;
 }
 
-const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
+const LegendBar: React.FC<LegendBarProps> = ({ onClose, showOptionsMenu }) => {
   const { allocationTheme, loading } = useSelector(
     (state: RootState) => state.settings
   );
@@ -110,7 +111,11 @@ const LegendBar: React.FC<LegendBarProps> = ({ onClose }) => {
       <IconButton
         size="small"
         onClick={onClose}
-        sx={{ position: 'absolute', right: 8, top: 130 }}
+        sx={{
+          position: 'absolute',
+          right: 8,
+          top: showOptionsMenu ? 185 : 130,
+        }}
       >
         <img src="/images/icons/CloseRemoveBtn.svg" alt="Close" />
       </IconButton>
