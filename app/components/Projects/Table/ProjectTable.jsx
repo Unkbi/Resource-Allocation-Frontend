@@ -81,7 +81,26 @@ const ProjectTable = ({
           visibleFields.some(field => {
             const value = (row)[field];
             if (value === null || value === undefined) return false;
-            return String(value).toLowerCase().includes(lowerSearch);
+            const strValue = String(value).toLowerCase();
+            if (strValue.includes(lowerSearch)) return true;
+            // Also match against MM/DD/YYYY and MM/DD/YYYY HH:MM AM/PM formatted date
+            if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+              const d = new Date(value);
+              if (!isNaN(d.getTime())) {
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                const formattedDate = `${mm}/${dd}/${yyyy}`;
+                if (formattedDate.includes(lowerSearch)) return true;
+                const hours = d.getHours();
+                const minutes = String(d.getMinutes()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'pm' : 'am';
+                const hour12 = String(hours % 12 || 12).padStart(2, '0');
+                const formattedTime = `${formattedDate} ${hour12}:${minutes} ${ampm}`;
+                if (formattedTime.includes(lowerSearch)) return true;
+              }
+            }
+            return false;
           })
         );
       }, [rows, search, columns, columnVisibilityModel]);
