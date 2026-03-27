@@ -1781,9 +1781,40 @@ function AllocationGrid({
     return '';
   };
 
+  const GROUP_FIELD_MAP = {
+    teams: {
+      __row_group_by_columns_group_teams__: 'teams',
+      __row_group_by_columns_group_resource__: 'resource',
+    },
+    organisationName: {
+      __row_group_by_columns_group_organisationName__: 'organisationName',
+      __row_group_by_columns_group_resource__: 'resource',
+    },
+    resource: {
+      __row_group_by_columns_group__: 'resource',
+    },
+    project: {
+      __row_group_by_columns_group__: 'project',
+    },
+    portfolioName: {
+      __row_group_by_columns_group_portfolioName__: 'portfolioName',
+      __row_group_by_columns_group_project__: 'project',
+      
+    },
+  };
+
+  const mapGroupedField = (groupBy, field) => {
+    if (!field || !groupBy) return field;
+
+    const groupMap = GROUP_FIELD_MAP[groupBy];
+    if (!groupMap) return field;
+
+    return groupMap[field] || field;
+  };
+  
   const handleFilterModelChange = newModel => {
     const filterData = newModel.items.map(item => ({
-      field: item.field,
+      field: mapGroupedField(groupBy, item.field),
       operator: item.operator,
       value: item.value,
       id: item.id,
@@ -1875,7 +1906,7 @@ function AllocationGrid({
         },
       }
     : {};
-
+ 
   return (
     <StyledDataGrid
       cellSelection
