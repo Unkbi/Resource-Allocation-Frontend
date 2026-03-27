@@ -1,6 +1,7 @@
 export interface formState {
   formType: string;
   initialData: any;
+  formValues: any;
 }
 
 export interface dialogState {

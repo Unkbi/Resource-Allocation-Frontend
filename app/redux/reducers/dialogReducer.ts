@@ -12,6 +12,7 @@ const initialState: dialogState = {
   formState: {
     formType: '',
     initialData: {},
+    formValues : {},
   },
 };
 
@@ -29,6 +30,7 @@ const dialogSlice = createSlice({
         formType,
         initialData,
         readOnly,
+        formValues
       } = action.payload;
       state.isOpen = true;
       state.title = title || '';
@@ -38,6 +40,7 @@ const dialogSlice = createSlice({
       state.cancelButtonText = cancelButtonText || 'Cancel';
       state.formState.formType = formType || '';
       state.formState.initialData = initialData || {};
+      state.formState.formValues = formValues || {};
       state.readOnly = readOnly || false;
     },
     closeDialog: state => {
@@ -49,6 +52,7 @@ const dialogSlice = createSlice({
       state.cancelButtonText = '';
       state.formState.formType = '';
       state.formState.initialData = {};
+      state.formState.formValues = {};
     },
     updateDialogData: (state, action) => {
       const {
@@ -59,6 +63,7 @@ const dialogSlice = createSlice({
         cancelButtonText,
         formType,
         initialData,
+        formValues
       } = action.payload;
 
       state.title = title ?? state.title;
@@ -70,12 +75,16 @@ const dialogSlice = createSlice({
       state.cancelButtonText = cancelButtonText ?? state.cancelButtonText;
       state.formState.formType = formType ?? state.formState.formType;
       state.formState.initialData = initialData ?? state.formState.initialData;
+      state.formState.formValues = formValues ?? state.formState.formValues;
     },
-  },
+    updateFormValues: (state, action) => {
+      state.formState.formValues = action.payload;
+    },
+  }
 });
 
 // Export the actions
-export const { openDialog, closeDialog, updateDialogData } =
+export const { openDialog, closeDialog, updateDialogData,updateFormValues } =
   dialogSlice.actions;
 
 // Export the reducer
