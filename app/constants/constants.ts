@@ -236,7 +236,7 @@ export const PUBLIC_ROUTES = [
 
 export const DEFAULT_LOCALE = 'en-gb';
 
-export const DEFAULT_PROJECT_WEEK_PLUS = 19;
+export const DEFAULT_PROJECT_WEEK_PLUS = 12;
 export const DEFAULT_PROJECT_WEEK_MINUS = 1;
 
 export const PROJECT_TYPES = ['Key Initiative', 'RTB', 'CTB', 'STB', 'Ongoing'];
