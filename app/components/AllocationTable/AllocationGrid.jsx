@@ -448,6 +448,7 @@ function AllocationGrid({
   }, [cellSelectionModel]);
 
   useEffect(() => {
+    if (loading) return;
     const handleScrollAndFocus = () => {
       if (!apiRef.current || Object.keys(cellSelectionData).length === 0)
         return;
@@ -466,6 +467,7 @@ function AllocationGrid({
       }
       apiRef.current.scrollToIndexes({ rowIndex, colIndex });
       setCellSelectionModel(cellSelectionData);
+      setExpandRowId(null);
     };
 
     if (!groupBy || rowExpanded) {
